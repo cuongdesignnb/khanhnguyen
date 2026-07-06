@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+/* ==============================
+   Design Tokens
+   ============================== */
+:root {
+  --bg: #070707;
+  --surface: #101112;
+  --surface-2: #17191b;
+  --surface-3: #202326;
+  --line: rgba(255, 255, 255, 0.10);
+  --line-gold: rgba(245, 181, 27, 0.30);
+  --gold: #f5b51b;
+  --gold-strong: #ffca35;
+  --gold-deep: #cb8c0b;
+  --text: #f7f7f4;
+  --muted: #a7a9a9;
+  --silver: #d9dcdf;
+  --danger: #ee3e3e;
+  --success: #a7e635;
+  --font-sans: var(--font-be-vietnam), Arial, Helvetica, sans-serif;
+}
+
+/* ==============================
+   Base Reset
+   ============================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ==============================
+   Utility Classes
+   ============================== */
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-safe-bottom {
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+}
+
+.gold-focus {
+  outline: none;
+}
+
+.gold-focus:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ==============================
+   Keyframes
+   ============================== */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(245, 181, 27, 0.08) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.5s ease-in-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+}
+
+/* ==============================
+   Texture / Noise Background
+   ============================== */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(245, 181, 27, 0.02) 0%,
+    transparent 60%
+  );
+}
