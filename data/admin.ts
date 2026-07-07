@@ -1,0 +1,613 @@
+import type {
+  AdminStat,
+  ProductAdminItem,
+  ContactAdminItem,
+  PostAdminItem,
+  OrderAdminItem,
+  OrderTimelineEvent,
+  MediaItem,
+  QuoteRequestItem,
+  CategoryItem,
+  BrandItem,
+  ServiceItem,
+  SettingItem,
+  AdminMenuItem,
+} from '@/types/admin'
+
+// ─── Sidebar Menu Items ──────────────────────────────────────────────────────
+
+export const adminMenuItems: AdminMenuItem[] = [
+  { label: 'Tổng quan', href: '/admin', icon: 'Home' },
+  { label: 'Sản phẩm', href: '/admin/products', icon: 'Package' },
+  { label: 'Danh mục', href: '/admin/categories', icon: 'Folder' },
+  { label: 'Thương hiệu', href: '/admin/brands', icon: 'ShieldCheck' },
+  { label: 'Dịch vụ', href: '/admin/services', icon: 'Wrench' },
+  { label: 'Tin tức', href: '/admin/posts', icon: 'Newspaper' },
+  { label: 'Media Library', href: '/admin/media', icon: 'Image' },
+  { label: 'Liên hệ', href: '/admin/contacts', icon: 'Phone' },
+  { label: 'Báo giá', href: '/admin/quote-requests', icon: 'ClipboardList' },
+  { label: 'Đơn hàng', href: '/admin/orders', icon: 'ShoppingCart' },
+  { label: 'Cài đặt website', href: '/admin/settings', icon: 'Settings' },
+]
+
+// ─── Dashboard Stats ─────────────────────────────────────────────────────────
+
+export const adminStats: AdminStat[] = [
+  { label: 'Tổng sản phẩm', value: 128, change: 12.5, icon: 'Package' },
+  { label: 'Danh mục', value: 16, change: 6.7, icon: 'Folder' },
+  { label: 'Bài viết', value: 45, change: 18.2, icon: 'Newspaper' },
+  { label: 'Liên hệ mới', value: 23, change: 21.1, icon: 'Phone' },
+  { label: 'Báo giá mới', value: 17, change: 30.8, icon: 'ClipboardList' },
+  { label: 'Đơn hàng mới', value: 12, change: 9.4, icon: 'ShoppingCart' },
+]
+
+// ─── Order Stats ─────────────────────────────────────────────────────────────
+
+export const orderStats: AdminStat[] = [
+  { label: 'Đơn hàng mới', value: 12, change: 15.2, icon: 'ShoppingCart' },
+  { label: 'Chờ xác nhận', value: 8, change: -5.3, icon: 'Clock' },
+  { label: 'Đang giao/lắp đặt', value: 5, change: 10.0, icon: 'Truck' },
+  { label: 'Hoàn thành', value: 36, change: 22.4, icon: 'CheckCircle' },
+  { label: 'Doanh thu tạm tính', value: '2.85 tỷ', change: 18.6, icon: 'CircleDollarSign' },
+]
+
+// ─── Products ────────────────────────────────────────────────────────────────
+
+export const adminProducts: ProductAdminItem[] = [
+  {
+    id: 'p-1',
+    name: 'TOYOTA 8FB25',
+    subtitle: 'Xe nâng điện ngồi lái',
+    model: '8FB25',
+    sku: 'TOY-8FB25',
+    category: 'Xe nâng điện',
+    brand: 'TOYOTA',
+    price: 425000000,
+    priceLabel: '425.000.000 ₫',
+    image: '/images/seed/products/toyota-8fb25.jpg',
+    isFeatured: true,
+    isVisible: true,
+    status: 'visible',
+    updatedAt: '22/05/2025 09:15',
+  },
+  {
+    id: 'p-2',
+    name: 'KOMATSU FD25T-17',
+    subtitle: 'Xe nâng dầu 2.5 tấn',
+    model: 'FD25T-17',
+    sku: 'KOM-FD25T17',
+    category: 'Xe nâng dầu',
+    brand: 'KOMATSU',
+    price: 395000000,
+    priceLabel: '395.000.000 ₫',
+    image: '/images/seed/products/komatsu-fd25t.jpg',
+    isFeatured: false,
+    isVisible: true,
+    status: 'visible',
+    updatedAt: '20/05/2025 10:30',
+  },
+  {
+    id: 'p-3',
+    name: 'MITSUBISHI RB14',
+    subtitle: 'Xe nâng điện đứng lái',
+    model: 'RB14',
+    sku: 'MIT-RB14',
+    category: 'Xe nâng điện',
+    brand: 'MITSUBISHI',
+    price: 285000000,
+    priceLabel: '285.000.000 ₫',
+    image: '/images/seed/products/mitsubishi-rb14.jpg',
+    isFeatured: true,
+    isVisible: true,
+    status: 'visible',
+    updatedAt: '18/05/2025 15:45',
+  },
+  {
+    id: 'p-4',
+    name: 'TCM FD30T3',
+    subtitle: 'Xe nâng dầu 3 tấn',
+    model: 'FD30T3',
+    sku: 'TCM-FD30T3',
+    category: 'Xe nâng dầu',
+    brand: 'TCM',
+    price: 465000000,
+    priceLabel: '465.000.000 ₫',
+    image: '/images/seed/products/tcm-fd30.jpg',
+    isFeatured: false,
+    isVisible: true,
+    status: 'visible',
+    updatedAt: '17/05/2025 11:20',
+  },
+  {
+    id: 'p-5',
+    name: 'NIULI AC25',
+    subtitle: 'Xe nâng điện ngồi lái',
+    model: 'AC25',
+    sku: 'NIU-AC25',
+    category: 'Xe nâng điện',
+    brand: 'NIULI',
+    price: 315000000,
+    priceLabel: '315.000.000 ₫',
+    image: '/images/seed/products/niuli-ac25.jpg',
+    isFeatured: true,
+    isVisible: true,
+    status: 'visible',
+    updatedAt: '16/05/2025 14:10',
+  },
+]
+
+// ─── Dashboard featured products ─────────────────────────────────────────────
+
+export const dashboardFeaturedProducts = [
+  { id: 1, model: 'KOMATSU FD25T-17', category: 'Xe nâng dầu', status: 'visible' as const, date: '20/05/2025 10:30', image: '/images/seed/products/komatsu-fd25t.jpg' },
+  { id: 2, model: 'TOYOTA 8FD30', category: 'Xe nâng dầu', status: 'visible' as const, date: '19/05/2025 15:45', image: '/images/seed/products/toyota-8fb25.jpg' },
+  { id: 3, model: 'MITSUBISHI FB15PN', category: 'Xe nâng điện', status: 'visible' as const, date: '18/05/2025 09:20', image: '/images/seed/products/mitsubishi-rb14.jpg' },
+  { id: 4, model: 'HELI CPCD30', category: 'Xe nâng dầu', status: 'visible' as const, date: '17/05/2025 14:10', image: '/images/seed/products/tcm-fd30.jpg' },
+  { id: 5, model: 'NISSAN U1D2A25LQ', category: 'Xe nâng điện', status: 'visible' as const, date: '16/05/2025 11:05', image: '/images/seed/products/niuli-ac25.jpg' },
+]
+
+// ─── Contacts ────────────────────────────────────────────────────────────────
+
+export const adminContacts: ContactAdminItem[] = [
+  {
+    id: 'c-1',
+    name: 'Anh Nguyễn Văn Minh',
+    company: 'Công ty TNHH Minh Phát',
+    email: 'minhphat@company.vn',
+    phone: '0901 234 567',
+    need: 'Xe nâng điện 2 tấn',
+    status: 'new',
+    time: '10:32',
+    date: '22/05/2025',
+    note: '',
+  },
+  {
+    id: 'c-2',
+    name: 'Chị Trần Thị Mai',
+    company: 'Cty CP Vina Tech',
+    email: 'maitran87@gmail.com',
+    phone: '0938 765 432',
+    need: 'Báo giá xe nâng dầu',
+    status: 'processing',
+    time: '09:15',
+    date: '22/05/2025',
+    note: 'Khách cần báo giá gấp',
+  },
+  {
+    id: 'c-3',
+    name: 'Anh Lê Hoàng Nam',
+    company: 'Cty SX & TM Hoàng Long',
+    email: 'hoanglong@gmail.com',
+    phone: '0912 345 678',
+    need: 'Thuê xe nâng 3 tấn',
+    status: 'contacted',
+    time: '16:45',
+    date: '21/05/2025',
+    note: 'Đã tư vấn, chờ phản hồi',
+  },
+  {
+    id: 'c-4',
+    name: 'Chị Phạm Thu Hằng',
+    company: 'Cty Logistics An Phú',
+    email: 'hangpham@anphu.com.vn',
+    phone: '0909 876 543',
+    need: 'Phụ tùng xe nâng',
+    status: 'processing',
+    time: '14:20',
+    date: '21/05/2025',
+    note: '',
+  },
+  {
+    id: 'c-5',
+    name: 'Anh Đỗ Văn Dũng',
+    company: 'Cty Cơ khí Dũng Phát',
+    email: 'dungphat@company.vn',
+    phone: '0987 654 321',
+    need: 'Xe nâng 5 tấn',
+    status: 'new',
+    time: '11:05',
+    date: '21/05/2025',
+    note: '',
+  },
+]
+
+// ─── Quote Requests ──────────────────────────────────────────────────────────
+
+export const adminQuoteRequests: QuoteRequestItem[] = [
+  {
+    id: 'qr-1',
+    code: 'BG-2025-001',
+    name: 'Anh Nguyễn Văn Minh',
+    company: 'Công ty TNHH Minh Phát',
+    phone: '0901 234 567',
+    email: 'minhphat@company.vn',
+    product: 'Xe nâng điện 2 tấn',
+    quantity: 2,
+    budget: '800 triệu',
+    status: 'new',
+    assignedTo: 'Admin',
+    date: '22/05/2025',
+    note: '',
+  },
+  {
+    id: 'qr-2',
+    code: 'BG-2025-002',
+    name: 'Chị Trần Thị Mai',
+    company: 'Cty CP Vina Tech',
+    phone: '0938 765 432',
+    email: 'maitran87@gmail.com',
+    product: 'KOMATSU FD25T-17',
+    quantity: 1,
+    budget: '400 triệu',
+    status: 'processing',
+    assignedTo: 'Admin',
+    date: '21/05/2025',
+    note: 'Đang thương lượng giá',
+  },
+  {
+    id: 'qr-3',
+    code: 'BG-2025-003',
+    name: 'Anh Lê Hoàng Nam',
+    company: 'Cty SX & TM Hoàng Long',
+    phone: '0912 345 678',
+    email: 'hoanglong@gmail.com',
+    product: 'Thuê xe nâng 3 tấn',
+    quantity: 3,
+    budget: 'Theo tháng',
+    status: 'quoted',
+    assignedTo: 'Admin',
+    date: '20/05/2025',
+    note: 'Đã gửi báo giá qua email',
+  },
+  {
+    id: 'qr-4',
+    code: 'BG-2025-004',
+    name: 'Chị Phạm Thu Hằng',
+    company: 'Cty Logistics An Phú',
+    phone: '0909 876 543',
+    email: 'hangpham@anphu.com.vn',
+    product: 'Phụ tùng xe nâng',
+    quantity: 10,
+    budget: '50 triệu',
+    status: 'quoted',
+    assignedTo: 'Admin',
+    date: '19/05/2025',
+    note: '',
+  },
+  {
+    id: 'qr-5',
+    code: 'BG-2025-005',
+    name: 'Anh Đỗ Văn Dũng',
+    company: 'Cty Cơ khí Dũng Phát',
+    phone: '0987 654 321',
+    email: 'dungphat@company.vn',
+    product: 'Xe nâng 5 tấn',
+    quantity: 1,
+    budget: '600 triệu',
+    status: 'closed',
+    assignedTo: 'Admin',
+    date: '18/05/2025',
+    note: 'Khách chọn đối tác khác',
+  },
+]
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
+
+export const adminPosts: PostAdminItem[] = [
+  {
+    id: 'post-1',
+    title: '5 lợi ích khi bảo dưỡng xe nâng định kỳ đúng cách',
+    image: '/images/seed/services/maintenance.jpg',
+    category: 'Kiến thức',
+    status: 'published',
+    publishedAt: '22/05/2025 10:30',
+    author: 'Admin',
+  },
+  {
+    id: 'post-2',
+    title: 'So sánh xe nâng điện và xe nâng dầu: Nên chọn loại nào?',
+    image: '/images/seed/products/toyota-8fb25.jpg',
+    category: 'So sánh',
+    status: 'published',
+    publishedAt: '21/05/2025 15:45',
+    author: 'Admin',
+  },
+  {
+    id: 'post-3',
+    title: 'Hướng dẫn vận hành xe nâng an toàn trong kho xưởng',
+    image: '/images/seed/services/repair.jpg',
+    category: 'Hướng dẫn',
+    status: 'published',
+    publishedAt: '20/05/2025 09:20',
+    author: 'Admin',
+  },
+  {
+    id: 'post-4',
+    title: 'Top 3 dòng xe nâng bán chạy nhất tháng 5/2025',
+    image: '/images/seed/products/komatsu-fd25t.jpg',
+    category: 'Tin tức',
+    status: 'scheduled',
+    publishedAt: '24/05/2025 08:00',
+    author: 'Admin',
+  },
+  {
+    id: 'post-5',
+    title: 'Bảng giá phụ tùng xe nâng mới nhất 2025',
+    image: '/images/seed/services/parts.jpg',
+    category: 'Bảng giá',
+    status: 'draft',
+    publishedAt: '',
+    author: 'Admin',
+  },
+]
+
+// ─── Orders ──────────────────────────────────────────────────────────────────
+
+export const adminOrders: OrderAdminItem[] = [
+  {
+    id: 'o-1',
+    code: 'KN-2025-0001',
+    customerName: 'Công ty TNHH Minh Phát',
+    company: 'Công ty TNHH Minh Phát',
+    phone: '0901 234 567',
+    email: 'minhphat@company.vn',
+    address: 'Lô A1-2, KCN Tân Tạo, Bình Tân, TP.HCM',
+    items: [
+      {
+        id: 'oi-1',
+        productName: 'TOYOTA 8FB25',
+        model: '8FB25',
+        sku: 'TOY-8FB25',
+        image: '/images/seed/products/toyota-8fb25.jpg',
+        quantity: 1,
+        unitPrice: 425000000,
+        totalPrice: 425000000,
+      },
+    ],
+    totalAmount: 425000000,
+    depositAmount: 50000000,
+    remainingAmount: 375000000,
+    orderStatus: 'pending',
+    paymentStatus: 'partial',
+    source: 'website',
+    deliveryMethod: 'delivery',
+    assignedTo: 'Admin',
+    note: 'Giao hàng trong tuần',
+    internalNote: 'Khách VIP, ưu tiên xử lý',
+    createdAt: '22/05/2025 09:15',
+    updatedAt: '22/05/2025 14:00',
+  },
+  {
+    id: 'o-2',
+    code: 'KN-2025-0002',
+    customerName: 'Anh Nguyễn Văn Hùng',
+    company: '',
+    phone: '0938 765 432',
+    email: 'hung.nguyen@gmail.com',
+    address: '123 Nguyễn Trãi, Q.1, TP.HCM',
+    items: [
+      {
+        id: 'oi-2',
+        productName: 'KOMATSU FD25T-17',
+        model: 'FD25T-17',
+        sku: 'KOM-FD25T17',
+        image: '/images/seed/products/komatsu-fd25t.jpg',
+        quantity: 1,
+        unitPrice: 395000000,
+        totalPrice: 395000000,
+      },
+    ],
+    totalAmount: 395000000,
+    depositAmount: 0,
+    remainingAmount: 395000000,
+    orderStatus: 'confirmed',
+    paymentStatus: 'unpaid',
+    source: 'zalo',
+    deliveryMethod: 'delivery',
+    assignedTo: 'Admin',
+    note: '',
+    internalNote: '',
+    createdAt: '21/05/2025 14:30',
+    updatedAt: '22/05/2025 09:00',
+  },
+  {
+    id: 'o-3',
+    code: 'KN-2025-0003',
+    customerName: 'Cty Logistics An Phú',
+    company: 'Cty Logistics An Phú',
+    phone: '0912 345 678',
+    email: 'info@anphu.com.vn',
+    address: 'KCN Biên Hòa 2, Đồng Nai',
+    items: [
+      {
+        id: 'oi-3',
+        productName: 'MITSUBISHI RB14',
+        model: 'RB14',
+        sku: 'MIT-RB14',
+        image: '/images/seed/products/mitsubishi-rb14.jpg',
+        quantity: 1,
+        unitPrice: 285000000,
+        totalPrice: 285000000,
+      },
+    ],
+    totalAmount: 285000000,
+    depositAmount: 285000000,
+    remainingAmount: 0,
+    orderStatus: 'shipping',
+    paymentStatus: 'paid',
+    source: 'phone',
+    deliveryMethod: 'installation',
+    assignedTo: 'Admin',
+    note: 'Giao + lắp đặt tại kho',
+    internalNote: 'Đã liên hệ đội vận chuyển',
+    createdAt: '20/05/2025 10:00',
+    updatedAt: '22/05/2025 08:30',
+  },
+  {
+    id: 'o-4',
+    code: 'KN-2025-0004',
+    customerName: 'Chị Trần Thị Mai',
+    company: '',
+    phone: '0909 876 543',
+    email: 'maitran87@gmail.com',
+    address: '456 Lê Văn Sỹ, Q.3, TP.HCM',
+    items: [
+      {
+        id: 'oi-4',
+        productName: 'Phụ tùng xe nâng',
+        model: 'PT-MIX',
+        sku: 'PT-MIX-001',
+        image: '/images/seed/services/parts.jpg',
+        quantity: 5,
+        unitPrice: 3700000,
+        totalPrice: 18500000,
+      },
+    ],
+    totalAmount: 18500000,
+    depositAmount: 18500000,
+    remainingAmount: 0,
+    orderStatus: 'completed',
+    paymentStatus: 'paid',
+    source: 'admin',
+    deliveryMethod: 'pickup',
+    assignedTo: 'Admin',
+    note: 'Khách tự đến lấy',
+    internalNote: '',
+    createdAt: '19/05/2025 11:00',
+    updatedAt: '20/05/2025 16:00',
+  },
+  {
+    id: 'o-5',
+    code: 'KN-2025-0005',
+    customerName: 'Công ty Hoàng Long',
+    company: 'Công ty Hoàng Long',
+    phone: '0987 654 321',
+    email: 'contact@hoanglong.vn',
+    address: '789 Quốc Lộ 1A, Bình Chánh, TP.HCM',
+    items: [
+      {
+        id: 'oi-5',
+        productName: 'TCM FD30T3',
+        model: 'FD30T3',
+        sku: 'TCM-FD30T3',
+        image: '/images/seed/products/tcm-fd30.jpg',
+        quantity: 1,
+        unitPrice: 465000000,
+        totalPrice: 465000000,
+      },
+    ],
+    totalAmount: 465000000,
+    depositAmount: 100000000,
+    remainingAmount: 365000000,
+    orderStatus: 'processing',
+    paymentStatus: 'partial',
+    source: 'facebook',
+    deliveryMethod: 'delivery',
+    assignedTo: 'Admin',
+    note: 'Cần kiểm tra xe trước khi giao',
+    internalNote: 'Đang chuẩn bị hồ sơ',
+    createdAt: '18/05/2025 15:30',
+    updatedAt: '21/05/2025 10:00',
+  },
+]
+
+// ─── Order Timeline (for KN-2025-0001) ───────────────────────────────────────
+
+export const orderTimeline: OrderTimelineEvent[] = [
+  { date: '22/05/2025', time: '09:15', description: 'Đơn hàng được tạo từ website', type: 'create' },
+  { date: '22/05/2025', time: '09:30', description: 'Admin xác nhận thông tin khách hàng', type: 'update' },
+  { date: '22/05/2025', time: '10:00', description: 'Khách đã cọc 50.000.000₫', type: 'payment' },
+  { date: '22/05/2025', time: '14:00', description: 'Đang chuẩn bị xe và hồ sơ', type: 'update' },
+  { date: '23/05/2025', time: '08:30', description: 'Dự kiến giao hàng', type: 'shipping' },
+]
+
+// ─── Media ───────────────────────────────────────────────────────────────────
+
+export const adminMedia: MediaItem[] = [
+  { id: 'm-1', src: '/images/seed/products/toyota-8fb25.jpg', alt: 'Toyota 8FB25', type: 'product', format: 'jpg', size: '68 KB', uploadedAt: '20/05/2025' },
+  { id: 'm-2', src: '/images/seed/products/komatsu-fd25t.jpg', alt: 'Komatsu FD25T-17', type: 'product', format: 'jpg', size: '69 KB', uploadedAt: '20/05/2025' },
+  { id: 'm-3', src: '/images/seed/products/mitsubishi-rb14.jpg', alt: 'Mitsubishi RB14', type: 'product', format: 'jpg', size: '56 KB', uploadedAt: '19/05/2025' },
+  { id: 'm-4', src: '/images/seed/products/tcm-fd30.jpg', alt: 'TCM FD30T3', type: 'product', format: 'jpg', size: '68 KB', uploadedAt: '19/05/2025' },
+  { id: 'm-5', src: '/images/seed/products/niuli-ac25.jpg', alt: 'Niuli AC25', type: 'product', format: 'jpg', size: '53 KB', uploadedAt: '18/05/2025' },
+  { id: 'm-6', src: '/images/seed/products/unic-urv504.jpg', alt: 'Unic URV504', type: 'product', format: 'jpg', size: '77 KB', uploadedAt: '18/05/2025' },
+  { id: 'm-7', src: '/images/seed/services/rental.jpg', alt: 'Cho thuê xe nâng', type: 'service', format: 'jpg', size: '70 KB', uploadedAt: '17/05/2025' },
+  { id: 'm-8', src: '/images/seed/services/repair.jpg', alt: 'Sửa chữa xe nâng', type: 'service', format: 'jpg', size: '74 KB', uploadedAt: '17/05/2025' },
+  { id: 'm-9', src: '/images/seed/services/maintenance.jpg', alt: 'Bảo dưỡng', type: 'service', format: 'jpg', size: '75 KB', uploadedAt: '16/05/2025' },
+  { id: 'm-10', src: '/images/seed/services/parts.jpg', alt: 'Phụ tùng', type: 'service', format: 'jpg', size: '74 KB', uploadedAt: '16/05/2025' },
+  { id: 'm-11', src: '/images/seed/services/import.jpg', alt: 'Nhập khẩu', type: 'service', format: 'jpg', size: '68 KB', uploadedAt: '15/05/2025' },
+  { id: 'm-12', src: '/images/seed/hero/forklift-warehouse.jpg', alt: 'Xe nâng trong kho', type: 'hero', format: 'jpg', size: '108 KB', uploadedAt: '15/05/2025' },
+]
+
+// ─── Inquiry Chart Data (30 days) ────────────────────────────────────────────
+
+export const inquiryChartData = {
+  labels: ['22/04', '27/04', '02/05', '07/05', '12/05', '17/05', '22/05'],
+  contacts: [15, 22, 18, 30, 25, 35, 42],
+  quotes: [10, 14, 12, 20, 18, 22, 28],
+}
+
+// ─── Request Status Donut Data ───────────────────────────────────────────────
+
+export const requestStatusData = [
+  { label: 'Mới', value: 86, percent: 38.6, color: '#f5b51b' },
+  { label: 'Đang xử lý', value: 71, percent: 31.8, color: '#3b82f6' },
+  { label: 'Đã liên hệ', value: 41, percent: 18.4, color: '#22c55e' },
+  { label: 'Đã báo giá', value: 18, percent: 8.1, color: '#a855f7' },
+  { label: 'Đã đóng', value: 7, percent: 3.1, color: '#6b7280' },
+]
+
+// ─── Settings ────────────────────────────────────────────────────────────────
+
+export const adminSettings: SettingItem[] = [
+  { id: 's-1', label: 'Logo website', value: '/brand/logo-reference.png', icon: 'Image', type: 'image' },
+  { id: 's-2', label: 'Hotline', value: '1900 96 96 20', icon: 'Phone', type: 'text' },
+  { id: 's-3', label: 'Hotline phụ', value: '0903 385 225', icon: 'Phone', type: 'text' },
+  { id: 's-4', label: 'Email', value: 'info@khanhnguyenforklift.vn', icon: 'Mail', type: 'text' },
+  { id: 's-5', label: 'Địa chỉ', value: 'Lô A1-2, KCN Tân Tạo, Bình Tân, TP. Hồ Chí Minh', icon: 'MapPin', type: 'textarea' },
+  { id: 's-6', label: 'Zalo', value: 'Khanh Nguyen Forklift', icon: 'MessageCircle', type: 'text' },
+  { id: 's-7', label: 'Facebook', value: 'facebook.com/khanhnguyenforklift', icon: 'Globe', type: 'url' },
+  { id: 's-8', label: 'YouTube', value: 'youtube.com/@khanhnguyenforklift', icon: 'Youtube', type: 'url' },
+  { id: 's-9', label: 'TikTok', value: '@khanhnguyenforklift', icon: 'Music', type: 'url' },
+  { id: 's-10', label: 'Google Map', value: 'Xem trên map', icon: 'MapPin', type: 'url' },
+  { id: 's-11', label: 'Footer menu', value: 'Quản lý menu footer', icon: 'Menu', type: 'link' },
+  { id: 's-12', label: 'Banner trang chủ', value: 'Đã chọn 3 banner', icon: 'Image', type: 'image' },
+  { id: 's-13', label: 'Popup trang chủ', value: 'Đang tắt', icon: 'Bell', type: 'text' },
+  { id: 's-14', label: 'SEO mặc định', value: 'Khanh Nguyen Forklift', icon: 'Search', type: 'textarea' },
+]
+
+// ─── Categories ──────────────────────────────────────────────────────────────
+
+export const adminCategories: CategoryItem[] = [
+  { id: 'cat-1', name: 'Xe nâng điện', slug: 'xe-nang-dien', parent: null, productCount: 35, isVisible: true, order: 1, icon: 'Zap', description: 'Xe nâng chạy điện các loại' },
+  { id: 'cat-2', name: 'Xe nâng điện ngồi lái', slug: 'xe-nang-dien-ngoi-lai', parent: 'Xe nâng điện', productCount: 20, isVisible: true, order: 1, icon: 'Zap', description: '' },
+  { id: 'cat-3', name: 'Xe nâng điện đứng lái', slug: 'xe-nang-dien-dung-lai', parent: 'Xe nâng điện', productCount: 15, isVisible: true, order: 2, icon: 'Zap', description: '' },
+  { id: 'cat-4', name: 'Xe nâng dầu', slug: 'xe-nang-dau', parent: null, productCount: 42, isVisible: true, order: 2, icon: 'Fuel', description: 'Xe nâng chạy dầu diesel' },
+  { id: 'cat-5', name: 'Xe nâng tay', slug: 'xe-nang-tay', parent: null, productCount: 18, isVisible: true, order: 3, icon: 'Hand', description: 'Xe nâng tay thấp, tay cao' },
+  { id: 'cat-6', name: 'Xe cẩu', slug: 'xe-cau', parent: null, productCount: 8, isVisible: true, order: 4, icon: 'Construction', description: 'Xe cẩu tự hành' },
+  { id: 'cat-7', name: 'Bình điện', slug: 'binh-dien', parent: null, productCount: 12, isVisible: true, order: 5, icon: 'BatteryCharging', description: 'Ắc quy, bình điện xe nâng' },
+  { id: 'cat-8', name: 'Phụ tùng', slug: 'phu-tung', parent: null, productCount: 25, isVisible: true, order: 6, icon: 'Settings', description: 'Phụ tùng thay thế' },
+]
+
+// ─── Brands ──────────────────────────────────────────────────────────────────
+
+export const adminBrands: BrandItem[] = [
+  { id: 'b-1', name: 'TOYOTA', slug: 'toyota', logo: '/images/seed/products/toyota-8fb25.jpg', description: 'Thương hiệu xe nâng hàng đầu Nhật Bản', productCount: 28, isVisible: true },
+  { id: 'b-2', name: 'KOMATSU', slug: 'komatsu', logo: '/images/seed/products/komatsu-fd25t.jpg', description: 'Xe nâng Komatsu chất lượng cao', productCount: 22, isVisible: true },
+  { id: 'b-3', name: 'MITSUBISHI', slug: 'mitsubishi', logo: '/images/seed/products/mitsubishi-rb14.jpg', description: 'Xe nâng điện Mitsubishi', productCount: 18, isVisible: true },
+  { id: 'b-4', name: 'TCM', slug: 'tcm', logo: '/images/seed/products/tcm-fd30.jpg', description: 'TCM - Xe nâng công nghiệp', productCount: 15, isVisible: true },
+  { id: 'b-5', name: 'NIULI', slug: 'niuli', logo: '/images/seed/products/niuli-ac25.jpg', description: 'Xe nâng tay & xe nâng điện mini', productCount: 12, isVisible: true },
+  { id: 'b-6', name: 'NISSAN', slug: 'nissan', logo: '/images/seed/products/toyota-8fb25.jpg', description: 'Nissan Forklift', productCount: 10, isVisible: true },
+  { id: 'b-7', name: 'HELI', slug: 'heli', logo: '/images/seed/products/komatsu-fd25t.jpg', description: 'Xe nâng Heli giá tốt', productCount: 8, isVisible: true },
+  { id: 'b-8', name: 'UNICARRIERS', slug: 'unicarriers', logo: '/images/seed/products/mitsubishi-rb14.jpg', description: 'UniCarriers (Nissan/Mitsubishi)', productCount: 5, isVisible: true },
+]
+
+// ─── Services ────────────────────────────────────────────────────────────────
+
+export const adminServices: ServiceItem[] = [
+  { id: 'sv-1', title: 'Cho thuê xe nâng', slug: 'cho-thue-xe-nang', image: '/images/seed/services/rental.jpg', status: 'published', faqCount: 8, updatedAt: '20/05/2025', description: 'Dịch vụ cho thuê xe nâng đa dạng tải trọng' },
+  { id: 'sv-2', title: 'Sửa chữa xe nâng', slug: 'sua-chua-xe-nang', image: '/images/seed/services/repair.jpg', status: 'published', faqCount: 6, updatedAt: '19/05/2025', description: 'Sửa chữa xe nâng tại chỗ, nhanh chóng' },
+  { id: 'sv-3', title: 'Bảo dưỡng định kỳ', slug: 'bao-duong-dinh-ky', image: '/images/seed/services/maintenance.jpg', status: 'published', faqCount: 5, updatedAt: '18/05/2025', description: 'Bảo dưỡng định kỳ kéo dài tuổi thọ' },
+  { id: 'sv-4', title: 'Cung cấp phụ tùng', slug: 'cung-cap-phu-tung', image: '/images/seed/services/parts.jpg', status: 'published', faqCount: 4, updatedAt: '17/05/2025', description: 'Phụ tùng chính hãng, giá tốt' },
+  { id: 'sv-5', title: 'Nhập khẩu theo yêu cầu', slug: 'nhap-khau-theo-yeu-cau', image: '/images/seed/services/import.jpg', status: 'published', faqCount: 7, updatedAt: '16/05/2025', description: 'Nhập khẩu xe nâng từ Nhật Bản' },
+  { id: 'sv-6', title: 'Bảo hành', slug: 'bao-hanh', image: '/images/seed/services/repair.jpg', status: 'draft', faqCount: 3, updatedAt: '15/05/2025', description: 'Chính sách bảo hành xe nâng' },
+]
