@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import AdminPageHeader from '@/components/admin/admin-page-header'
 import AdminButton from '@/components/admin/admin-button'
 import AdminStatusBadge from '@/components/admin/admin-status-badge'
@@ -46,9 +46,8 @@ export default function CategoriesPage() {
               </thead>
               <tbody>
                 {parentCategories.map((cat) => (
-                  <>
+                  <Fragment key={cat.id}>
                     <tr
-                      key={cat.id}
                       className="border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer"
                       onClick={() => setEditingId(cat.id)}
                     >
@@ -123,7 +122,7 @@ export default function CategoriesPage() {
                         </td>
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
