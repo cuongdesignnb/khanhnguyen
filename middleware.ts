@@ -26,9 +26,21 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    })
+    let session = null
+    try {
+      const origin = request.nextUrl.origin
+      const cookie = request.headers.get('cookie') || ''
+      const res = await fetch(`${origin}/api/auth/get-session`, {
+        headers: {
+          cookie,
+        },
+      })
+      if (res.ok) {
+        session = await res.json()
+      }
+    } catch (e) {
+      console.error('Middleware session fetch error:', e)
+    }
 
     if (!session) {
       if (isAdminApiRoute) {
