@@ -1,9 +1,25 @@
-import Image from 'next/image';
-import { Star } from 'lucide-react';
-import { testimonials } from '@/data/home';
-import { SectionHeading } from '@/components/ui/section-heading';
+import Image from 'next/image'
+import { Star } from 'lucide-react'
+import { testimonials as staticTestimonials } from '@/data/home'
+import { SectionHeading } from '@/components/ui/section-heading'
+import { PublicTestimonial } from '@/types/public'
 
-export function Testimonials() {
+interface TestimonialsProps {
+  testimonials?: PublicTestimonial[]
+}
+
+export function Testimonials({ testimonials }: TestimonialsProps) {
+  const displayTestimonials: PublicTestimonial[] = testimonials && testimonials.length > 0
+    ? testimonials
+    : staticTestimonials.map((t, i) => ({
+        id: `t-${i}`,
+        name: t.name,
+        location: t.location,
+        quote: t.quote,
+        image: t.image,
+        rating: t.rating,
+      }))
+
   return (
     <section className="py-14 lg:py-20 bg-[color:var(--surface)]">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,24 +30,24 @@ export function Testimonials() {
 
         {/* Desktop grid */}
         <div className="hidden md:grid grid-cols-3 gap-6">
-          {testimonials.map((t) => (
-            <TestimonialCard key={t.name} testimonial={t} />
+          {displayTestimonials.map((t) => (
+            <TestimonialCard key={t.id} testimonial={t} />
           ))}
         </div>
 
         {/* Mobile horizontal scroll */}
         <div className="flex md:hidden overflow-x-auto snap-x gap-4 scrollbar-hidden">
-          {testimonials.map((t) => (
-            <TestimonialCard key={t.name} testimonial={t} />
+          {displayTestimonials.map((t) => (
+            <TestimonialCard key={t.id} testimonial={t} />
           ))}
         </div>
       </div>
     </section>
-  );
+  )
 }
 
 interface TestimonialCardProps {
-  testimonial: (typeof testimonials)[number];
+  testimonial: PublicTestimonial
 }
 
 function TestimonialCard({ testimonial }: TestimonialCardProps) {
@@ -44,11 +60,12 @@ function TestimonialCard({ testimonial }: TestimonialCardProps) {
           alt={`Ảnh đại diện của ${testimonial.name}`}
           width={48}
           height={48}
-          className="rounded-full object-cover"
+          className="rounded-full object-cover aspect-square"
         />
         <div>
           <p className="font-semibold text-white">
-            {testimonial.name} – {testimonial.location}
+            {testimonial.name}
+            {testimonial.location && ` – ${testimonial.location}`}
           </p>
         </div>
       </div>
@@ -69,5 +86,5 @@ function TestimonialCard({ testimonial }: TestimonialCardProps) {
         &ldquo;{testimonial.quote}&rdquo;
       </blockquote>
     </article>
-  );
+  )
 }

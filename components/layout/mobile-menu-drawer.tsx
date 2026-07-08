@@ -5,28 +5,29 @@ import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
 import { ChevronDown, MessageCircle, PhoneCall, Send, X } from 'lucide-react'
 
-import { navigation, siteConfig } from '@/data/home'
+import { navigation as staticNavigation, siteConfig as staticSiteConfig } from '@/data/home'
 import { useLockBodyScroll } from '@/hooks/use-lock-body-scroll'
+import { PublicSiteConfig, PublicNavigationItem } from '@/types/public'
 
 type MobileMenuDrawerProps = {
   open: boolean
   onClose: () => void
+  siteConfig?: PublicSiteConfig
+  navigation?: PublicNavigationItem[]
 }
 
-
-
-export default function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
+export default function MobileMenuDrawer({ open, onClose, siteConfig, navigation }: MobileMenuDrawerProps) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+  const config = siteConfig || staticSiteConfig
+  const displayNavigation = navigation || staticNavigation
 
   useLockBodyScroll(open)
 
-  // Combine close + reset accordion state
   const handleClose = useCallback(() => {
     setExpandedIndex(null)
     onClose()
   }, [onClose])
 
-  // Close on Escape key
   useEffect(() => {
     if (!open) return
 
@@ -91,7 +92,7 @@ export default function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProp
             {/* Navigation items */}
             <nav className="flex-1 overflow-y-auto overscroll-contain px-2 py-2" aria-label="Menu chính">
               <ul className="space-y-0">
-                {navigation.map((item, index) => {
+                {displayNavigation.map((item, index) => {
                   const hasChildren = item.children && item.children.length > 0
                   const isExpanded = expandedIndex === index
 
@@ -160,7 +161,7 @@ export default function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProp
             <div className="border-t border-white/5 px-4 py-4">
               <div className="grid grid-cols-3 gap-3">
                 <a
-                  href={`tel:${siteConfig.hotline.replace(/\s/g, '')}`}
+                  href={`tel:${config.hotline.replace(/\s/g, '')}`}
                   className="flex flex-col items-center gap-1.5 rounded-lg bg-[color:var(--surface-3)] p-3 text-[color:var(--text)] transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
                 >
                   <PhoneCall size={20} />
@@ -168,7 +169,7 @@ export default function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProp
                 </a>
 
                 <a
-                  href="https://zalo.me/0911123567"
+                  href={(config as any).zaloLink || "https://zalo.me/0903385225"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-col items-center gap-1.5 rounded-lg bg-[color:var(--surface-3)] p-3 text-[color:var(--text)] transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"

@@ -1,34 +1,52 @@
-import Image from 'next/image';
-import { Calendar } from 'lucide-react';
-import { latestPosts } from '@/data/home';
-import { SectionHeading } from '@/components/ui/section-heading';
+import Image from 'next/image'
+import { Calendar } from 'lucide-react'
+import { latestPosts as staticPosts } from '@/data/home'
+import { SectionHeading } from '@/components/ui/section-heading'
+import { PublicPostCard } from '@/types/public'
 
-export function LatestNews() {
+interface LatestNewsProps {
+  posts?: PublicPostCard[]
+}
+
+export function LatestNews({ posts }: LatestNewsProps) {
+  const displayPosts: PublicPostCard[] = posts && posts.length > 0
+    ? posts
+    : staticPosts.map((p) => ({
+        id: p.id,
+        title: p.title,
+        excerpt: p.excerpt,
+        date: p.date,
+        image: p.image,
+        category: 'Tin tức',
+        categorySlug: 'tin-tuc',
+        slug: p.href.replace('/tin-tuc/', ''),
+      }))
+
   return (
     <section className="py-14 lg:py-20">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeading title="TIN TỨC MỚI NHẤT" />
+        <SectionHeading title="TIN TỨC MỚI NHẤT" linkHref="/tin-tuc" linkText="Xem tất cả" />
 
         {/* Desktop grid */}
         <div className="hidden md:grid grid-cols-3 gap-6">
-          {latestPosts.map((post) => (
+          {displayPosts.map((post) => (
             <NewsCard key={post.id} post={post} />
           ))}
         </div>
 
         {/* Mobile horizontal scroll */}
         <div className="flex md:hidden overflow-x-auto snap-x gap-4 scrollbar-hidden">
-          {latestPosts.map((post) => (
+          {displayPosts.map((post) => (
             <NewsCard key={post.id} post={post} />
           ))}
         </div>
       </div>
     </section>
-  );
+  )
 }
 
 interface NewsCardProps {
-  post: (typeof latestPosts)[number];
+  post: PublicPostCard
 }
 
 function NewsCard({ post }: NewsCardProps) {
@@ -47,10 +65,15 @@ function NewsCard({ post }: NewsCardProps) {
 
       {/* Content */}
       <div className="p-4 sm:p-5">
-        {/* Date */}
-        <div className="flex items-center gap-1.5">
-          <Calendar size={14} className="text-[color:var(--muted)]" />
-          <time className="text-xs text-[color:var(--muted)]">{post.date}</time>
+        {/* Date + Category */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Calendar size={14} className="text-[color:var(--muted)]" />
+            <time className="text-xs text-[color:var(--muted)]">{post.date}</time>
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-[color:var(--gold)]">
+            {post.category}
+          </span>
         </div>
 
         {/* Title */}
@@ -65,12 +88,12 @@ function NewsCard({ post }: NewsCardProps) {
 
         {/* Read more link */}
         <a
-          href={post.href}
+          href={`/tin-tuc/${post.slug}`}
           className="text-sm text-[color:var(--gold)] hover:text-[color:var(--gold-strong)] mt-3 inline-block font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
         >
           Xem thêm →
         </a>
       </div>
     </article>
-  );
+  )
 }

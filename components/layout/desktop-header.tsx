@@ -17,60 +17,56 @@ import {
   Search,
   Menu,
 } from 'lucide-react'
-import { siteConfig } from '@/data/home'
+import { siteConfig as staticSiteConfig } from '@/data/home'
 import SiteNavigation from '@/components/layout/site-navigation'
-
-/* ─── Types ────────────────────────────────────────────────────────────────── */
+import { PublicSiteConfig, PublicNavigationItem } from '@/types/public'
 
 interface DesktopHeaderProps {
+  siteConfig?: PublicSiteConfig
+  navigation?: PublicNavigationItem[]
   onMenuOpen: () => void
 }
 
-/* ─── Utility Bar Items ────────────────────────────────────────────────────── */
-
-const utilityLeft = [
-  {
-    icon: Phone,
-    text: `${siteConfig.hotline} – ${siteConfig.secondaryHotline}`,
-    href: `tel:${siteConfig.hotline.replace(/\s/g, '')}`,
-  },
-  {
-    icon: Mail,
-    text: siteConfig.email,
-    href: `mailto:${siteConfig.email}`,
-  },
-  {
-    icon: MapPin,
-    text: `Showroom: ${siteConfig.showroom}`,
-    href: '#lien-he',
-  },
-] as const
-
-const utilityRight = [
-  { icon: Headset, text: 'Hỗ trợ 24/7', href: `tel:${siteConfig.hotline.replace(/\s/g, '')}` },
-  { icon: FileDown, text: 'Tải catalogue', href: '/catalogue' },
-  { icon: PackageSearch, text: 'Kiểm tra đơn hàng', href: '/kiem-tra-don-hang' },
-] as const
-
-/* ─── Header Action Buttons ────────────────────────────────────────────────── */
-
-const headerActions = [
-  { icon: GitCompare, label: 'So sánh', href: '/so-sanh', badge: null },
-  { icon: Heart, label: 'Yêu thích', href: '/yeu-thich', badge: null },
-  { icon: User, label: 'Tài khoản / Đăng nhập', href: '/tai-khoan', badge: null },
-  { icon: ShoppingCart, label: 'Giỏ hàng', href: '/gio-hang', badge: '0' },
-] as const
-
-/* ─── Component ────────────────────────────────────────────────────────────── */
-
-export default function DesktopHeader({ onMenuOpen }: DesktopHeaderProps) {
+export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: DesktopHeaderProps) {
   const [scrolled, setScrolled] = useState(false)
+  const config = siteConfig || staticSiteConfig
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const utilityLeft = [
+    {
+      icon: Phone,
+      text: config.secondaryHotline ? `${config.hotline} – ${config.secondaryHotline}` : config.hotline,
+      href: `tel:${config.hotline.replace(/\s/g, '')}`,
+    },
+    {
+      icon: Mail,
+      text: config.email,
+      href: `mailto:${config.email}`,
+    },
+    {
+      icon: MapPin,
+      text: `Showroom: ${config.showroom}`,
+      href: '#lien-he',
+    },
+  ] as const
+
+  const utilityRight = [
+    { icon: Headset, text: 'Hỗ trợ 24/7', href: `tel:${config.hotline.replace(/\s/g, '')}` },
+    { icon: FileDown, text: 'Tải catalogue', href: '/catalogue' },
+    { icon: PackageSearch, text: 'Kiểm tra đơn hàng', href: '/kiem-tra-don-hang' },
+  ] as const
+
+  const headerActions = [
+    { icon: GitCompare, label: 'So sánh', href: '/so-sanh', badge: null },
+    { icon: Heart, label: 'Yêu thích', href: '/yeu-thich', badge: null },
+    { icon: User, label: 'Tài khoản / Đăng nhập', href: '/tai-khoan', badge: null },
+    { icon: ShoppingCart, label: 'Giỏ hàng', href: '/gio-hang', badge: '0' },
+  ] as const
 
   return (
     <header
@@ -180,7 +176,7 @@ export default function DesktopHeader({ onMenuOpen }: DesktopHeaderProps) {
                 <span className="text-[color:var(--text)]"> NGUYEN</span>
               </span>
               <span className="block text-xs text-[color:var(--muted)] mt-0.5">
-                {siteConfig.tagline}
+                {config.tagline}
               </span>
             </Link>
 
@@ -251,7 +247,7 @@ export default function DesktopHeader({ onMenuOpen }: DesktopHeaderProps) {
       {/* ── Tier 3 · Navigation (desktop only) ───────────────────────────── */}
       <div className="hidden lg:block bg-[color:var(--surface-2)] border-b border-white/10">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-          <SiteNavigation />
+          <SiteNavigation navigation={navigation} />
         </div>
       </div>
     </header>

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Globe, Camera, Video, Music2 } from 'lucide-react'
-import { siteConfig, footerGroups } from '@/data/home'
+import { siteConfig as staticSiteConfig, footerGroups as staticFooterGroups } from '@/data/home'
+import { PublicSiteConfig } from '@/types/public'
 
 const socialLinks = [
   { icon: Globe, label: 'Facebook', href: '#' },
@@ -15,7 +16,15 @@ const legalLinks = [
   { label: 'Sơ đồ website', href: '/sitemap' },
 ] as const
 
-export default function Footer() {
+interface FooterProps {
+  siteConfig?: PublicSiteConfig
+  footerGroups?: { title: string; links: { label: string; href: string }[] }[]
+}
+
+export default function Footer({ siteConfig, footerGroups }: FooterProps) {
+  const config = siteConfig || staticSiteConfig
+  const displayGroups = footerGroups || staticFooterGroups
+
   return (
     <footer className="bg-black border-t border-[color:var(--line-gold)] pt-12 lg:pt-16 pb-24 lg:pb-6">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,7 +37,7 @@ export default function Footer() {
               <span className="text-white">NGUYEN</span>
             </p>
             <p className="text-sm text-[color:var(--muted)] mt-1">
-              {siteConfig.tagline}
+              {config.tagline}
             </p>
             <p className="text-sm text-[color:var(--muted)] mt-3">
               Chuyên cung cấp xe nâng Nhật bãi chất lượng, xe cẩu và thiết bị
@@ -50,8 +59,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Columns 2-4: Footer groups from data */}
-          {footerGroups.map((group) => (
+          {/* Columns 2-4: Footer groups */}
+          {displayGroups.map((group) => (
             <nav key={group.title} aria-label={group.title}>
               <h3 className="text-sm font-bold uppercase text-white mb-4 tracking-wider">
                 {group.title}

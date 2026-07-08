@@ -1,16 +1,16 @@
-import Image from 'next/image';
-import clsx from 'clsx';
-import type { Product } from '@/data/home';
+import Image from 'next/image'
+import clsx from 'clsx'
+import { PublicProductCard } from '@/types/public'
 
 interface ProductCardProps {
-  product: Product;
+  product: PublicProductCard
 }
 
 const badgeColorMap: Record<string, string> = {
   'Mới': 'bg-[color:var(--gold)] text-[color:var(--bg)]',
   'Bán chạy': 'bg-[color:var(--danger)] text-white',
   'Giảm giá': 'bg-[color:var(--success)] text-[color:var(--bg)]',
-};
+}
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
@@ -35,7 +35,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <span
             className={clsx(
               'absolute top-3 left-3 rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide',
-              badgeColorMap[product.badge]
+              badgeColorMap[product.badge] || 'bg-[color:var(--gold)] text-[color:var(--bg)]'
             )}
           >
             {product.badge}
@@ -78,7 +78,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* CTA */}
         <a
-          href={`/san-pham/${product.id}`}
+          href={`/san-pham/${product.slug}`}
           className={clsx(
             'mt-1 block w-full rounded-lg border border-[color:var(--gold)] py-2.5 text-center',
             'text-sm font-bold uppercase tracking-wider text-[color:var(--gold)]',
@@ -90,5 +90,5 @@ export function ProductCard({ product }: ProductCardProps) {
         </a>
       </div>
     </article>
-  );
+  )
 }

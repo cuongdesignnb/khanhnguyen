@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useInView, useReducedMotion } from 'motion/react';
-import { stats } from '@/data/home';
+import { stats as staticStats } from '@/data/home';
 import {
   Forklift,
   Users,
@@ -18,14 +18,9 @@ const iconMap: Record<string, LucideIcon> = {
   MapPin,
 };
 
-/** Format number with dot separator: 2500 → "2.500" */
 function formatNumber(n: number): string {
-  return n.toLocaleString('de-DE'); // dot as thousands separator
+  return n.toLocaleString('de-DE');
 }
-
-/* ------------------------------------------------------------------ */
-/*  Counter hook                                                      */
-/* ------------------------------------------------------------------ */
 
 function useCountUp(
   target: number,
@@ -45,7 +40,6 @@ function useCountUp(
     function step(now: number) {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setCurrent(Math.round(eased * target));
 
@@ -65,10 +59,6 @@ function useCountUp(
 
   return current;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Stat card                                                         */
-/* ------------------------------------------------------------------ */
 
 function StatCard({
   icon,
@@ -110,15 +100,16 @@ function StatCard({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Section                                                           */
-/* ------------------------------------------------------------------ */
+interface StatsStripProps {
+  stats?: { value: number; suffix: string; label: string; icon: string }[]
+}
 
-export default function StatsStrip() {
+export default function StatsStrip({ stats }: StatsStripProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.3 });
   const shouldReduceMotion = useReducedMotion();
   const skip = !!shouldReduceMotion;
+  const displayStats = stats && stats.length > 0 ? stats : staticStats
 
   return (
     <section
@@ -128,7 +119,7 @@ export default function StatsStrip() {
     >
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-8">
-          {stats.map((stat) => (
+          {displayStats.map((stat) => (
             <StatCard
               key={stat.label}
               icon={stat.icon}

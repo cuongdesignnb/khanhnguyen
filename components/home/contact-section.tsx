@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useId } from 'react';
-import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
-import { siteConfig } from '@/data/home';
+import { siteConfig as staticSiteConfig } from '@/data/home';
+import { PublicSiteConfig } from '@/types/public';
 
 interface FormData {
   name: string;
@@ -18,13 +19,19 @@ interface FormErrors {
   message?: string;
 }
 
+interface ContactSectionProps {
+  siteConfig?: PublicSiteConfig
+}
+
 const INPUT_CLASSES =
   'w-full bg-[color:var(--surface-2)] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[color:var(--muted)] focus:border-[color:var(--gold)] focus:outline-none transition';
 
 const INPUT_ERROR_CLASSES = 'border-[color:var(--danger)]';
 
-export function ContactSection() {
+export function ContactSection({ siteConfig }: ContactSectionProps) {
   const formId = useId();
+  const config = siteConfig || staticSiteConfig
+  
   const [formData, setFormData] = useState<FormData>({
     name: '',
     phone: '',
@@ -32,6 +39,8 @@ export function ContactSection() {
     message: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   function validate(): FormErrors {
@@ -48,13 +57,41 @@ export function ContactSection() {
     return newErrors;
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const validationErrors = validate();
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
-      setSubmitted(true);
+      setLoading(true);
+      setSubmitError(null);
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email || undefined,
+            message: formData.message,
+            need: 'Tư vấn từ trang chủ',
+          }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          setSubmitted(true);
+        } else {
+          setSubmitError(result.error || 'Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.');
+        }
+      } catch (err) {
+        console.error('Submit contact error:', err);
+        setSubmitError('Lỗi kết nối mạng. Vui lòng kiểm tra lại kết nối.');
+      } finally {
+        setLoading(false);
+      }
     }
   }
 
@@ -63,7 +100,6 @@ export function ContactSection() {
   ) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error for this field when user starts typing
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -95,28 +131,30 @@ export function ContactSection() {
               <ContactInfoItem
                 icon={<Phone size={18} />}
                 label="HOTLINE"
-                value={`${siteConfig.hotline} – ${siteConfig.secondaryHotline}`}
+                value={config.secondaryHotline ? `${config.hotline} – ${config.secondaryHotline}` : config.hotline}
                 isHighlighted
               />
               <ContactInfoItem
                 icon={<Mail size={18} />}
                 label="EMAIL"
-                value={siteConfig.email}
+                value={config.email}
               />
               <ContactInfoItem
                 icon={<MapPin size={18} />}
                 label="SHOWROOM CHÍNH"
-                value={siteConfig.showroom}
+                value={config.showroom}
               />
-              <ContactInfoItem
-                icon={<MapPin size={18} />}
-                label="CHI NHÁNH HÀ NỘI"
-                value={siteConfig.branch}
-              />
+              {config.branch && (
+                <ContactInfoItem
+                  icon={<MapPin size={18} />}
+                  label="CHI NHÁNH"
+                  value={config.branch}
+                />
+              )}
               <ContactInfoItem
                 icon={<Clock size={18} />}
                 label="THỜI GIAN LÀM VIỆC"
-                value={siteConfig.workingHours}
+                value={config.workingHours}
               />
             </div>
 
@@ -124,7 +162,7 @@ export function ContactSection() {
             <div className="bg-[color:var(--surface-2)] rounded-xl h-48 lg:h-56 mt-6 flex flex-col items-center justify-center border border-white/10">
               <MapPin size={32} className="text-[color:var(--gold)]" />
               <p className="text-sm text-[color:var(--muted)] mt-2 font-semibold tracking-wide">
-                KHANH NGUYEN
+                KHANH NGUYEN FORKLIFT
               </p>
             </div>
           </div>
@@ -139,7 +177,7 @@ export function ContactSection() {
             {submitted ? (
               <div className="mt-8 rounded-lg bg-[color:var(--success)]/10 border border-[color:var(--success)]/30 p-6 text-center">
                 <p className="text-[color:var(--success)] font-semibold">
-                  Cảm ơn! Chúng tôi sẽ liên hệ sớm nhất.
+                  Cảm ơn! Yêu cầu của bạn đã được gửi thành công. Chúng tôi sẽ liên hệ trong thời gian sớm nhất.
                 </p>
               </div>
             ) : (
@@ -148,6 +186,12 @@ export function ContactSection() {
                 noValidate
                 className="mt-8 space-y-4"
               >
+                {submitError && (
+                  <div className="rounded-lg bg-[color:var(--danger)]/10 border border-[color:var(--danger)]/30 p-4 text-sm text-[color:var(--danger)] font-medium">
+                    {submitError}
+                  </div>
+                )}
+
                 {/* Name + Phone (2-col) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -155,6 +199,7 @@ export function ContactSection() {
                       type="text"
                       name="name"
                       placeholder="Họ và tên*"
+                      disabled={loading}
                       value={formData.name}
                       onChange={handleChange}
                       aria-describedby={errors.name ? nameErrorId : undefined}
@@ -172,6 +217,7 @@ export function ContactSection() {
                       type="tel"
                       name="phone"
                       placeholder="Số điện thoại*"
+                      disabled={loading}
                       value={formData.phone}
                       onChange={handleChange}
                       aria-describedby={errors.phone ? phoneErrorId : undefined}
@@ -192,6 +238,7 @@ export function ContactSection() {
                     type="email"
                     name="email"
                     placeholder="Email"
+                    disabled={loading}
                     value={formData.email}
                     onChange={handleChange}
                     className={INPUT_CLASSES}
@@ -203,6 +250,7 @@ export function ContactSection() {
                   <textarea
                     name="message"
                     placeholder="Nội dung yêu cầu*"
+                    disabled={loading}
                     rows={4}
                     value={formData.message}
                     onChange={handleChange}
@@ -220,10 +268,15 @@ export function ContactSection() {
                 {/* Submit button */}
                 <button
                   type="submit"
-                  className="w-full bg-[color:var(--gold)] hover:bg-[color:var(--gold-strong)] text-black font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
+                  disabled={loading}
+                  className="w-full bg-[color:var(--gold)] hover:bg-[color:var(--gold-strong)] text-black disabled:opacity-50 disabled:cursor-not-allowed font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
                 >
-                  <Send size={16} />
-                  GỬI YÊU CẦU
+                  {loading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Send size={16} />
+                  )}
+                  {loading ? 'ĐANG GỬI...' : 'GỬI YÊU CẦU'}
                 </button>
               </form>
             )}
@@ -233,8 +286,6 @@ export function ContactSection() {
     </section>
   );
 }
-
-/* ─── Contact Info Item ─────────────────────────────────────────────────────── */
 
 interface ContactInfoItemProps {
   icon: React.ReactNode;

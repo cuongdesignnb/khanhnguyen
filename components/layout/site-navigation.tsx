@@ -5,13 +5,14 @@ import Link from 'next/link'
 import { ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import clsx from 'clsx'
-import { navigation, type NavItem } from '@/data/home'
+import { navigation as staticNavigation } from '@/data/home'
+import { PublicNavigationItem } from '@/types/public'
 
 function NavItemWithDropdown({
   item,
   isActive,
 }: {
-  item: NavItem
+  item: PublicNavigationItem
   isActive: boolean
 }) {
   const [open, setOpen] = useState(false)
@@ -99,7 +100,13 @@ function NavItemWithDropdown({
   )
 }
 
-export default function SiteNavigation() {
+interface SiteNavigationProps {
+  navigation?: PublicNavigationItem[]
+}
+
+export default function SiteNavigation({ navigation }: SiteNavigationProps) {
+  const displayNavigation = navigation || staticNavigation
+
   return (
     <nav
       aria-label="Thanh điều hướng chính"
@@ -107,11 +114,11 @@ export default function SiteNavigation() {
     >
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-1">
-          {navigation.map((item, index) => (
+          {displayNavigation.map((item, index) => (
             <NavItemWithDropdown
               key={item.href}
               item={item}
-              isActive={index === 0}
+              isActive={index === 0} // Active if home page/first item
             />
           ))}
         </div>

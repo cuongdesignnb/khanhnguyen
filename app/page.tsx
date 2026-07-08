@@ -1,46 +1,27 @@
-'use client'
+import { getHomeData, getSiteSettings } from '@/lib/public-data'
+import HomePageClient from '@/components/home/home-page-client'
+import type { Metadata } from 'next'
 
-import { useState } from 'react'
-import DesktopHeader from '@/components/layout/desktop-header'
-import MobileMenuDrawer from '@/components/layout/mobile-menu-drawer'
-import MobileDock from '@/components/layout/mobile-dock'
-import Hero from '@/components/home/hero'
-import CategoryGrid from '@/components/home/category-grid'
-import FeaturedProducts from '@/components/home/featured-products'
-import PromoBanner from '@/components/home/promo-banner'
-import BrandStrip from '@/components/home/brand-strip'
-import WhyUs from '@/components/home/why-us'
-import StatsStrip from '@/components/home/stats-strip'
-import ServicesSection from '@/components/home/services-section'
-import { Testimonials } from '@/components/home/testimonials'
-import { LatestNews } from '@/components/home/latest-news'
-import { ContactSection } from '@/components/home/contact-section'
-import Footer from '@/components/layout/footer'
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings()
+  return {
+    title: `${settings.name} | ${settings.tagline}`,
+    description: settings.slogan || `${settings.name} chuyên cung cấp xe nâng, xe cẩu Nhật bãi uy tín.`,
+    alternates: {
+      canonical: '/',
+    },
+    openGraph: {
+      title: `${settings.name} | ${settings.tagline}`,
+      description: settings.slogan || `${settings.name} chuyên cung cấp xe nâng, xe cẩu Nhật bãi uy tín.`,
+      url: '/',
+      siteName: settings.name,
+      locale: 'vi_VN',
+      type: 'website',
+    },
+  }
+}
 
-export default function HomePage() {
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  return (
-    <>
-      <DesktopHeader onMenuOpen={() => setMenuOpen(true)} />
-      <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
-
-      <main className="pb-24 lg:pb-0">
-        <Hero />
-        <CategoryGrid />
-        <FeaturedProducts />
-        <PromoBanner />
-        <BrandStrip />
-        <WhyUs />
-        <StatsStrip />
-        <ServicesSection />
-        <Testimonials />
-        <LatestNews />
-        <ContactSection />
-      </main>
-
-      <Footer />
-      <MobileDock onMenuOpen={() => setMenuOpen(true)} />
-    </>
-  )
+export default async function HomePage() {
+  const data = await getHomeData()
+  return <HomePageClient data={data} />
 }
