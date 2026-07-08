@@ -4,6 +4,7 @@ import PublicPageShell from '@/components/public/public-page-shell'
 import BlogDetailPage from '@/components/blog/blog-detail-page'
 import JsonLd from '@/components/seo/json-ld'
 import { articleSchema, breadcrumbSchema } from '@/lib/schema'
+import { getSiteUrl } from '@/lib/site-url'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -35,7 +36,7 @@ export default async function Page({ params }: PageProps) {
   const recentPostsResult = await getPostList({ limit: 4 })
   const relatedPosts = recentPostsResult.items.filter((p) => p.id !== post.id).slice(0, 3)
 
-  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://khanhnguyenforklift.vn'
+  const origin = getSiteUrl()
   
   const breadcrumbs = [
     { label: 'Trang chủ', url: origin },

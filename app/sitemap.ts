@@ -5,9 +5,10 @@ import {
   getAllPostSlugs,
   getAllProductCategorySlugs,
 } from '@/lib/public-data'
+import { getSiteUrl } from '@/lib/site-url'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://khanhnguyenforklift.vn'
+  const origin = getSiteUrl()
 
   // Standard static routes
   const routes = [

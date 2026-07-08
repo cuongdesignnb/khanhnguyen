@@ -4,6 +4,7 @@ import PublicPageShell from '@/components/public/public-page-shell'
 import ProductDetailPage from '@/components/products/product-detail-page'
 import JsonLd from '@/components/seo/json-ld'
 import { productSchema, breadcrumbSchema } from '@/lib/schema'
+import { getSiteUrl } from '@/lib/site-url'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -33,7 +34,7 @@ export default async function Page({ params }: PageProps) {
   }
 
   const relatedProducts = await getRelatedProducts(product.id, product.categoryId, 6)
-  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://khanhnguyenforklift.vn'
+  const origin = getSiteUrl()
   
   const breadcrumbs = [
     { label: 'Trang chủ', url: origin },

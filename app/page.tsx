@@ -2,6 +2,7 @@ import { getHomeData, getSiteSettings } from '@/lib/public-data'
 import HomePageClient from '@/components/home/home-page-client'
 import JsonLd from '@/components/seo/json-ld'
 import { organizationSchema, localBusinessSchema } from '@/lib/schema'
+import { getSiteUrl } from '@/lib/site-url'
 import type { Metadata } from 'next'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const data = await getHomeData()
-  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://khanhnguyenforklift.vn'
+  const origin = getSiteUrl()
 
   return (
     <>

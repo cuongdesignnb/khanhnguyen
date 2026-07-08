@@ -4,6 +4,7 @@ import PublicPageShell from '@/components/public/public-page-shell'
 import ServiceDetailPage from '@/components/services/service-detail-page'
 import JsonLd from '@/components/seo/json-ld'
 import { faqSchema, breadcrumbSchema } from '@/lib/schema'
+import { getSiteUrl } from '@/lib/site-url'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -32,7 +33,7 @@ export default async function Page({ params }: PageProps) {
     notFound()
   }
 
-  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://khanhnguyenforklift.vn'
+  const origin = getSiteUrl()
   
   const breadcrumbs = [
     { label: 'Trang chủ', url: origin },

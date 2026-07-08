@@ -1,5 +1,6 @@
 import prisma from './prisma'
 import * as homeData from '@/data/home'
+import { logPublicDataFallback } from './public-db-safe'
 import {
   mapSettingRowsToSiteConfig,
   mapCategoryToPublicCategory,
@@ -53,7 +54,7 @@ export async function getSiteSettings(): Promise<PublicSiteConfig> {
     }
     return mapSettingRowsToSiteConfig(dbSettings, defaultSiteConfig)
   } catch (error) {
-    console.error('getSiteSettings fallback to static:', error)
+    logPublicDataFallback('getSiteSettings', error)
     return {
       name: homeData.siteConfig.name,
       tagline: homeData.siteConfig.tagline,
@@ -80,7 +81,7 @@ export async function getPublicMenus(): Promise<PublicNavigationItem[]> {
     }
     return mapMenuToNavigation(dbMenus)
   } catch (error) {
-    console.error('getPublicMenus fallback to static:', error)
+    logPublicDataFallback('getPublicMenus', error)
     return homeData.navigation
   }
 }
@@ -95,7 +96,7 @@ export async function getHomeBanners(): Promise<PublicBanner[]> {
     })
     return dbBanners.map(mapBannerToPublicBanner)
   } catch (error) {
-    console.error('getHomeBanners error:', error)
+    logPublicDataFallback('getHomeBanners', error)
     return []
   }
 }
@@ -117,12 +118,12 @@ export async function getVisibleBrands(): Promise<PublicBrand[]> {
     }
     return dbBrands.map(mapBrandToPublicBrand)
   } catch (error) {
-    console.error('getVisibleBrands fallback to static:', error)
+    logPublicDataFallback('getVisibleBrands', error)
     return homeData.brandNames.map((name) => ({
-        id: name.toLowerCase().replace(/\s+/g, '-'),
-        name,
-        slug: name.toLowerCase().replace(/\s+/g, '-'),
-      }))
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name,
+      slug: name.toLowerCase().replace(/\s+/g, '-'),
+    }))
   }
 }
 
@@ -145,7 +146,7 @@ export async function getVisibleCategories(): Promise<PublicCategory[]> {
     }
     return dbCategories.map(mapCategoryToPublicCategory)
   } catch (error) {
-    console.error('getVisibleCategories fallback to static:', error)
+    logPublicDataFallback('getVisibleCategories', error)
     return homeData.categories.map((c) => ({
       id: c.id,
       name: c.label,
@@ -190,7 +191,7 @@ export async function getFeaturedProducts(): Promise<PublicProductCard[]> {
     }
     return dbProducts.map(mapProductToPublicCard)
   } catch (error) {
-    console.error('getFeaturedProducts fallback to static:', error)
+    logPublicDataFallback('getFeaturedProducts', error)
     return homeData.featuredProducts.map((p) => ({
       id: p.id,
       slug: p.id,
@@ -226,7 +227,7 @@ export async function getVisibleServices(): Promise<PublicService[]> {
     }
     return dbServices.map(mapServiceToPublicService)
   } catch (error) {
-    console.error('getVisibleServices fallback to static:', error)
+    logPublicDataFallback('getVisibleServices', error)
     return homeData.services.map((s, i) => ({
       id: `service-${i}`,
       title: s.title,
@@ -257,7 +258,7 @@ export async function getTestimonials(): Promise<PublicTestimonial[]> {
     }
     return dbTestimonials.map(mapTestimonialToPublicTestimonial)
   } catch (error) {
-    console.error('getTestimonials fallback to static:', error)
+    logPublicDataFallback('getTestimonials', error)
     return homeData.testimonials.map((t, i) => ({
       id: `t-${i}`,
       name: t.name,
@@ -292,7 +293,7 @@ export async function getLatestPosts(): Promise<PublicPostCard[]> {
     }
     return dbPosts.map(mapPostToPublicPost)
   } catch (error) {
-    console.error('getLatestPosts fallback to static:', error)
+    logPublicDataFallback('getLatestPosts', error)
     return homeData.latestPosts.map((p) => ({
       id: p.id,
       title: p.title,
@@ -331,13 +332,13 @@ export async function getHomeData() {
   return {
     siteConfig,
     navigation,
-    footerGroups: homeData.footerGroups, // Static footer group structure fallback or direct
+    footerGroups: homeData.footerGroups,
     categories,
     featuredProducts,
     services,
     latestPosts,
     testimonials,
-    stats: homeData.stats, // Static stats strip data
+    stats: homeData.stats,
     brands,
   }
 }
@@ -362,7 +363,6 @@ export async function getProductList(params: ProductListParams): Promise<Product
 
     const skip = (page - 1) * limit
 
-    // Build Prisma query condition
     const where: any = {
       status: 'PUBLISHED',
       deletedAt: null,
@@ -414,7 +414,6 @@ export async function getProductList(params: ProductListParams): Promise<Product
       where.price = { ...where.price, lte: maxPrice }
     }
 
-    // Build orderBy
     let orderBy: any = { sortOrder: 'asc' }
     if (sort === 'latest') {
       orderBy = { createdAt: 'desc' }
@@ -447,13 +446,29 @@ export async function getProductList(params: ProductListParams): Promise<Product
       totalPages: Math.ceil(total / limit),
     }
   } catch (error) {
-    console.error('getProductList error, fallback to empty:', error)
+    logPublicDataFallback('getProductList', error)
+
+    // Hotfix: Fallback to static featuredProducts instead of returning empty list
+    const mappedFallback = homeData.featuredProducts.map((p) => ({
+      id: p.id,
+      slug: p.id,
+      badge: p.badge || undefined,
+      category: p.category,
+      categorySlug: p.category.toLowerCase().replace(/\s+/g, '-'),
+      name: p.name,
+      model: p.name,
+      image: p.image,
+      specs: p.specs,
+      price: null,
+      priceLabel: p.priceLabel,
+    }))
+
     return {
-      items: [],
-      total: 0,
+      items: mappedFallback,
+      total: mappedFallback.length,
       page: 1,
       limit: params.limit || 12,
-      totalPages: 0,
+      totalPages: 1,
     }
   }
 }
@@ -477,7 +492,7 @@ export async function getProductBySlug(slug: string): Promise<PublicProductDetai
     if (!dbProduct) return null
     return mapProductToProductDetail(dbProduct)
   } catch (error) {
-    console.error('getProductBySlug error:', error)
+    logPublicDataFallback('getProductBySlug', error)
     return null
   }
 }
@@ -497,7 +512,7 @@ export async function getRelatedProducts(productId: string, categoryId: string, 
     })
     return dbProducts.map(mapProductToPublicCard)
   } catch (error) {
-    console.error('getRelatedProducts error:', error)
+    logPublicDataFallback('getRelatedProducts', error)
     return []
   }
 }
@@ -512,7 +527,7 @@ export async function getCategoryBySlug(slug: string): Promise<PublicCategory | 
     if (!dbCategory) return null
     return mapCategoryToPublicCategory(dbCategory)
   } catch (error) {
-    console.error('getCategoryBySlug error:', error)
+    logPublicDataFallback('getCategoryBySlug', error)
     return null
   }
 }
@@ -532,7 +547,7 @@ export async function getAllProductCategorySlugs(): Promise<string[]> {
     })
     return categories.map((c) => c.slug)
   } catch (error) {
-    console.error('getAllProductCategorySlugs error:', error)
+    logPublicDataFallback('getAllProductCategorySlugs', error)
     return []
   }
 }
@@ -545,7 +560,7 @@ export async function getAllProductSlugs(): Promise<string[]> {
     })
     return products.map((p) => p.slug)
   } catch (error) {
-    console.error('getAllProductSlugs error:', error)
+    logPublicDataFallback('getAllProductSlugs', error)
     return []
   }
 }
@@ -564,7 +579,7 @@ export async function getServiceBySlug(slug: string): Promise<PublicServiceDetai
     if (!dbService) return null
     return mapServiceToServiceDetail(dbService)
   } catch (error) {
-    console.error('getServiceBySlug error:', error)
+    logPublicDataFallback('getServiceBySlug', error)
     return null
   }
 }
@@ -577,7 +592,7 @@ export async function getAllServiceSlugs(): Promise<string[]> {
     })
     return services.map((s) => s.slug)
   } catch (error) {
-    console.error('getAllServiceSlugs error:', error)
+    logPublicDataFallback('getAllServiceSlugs', error)
     return []
   }
 }
@@ -624,7 +639,7 @@ export async function getPostList(params: PostListParams): Promise<PostListResul
       totalPages: Math.ceil(total / limit),
     }
   } catch (error) {
-    console.error('getPostList error:', error)
+    logPublicDataFallback('getPostList', error)
     return {
       items: [],
       total: 0,
@@ -643,15 +658,14 @@ export async function getPostBySlug(slug: string): Promise<PublicPostDetail | nu
     })
     if (!dbPost) return null
 
-    // Increment viewCount asynchronously
     prisma.post.update({
       where: { id: dbPost.id },
       data: { viewCount: { increment: 1 } },
-    }).catch(e => console.error('Increment viewCount error:', e))
+    }).catch(e => logPublicDataFallback('getPostBySlug:incrementView', e))
 
     return mapPostToPostDetail(dbPost)
   } catch (error) {
-    console.error('getPostBySlug error:', error)
+    logPublicDataFallback('getPostBySlug', error)
     return null
   }
 }
@@ -662,7 +676,7 @@ export async function getPostCategoryBySlug(slug: string) {
       where: { slug, isVisible: true, deletedAt: null },
     })
   } catch (error) {
-    console.error('getPostCategoryBySlug error:', error)
+    logPublicDataFallback('getPostCategoryBySlug', error)
     return null
   }
 }
@@ -682,7 +696,7 @@ export async function getAllPostSlugs(): Promise<string[]> {
     })
     return posts.map((p) => p.slug)
   } catch (error) {
-    console.error('getAllPostSlugs error:', error)
+    logPublicDataFallback('getAllPostSlugs', error)
     return []
   }
 }
@@ -695,7 +709,7 @@ export async function getAllPostCategorySlugs(): Promise<string[]> {
     })
     return categories.map((c) => c.slug)
   } catch (error) {
-    console.error('getAllPostCategorySlugs error:', error)
+    logPublicDataFallback('getAllPostCategorySlugs', error)
     return []
   }
 }
