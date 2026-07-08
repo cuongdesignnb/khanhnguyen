@@ -1,0 +1,593 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  STAFF
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  HIDDEN
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  SOLD
+  HIDDEN
+}
+
+enum StockStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+  CONTACT
+  SOLD
+}
+
+enum ContactStatus {
+  NEW
+  CALLED
+  PROCESSING
+  QUOTED
+  CLOSED
+  IGNORED
+}
+
+enum QuoteStatus {
+  NEW
+  PROCESSING
+  QUOTED
+  CLOSED
+  IGNORED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+enum OrderSource {
+  WEBSITE
+  ADMIN
+  PHONE
+  ZALO
+  FACEBOOK
+}
+
+enum DeliveryMethod {
+  PICKUP
+  DELIVERY
+  INSTALLATION
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  COD
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  OTHER
+}
+
+enum BannerPosition {
+  HOME_HERO
+  HOME_PROMO
+  CATEGORY
+  POPUP
+  FOOTER
+}
+
+// ─── Better Auth Models ─────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          UserRole  @default(STAFF)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+
+  assignedContacts   Contact[]      @relation("AssignedContacts")
+  assignedQuotes     QuoteRequest[] @relation("AssignedQuotes")
+  assignedOrders     Order[]        @relation("AssignedOrders")
+  timelineEvents     OrderTimelineEvent[]
+  posts              Post[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  userId                String
+  providerId            String
+  accountId             String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// ─── Business Models ─────────────────────────────────────────────────────────
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  label     String
+  value     String?
+  type      String
+  group     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MediaFolder {
+  id        String        @id @default(uuid())
+  name      String
+  slug      String        @unique
+  parentId  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+
+  parent    MediaFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children  MediaFolder[] @relation("FolderHierarchy")
+  files     MediaFile[]
+}
+
+model MediaFile {
+  id           String        @id @default(uuid())
+  folderId     String?
+  filename     String
+  originalName String
+  path         String
+  url          String
+  mimeType     String
+  extension    String
+  size         Int
+  width        Int?
+  height       Int?
+  alt          String?
+  title        String?
+  type         MediaType     @default(IMAGE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+
+  folder       MediaFolder?  @relation(fields: [folderId], references: [id])
+
+  categoryBanners Category[]   @relation("CategoryBanner")
+  brandLogos      Brand[]      @relation("BrandLogo")
+  productThumbs   Product[]    @relation("ProductThumb")
+  productOgImages Product[]    @relation("ProductOgImage")
+  productImages   ProductImage[]
+  serviceImages   Service[]
+  postThumbs      Post[]       @relation("PostThumb")
+  postOgImages    Post[]       @relation("PostOgImage")
+  testimonials    Testimonial[]
+  banners         Banner[]
+}
+
+model Category {
+  id             String     @id @default(uuid())
+  parentId       String?
+  name           String
+  slug           String     @unique
+  subtitle       String?
+  description    String?
+  icon           String?
+  bannerImageId  String?
+  seoTitle       String?
+  seoDescription String?
+  sortOrder      Int        @default(0)
+  isVisible      Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?
+
+  parent         Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children       Category[] @relation("CategoryHierarchy")
+  bannerImage    MediaFile? @relation("CategoryBanner", fields: [bannerImageId], references: [id])
+  products       Product[]
+}
+
+model Brand {
+  id             String     @id @default(uuid())
+  name           String
+  slug           String     @unique
+  logoId         String?
+  description    String?
+  seoTitle       String?
+  seoDescription String?
+  isVisible      Boolean    @default(true)
+  sortOrder      Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?
+
+  logo           MediaFile? @relation("BrandLogo", fields: [logoId], references: [id])
+  products       Product[]
+}
+
+model Product {
+  id               String         @id @default(uuid())
+  categoryId       String
+  brandId          String?
+  thumbnailId      String?
+  name             String
+  slug             String         @unique
+  sku              String?        @unique
+  model            String?
+  shortDescription String?
+  description      String?
+  advantages       Json?
+  warrantyPolicy   String?
+  price            Decimal?       @db.Decimal(12, 2)
+  priceLabel       String         @default("Liên hệ")
+  badge            String?
+  status           ProductStatus  @default(PUBLISHED)
+  stockStatus      StockStatus    @default(IN_STOCK)
+  isFeatured       Boolean        @default(false)
+  showOnHome       Boolean        @default(true)
+  isBestSeller     Boolean        @default(false)
+  sortOrder        Int            @default(0)
+  capacity         String?
+  liftHeight       String?
+  fuelType         String?
+  manufactureYear  Int?
+  forkLength       String?
+  condition        String?
+  origin           String?
+  seoTitle         String?
+  seoDescription   String?
+  ogImageId        String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  deletedAt        DateTime?
+
+  category        Category       @relation(fields: [categoryId], references: [id])
+  brand           Brand?         @relation(fields: [brandId], references: [id])
+  thumbnail       MediaFile?     @relation("ProductThumb", fields: [thumbnailId], references: [id])
+  ogImage         MediaFile?     @relation("ProductOgImage", fields: [ogImageId], references: [id])
+  images          ProductImage[]
+  specs           ProductSpec[]
+  orderItems      OrderItem[]
+  quoteRequests   QuoteRequest[]
+}
+
+model ProductImage {
+  id         String   @id @default(uuid())
+  productId  String
+  mediaId    String
+  sortOrder  Int      @default(0)
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  media      MediaFile @relation(fields: [mediaId], references: [id])
+}
+
+model ProductSpec {
+  id        String   @id @default(uuid())
+  productId String
+  label     String
+  value     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Service {
+  id             String       @id @default(uuid())
+  title          String
+  slug           String       @unique
+  subtitle       String?
+  description    String?
+  content        String?
+  imageId        String?
+  benefits       Json?
+  process        Json?
+  ctaTitle       String?
+  ctaDescription String?
+  ctaButtonText  String?
+  ctaButtonHref  String?
+  status         PublishStatus @default(PUBLISHED)
+  seoTitle       String?
+  seoDescription String?
+  sortOrder      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  image          MediaFile?   @relation(fields: [imageId], references: [id])
+  faqs           ServiceFAQ[]
+}
+
+model ServiceFAQ {
+  id        String   @id @default(uuid())
+  serviceId String
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model PostCategory {
+  id             String    @id @default(uuid())
+  name           String
+  slug           String    @unique
+  description    String?
+  seoTitle       String?
+  seoDescription String?
+  sortOrder      Int       @default(0)
+  isVisible      Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  posts          Post[]
+}
+
+model Post {
+  id             String        @id @default(uuid())
+  categoryId     String?
+  authorId       String?
+  title          String
+  slug           String        @unique
+  excerpt        String?
+  content        String?
+  thumbnailId    String?
+  status         PublishStatus @default(DRAFT)
+  publishedAt    DateTime?
+  scheduledAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  ogImageId      String?
+  viewCount      Int           @default(0)
+  isFeatured     Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  category       PostCategory? @relation(fields: [categoryId], references: [id])
+  author         User?         @relation(fields: [authorId], references: [id])
+  thumbnail      MediaFile?    @relation("PostThumb", fields: [thumbnailId], references: [id])
+  ogImage        MediaFile?    @relation("PostOgImage", fields: [ogImageId], references: [id])
+}
+
+model Contact {
+  id            String        @id @default(uuid())
+  name          String
+  phone         String
+  email         String?
+  company       String?
+  need          String?
+  message       String?
+  status        ContactStatus @default(NEW)
+  internalNote  String?
+  assignedToId  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  assignedTo    User?         @relation("AssignedContacts", fields: [assignedToId], references: [id])
+}
+
+model QuoteRequest {
+  id            String        @id @default(uuid())
+  code          String        @unique
+  name          String
+  phone         String
+  email         String?
+  company       String?
+  productId     String?
+  productName   String?
+  quantity      Int?          @default(1)
+  budget        String?
+  message       String?
+  status        QuoteStatus   @default(NEW)
+  internalNote  String?
+  assignedToId  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  product       Product?      @relation(fields: [productId], references: [id])
+  assignedTo    User?         @relation("AssignedQuotes", fields: [assignedToId], references: [id])
+}
+
+model Order {
+  id                 String               @id @default(uuid())
+  code               String               @unique
+  customerName       String
+  company            String?
+  phone              String
+  email              String?
+  address            String?
+  totalAmount        Decimal              @db.Decimal(12, 2)
+  depositAmount      Decimal              @db.Decimal(12, 2) @default(0)
+  remainingAmount    Decimal              @db.Decimal(12, 2)
+  discountAmount     Decimal              @db.Decimal(12, 2) @default(0)
+  shippingFee        Decimal              @db.Decimal(12, 2) @default(0)
+  orderStatus        OrderStatus          @default(PENDING)
+  paymentStatus      PaymentStatus        @default(UNPAID)
+  source             OrderSource          @default(WEBSITE)
+  deliveryMethod     DeliveryMethod       @default(DELIVERY)
+  paymentMethod      PaymentMethod?
+  assignedToId       String?
+  note               String?
+  internalNote       String?
+  expectedDeliveryAt DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  deletedAt          DateTime?
+
+  assignedTo         User?                @relation("AssignedOrders", fields: [assignedToId], references: [id])
+  items              OrderItem[]
+  payments           OrderPayment[]
+  timeline           OrderTimelineEvent[]
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  orderId     String
+  productId   String?
+  productName String
+  model       String?
+  sku         String?
+  imageUrl    String?
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  totalPrice  Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
+}
+
+model OrderTimelineEvent {
+  id          String   @id @default(uuid())
+  orderId     String
+  type        String
+  title       String
+  description String?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+}
+
+model OrderPayment {
+  id              String        @id @default(uuid())
+  orderId         String
+  amount          Decimal       @db.Decimal(12, 2)
+  method          PaymentMethod
+  status          PaymentStatus @default(PAID)
+  transactionCode String?
+  paidAt          DateTime?     @default(now())
+  note            String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Testimonial {
+  id        String    @id @default(uuid())
+  name      String
+  location  String?
+  quote     String
+  imageId   String?
+  rating    Int       @default(5)
+  isVisible Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  image     MediaFile? @relation(fields: [imageId], references: [id])
+}
+
+model Banner {
+  id           String         @id @default(uuid())
+  title        String
+  subtitle     String?
+  imageId      String?
+  href         String?
+  buttonText   String?
+  position     BannerPosition @default(HOME_HERO)
+  isVisible    Boolean        @default(true)
+  sortOrder    Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+
+  image        MediaFile?     @relation(fields: [imageId], references: [id])
+}
+
+model Menu {
+  id        String    @id @default(uuid())
+  label     String
+  href      String
+  parentId  String?
+  group     String
+  sortOrder Int       @default(0)
+  isVisible Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
