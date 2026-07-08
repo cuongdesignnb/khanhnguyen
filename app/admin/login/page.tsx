@@ -1,21 +1,62 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react'
+import { authClient } from '@/lib/auth-client'
 
 export default function AdminLoginPage() {
   const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: FormEvent) => {
+  // Redirect if already logged in
+  const { data: session, isPending } = authClient.useSession()
+
+  useEffect(() => {
+    if (session) {
+      router.push('/admin')
+    }
+  }, [session, router])
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    // Mock login - redirect after a brief delay
-    setTimeout(() => {
-      router.push('/admin')
-    }, 800)
+    setError(null)
+
+    try {
+      const response = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: '/admin',
+      })
+
+      if (response?.error) {
+        setError(response.error.message || 'Email hoặc mật khẩu không chính xác')
+      } else {
+        router.push('/admin')
+        router.refresh()
+      }
+    } catch (err: any) {
+      setError('Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-[color:var(--bg)] flex items-center justify-center">
+        <svg className="animate-spin w-8 h-8 text-[color:var(--gold)]" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      </div>
+    )
   }
 
   return (
@@ -54,6 +95,13 @@ export default function AdminLoginPage() {
             Khu vực dành cho quản trị viên Khanh Nguyên Forklift
           </p>
 
+          {error && (
+            <div className="bg-rose-500/10 border border-rose-500/20 text-rose-200 text-xs rounded-xl p-3 mb-5 flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-400" />
+              <div className="leading-relaxed">{error}</div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
@@ -64,6 +112,8 @@ export default function AdminLoginPage() {
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--muted)]" />
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@khanhnguyenforklift.vn"
                   className="w-full bg-[color:var(--surface-2)] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-[color:var(--text)] placeholder:text-[color:var(--muted)]/50 outline-none focus:border-[color:var(--gold)]/50 focus:ring-1 focus:ring-[color:var(--gold)]/20 transition-all"
                   required
@@ -80,6 +130,8 @@ export default function AdminLoginPage() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--muted)]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full bg-[color:var(--surface-2)] border border-white/10 rounded-xl pl-10 pr-10 py-3 text-sm text-[color:var(--text)] placeholder:text-[color:var(--muted)]/50 outline-none focus:border-[color:var(--gold)]/50 focus:ring-1 focus:ring-[color:var(--gold)]/20 transition-all"
                   required
@@ -103,13 +155,12 @@ export default function AdminLoginPage() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-white/10 accent-[color:var(--gold)] cursor-pointer"
                 />
                 <span className="text-xs text-[color:var(--muted)]">Ghi nhớ đăng nhập</span>
               </label>
-              <button type="button" className="text-xs text-[color:var(--gold)] hover:text-[color:var(--gold-strong)] cursor-pointer">
-                Quên mật khẩu?
-              </button>
             </div>
 
             {/* Submit */}
@@ -120,24 +171,9 @@ export default function AdminLoginPage() {
             >
               {loading ? (
                 <>
-                  <svg
-                    className="animate-spin w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Đang đăng nhập...
                 </>

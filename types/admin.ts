@@ -185,6 +185,7 @@ export type OrderAdminItem = {
   assignedTo: string
   note: string
   internalNote: string
+  expectedDeliveryAt?: string
   createdAt: string
   updatedAt: string
 }

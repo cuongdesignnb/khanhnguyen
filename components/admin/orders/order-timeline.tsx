@@ -1,6 +1,6 @@
 'use client'
 
-import { orderTimeline } from '@/data/admin'
+import type { OrderTimelineEvent } from '@/types/admin'
 
 const dotColors: Record<string, string> = {
   create: 'bg-[color:var(--gold)] border-[color:var(--gold)]',
@@ -10,10 +10,22 @@ const dotColors: Record<string, string> = {
   note: 'bg-gray-500 border-gray-500',
 }
 
-export default function OrderTimeline() {
+interface OrderTimelineProps {
+  timeline?: OrderTimelineEvent[]
+}
+
+export default function OrderTimeline({ timeline = [] }: OrderTimelineProps) {
+  if (timeline.length === 0) {
+    return (
+      <div className="text-center py-6 text-xs text-[color:var(--muted)]">
+        Chưa có sự kiện nào.
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-0">
-      {orderTimeline.map((event, idx) => (
+      {timeline.map((event, idx) => (
         <div key={idx} className="flex gap-4 relative">
           {/* Left column: dot + line */}
           <div className="flex flex-col items-center">
@@ -22,7 +34,7 @@ export default function OrderTimeline() {
                 dotColors[event.type] || dotColors.note
               }`}
             />
-            {idx < orderTimeline.length - 1 && (
+            {idx < timeline.length - 1 && (
               <div className="w-px flex-1 bg-white/10 my-1" />
             )}
           </div>
