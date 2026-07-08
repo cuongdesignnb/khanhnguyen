@@ -11,7 +11,11 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "docker:up": "docker compose --env-file .env.docker up -d --build",
+    "docker:down": "docker compose --env-file .env.docker down",
+    "docker:logs": "docker compose --env-file .env.docker logs -f app",
+    "docker:ps": "docker compose --env-file .env.docker ps"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -25,6 +29,8 @@
     "react-dom": "19.2.4",
     "sharp": "^0.35.3",
     "slugify": "^1.6.9",
+    "tsx": "^4.23.0",
+    "typescript": "^5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -34,9 +40,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
-    "tailwindcss": "^4",
-    "tsx": "^4.23.0",
-    "typescript": "^5"
+    "tailwindcss": "^4"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

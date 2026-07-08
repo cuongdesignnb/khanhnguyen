@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: khanhnguyen-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-55437}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-khanhnguyen}
+      POSTGRES_USER: ${POSTGRES_USER:-khanhnguyen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-khanhnguyen_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-khanhnguyen} -d ${POSTGRES_DB:-khanhnguyen}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: khanhnguyen-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-4317}:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      PORT: 3000
+
+      DATABASE_URL: postgresql://${POSTGRES_USER:-khanhnguyen}:${POSTGRES_PASSWORD:-khanhnguyen_password}@postgres:5432/${POSTGRES_DB:-khanhnguyen}?schema=public
+
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:4317}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:4317}
+
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@khanhnguyen.vn}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@123456}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+
+      UPLOAD_DIR: ${UPLOAD_DIR:-public/uploads}
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-10}
+
+      RUN_DB_PUSH: ${RUN_DB_PUSH:-true}
+      RUN_DB_SEED: ${RUN_DB_SEED:-true}
+    volumes:
+      - uploads_data:/app/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  uploads_data:

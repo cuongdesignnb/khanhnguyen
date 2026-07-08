@@ -374,7 +374,7 @@ async function main() {
         company: c.company,
         need: c.need,
         message: 'Tôi quan tâm đến dịch vụ xe nâng.',
-        status: c.status.toUpperCase() as any,
+        status: (c.status === 'contacted' ? 'CALLED' : c.status.toUpperCase()) as any,
         internalNote: c.note,
         assignedToId: adminId
       }
