@@ -1,5 +1,7 @@
 import { getHomeData, getSiteSettings } from '@/lib/public-data'
 import HomePageClient from '@/components/home/home-page-client'
+import JsonLd from '@/components/seo/json-ld'
+import { organizationSchema, localBusinessSchema } from '@/lib/schema'
 import type { Metadata } from 'next'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,5 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const data = await getHomeData()
-  return <HomePageClient data={data} />
+  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://khanhnguyenforklift.vn'
+
+  return (
+    <>
+      <JsonLd schema={organizationSchema(data.siteConfig, origin)} />
+      <JsonLd schema={localBusinessSchema(data.siteConfig, origin)} />
+      <HomePageClient data={data} />
+    </>
+  )
 }

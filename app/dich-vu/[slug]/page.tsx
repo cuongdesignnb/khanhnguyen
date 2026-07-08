@@ -2,6 +2,8 @@ import { getServiceBySlug } from '@/lib/public-data'
 import { notFound } from 'next/navigation'
 import PublicPageShell from '@/components/public/public-page-shell'
 import ServiceDetailPage from '@/components/services/service-detail-page'
+import JsonLd from '@/components/seo/json-ld'
+import { faqSchema, breadcrumbSchema } from '@/lib/schema'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -30,9 +32,23 @@ export default async function Page({ params }: PageProps) {
     notFound()
   }
 
+  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://khanhnguyenforklift.vn'
+  
+  const breadcrumbs = [
+    { label: 'Trang chủ', url: origin },
+    { label: 'Dịch vụ', url: `${origin}/dich-vu` },
+    { label: service.title, url: `${origin}/dich-vu/${service.slug}` },
+  ]
+
   return (
-    <PublicPageShell>
-      <ServiceDetailPage service={service} />
-    </PublicPageShell>
+    <>
+      <JsonLd schema={breadcrumbSchema(breadcrumbs)} />
+      {service.faqs && service.faqs.length > 0 && (
+        <JsonLd schema={faqSchema(service.faqs)} />
+      )}
+      <PublicPageShell>
+        <ServiceDetailPage service={service} />
+      </PublicPageShell>
+    </>
   )
 }

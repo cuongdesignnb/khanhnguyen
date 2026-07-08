@@ -2,6 +2,8 @@ import { getPostBySlug, getPostList } from '@/lib/public-data'
 import { notFound } from 'next/navigation'
 import PublicPageShell from '@/components/public/public-page-shell'
 import BlogDetailPage from '@/components/blog/blog-detail-page'
+import JsonLd from '@/components/seo/json-ld'
+import { articleSchema, breadcrumbSchema } from '@/lib/schema'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -30,13 +32,25 @@ export default async function Page({ params }: PageProps) {
     notFound()
   }
 
-  // Fetch recent posts as related
   const recentPostsResult = await getPostList({ limit: 4 })
   const relatedPosts = recentPostsResult.items.filter((p) => p.id !== post.id).slice(0, 3)
 
+  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://khanhnguyenforklift.vn'
+  
+  const breadcrumbs = [
+    { label: 'Trang chủ', url: origin },
+    { label: 'Tin tức', url: `${origin}/tin-tuc` },
+    { label: post.categoryName, url: `${origin}/tin-tuc/danh-muc/${post.categorySlug}` },
+    { label: post.title, url: `${origin}/tin-tuc/${post.slug}` },
+  ]
+
   return (
-    <PublicPageShell>
-      <BlogDetailPage post={post} relatedPosts={relatedPosts} />
-    </PublicPageShell>
+    <>
+      <JsonLd schema={articleSchema(post, origin)} />
+      <JsonLd schema={breadcrumbSchema(breadcrumbs)} />
+      <PublicPageShell>
+        <BlogDetailPage post={post} relatedPosts={relatedPosts} />
+      </PublicPageShell>
+    </>
   )
 }
