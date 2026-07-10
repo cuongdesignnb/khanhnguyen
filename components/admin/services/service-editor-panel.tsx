@@ -10,6 +10,7 @@ import type { ServiceItem, MediaItem } from '@/types/admin'
 import { adminApi } from '@/lib/admin-api'
 import { toast } from '@/lib/toast'
 import MediaPicker from '../media-picker'
+import RichTextEditor from '@/components/admin/editor/rich-text-editor'
 
 interface ServiceEditorPanelProps {
   isOpen: boolean
@@ -44,6 +45,7 @@ export default function ServiceEditorPanel({
   const [isVisible, setIsVisible] = useState(true)
 
   // Content states
+  const [content, setContent] = useState('')
   const [benefits, setBenefits] = useState<string[]>([])
   const [process, setProcess] = useState<string[]>([])
   const [ctaTitle, setCtaTitle] = useState('')
@@ -69,6 +71,7 @@ export default function ServiceEditorPanel({
             setTitle(res.title || '')
             setSlug(res.slug || '')
             setDescription(res.description || '')
+            setContent(res.content || '')
             setIsVisible(res.status === 'PUBLISHED')
             setBenefits(res.benefits || [])
             setProcess(res.process || [])
@@ -118,6 +121,7 @@ export default function ServiceEditorPanel({
         setTitle('')
         setSlug('')
         setDescription('')
+        setContent('')
         setImageMedia(null)
         setIsVisible(true)
         setBenefits(['Tiết kiệm chi phí đầu tư ban đầu', 'Linh hoạt thay đổi tải trọng'])
@@ -182,6 +186,7 @@ export default function ServiceEditorPanel({
         title,
         slug: slug || undefined,
         description,
+        content: content || null,
         imageId: imageMedia?.id || null,
         status: isVisible ? 'PUBLISHED' : 'DRAFT',
         benefits: benefits.filter(Boolean),
@@ -303,11 +308,11 @@ export default function ServiceEditorPanel({
                       </div>
                       <div>
                         <label className={labelClass}>Mô tả ngắn</label>
-                        <textarea
-                          className={clsx(inputClass, 'h-20 resize-none')}
+                        <RichTextEditor
                           value={description}
-                          onChange={(e) => setDescription(e.target.value)}
+                          onChange={setDescription}
                           placeholder="Mô tả tóm tắt dịch vụ..."
+                          minHeight={120}
                         />
                       </div>
                       <div>
@@ -358,8 +363,19 @@ export default function ServiceEditorPanel({
 
                   {activeTab === 1 && (
                     <>
+                      {/* Service Content */}
+                      <div className="space-y-1.5">
+                        <label className={labelClass}>Nội dung chi tiết dịch vụ</label>
+                        <RichTextEditor
+                          value={content}
+                          onChange={setContent}
+                          placeholder="Mô tả quy trình chi tiết, biểu phí, hoặc các lưu ý đặc thù..."
+                          minHeight={250}
+                        />
+                      </div>
+
                       {/* Benefits */}
-                      <div className="space-y-3">
+                      <div className="space-y-3 pt-4 border-t border-white/5">
                         <div className="flex justify-between items-center">
                           <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Lợi ích dịch vụ</h4>
                           <AdminButton

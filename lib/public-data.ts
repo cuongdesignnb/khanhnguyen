@@ -1,6 +1,10 @@
 import prisma from './prisma'
 import * as homeData from '@/data/home'
 import { logPublicDataFallback } from './public-db-safe'
+import { toVietnameseSlug } from './slug'
+import { defaultSettings } from '@/data/default-settings'
+import { getSettingsByGroup } from './settings'
+import { getFooterMenu, getHeaderMenu, getMobileMenu } from './menu'
 import {
   mapSettingRowsToSiteConfig,
   mapCategoryToPublicCategory,
@@ -34,25 +38,137 @@ import {
   PostListResult,
 } from '@/types/public'
 
+const fallbackProductDetails: PublicProductDetail[] = [
+  {
+    id: 'toyota-7fb15-fallback-id',
+    slug: 'xe-nang-dien-dung-lai-toyota-15-tan-7fb15',
+    sku: 'KN-ED-7FB15-2019',
+    name: 'Xe nâng điện đứng lái Toyota 1.5 tấn 7FB15',
+    model: '7FB15',
+    categoryId: 'xe-nang-dien',
+    categoryName: 'Xe nâng điện',
+    categorySlug: 'xe-nang-dien',
+    brandId: 'toyota-brand-id',
+    brandName: 'Toyota',
+    brandSlug: 'toyota',
+    thumbnail: '/images/seed/products/toyota-8fb25.jpg',
+    images: ['/images/seed/products/toyota-8fb25.jpg'],
+    specs: [
+      { label: 'Model', value: '7FB15' },
+      { label: 'Thương hiệu', value: 'Toyota' },
+      { label: 'Tải trọng nâng', value: '1500 kg' },
+      { label: 'Chiều cao nâng', value: '4500 mm' },
+      { label: 'Tâm tải trọng', value: '500 mm' },
+      { label: 'Chiều dài càng', value: '1070 mm' },
+      { label: 'Nguồn năng lượng', value: 'Điện 48V' },
+      { label: 'Loại pin', value: 'Ắc quy chì axit' },
+      { label: 'Dung lượng pin', value: '48V – 420Ah' },
+      { label: 'Năm sản xuất', value: '2019' },
+      { label: 'Xuất xứ', value: 'Nhật Bản' },
+      { label: 'Tình trạng', value: 'Nhật bãi 85%' },
+      { label: 'Giờ hoạt động', value: '3.250 giờ' },
+      { label: 'Tổng trọng lượng', value: '2650 kg' },
+      { label: 'Bánh trước', value: 'Bánh đặc' },
+      { label: 'Bánh sau', value: 'Bánh đặc' },
+      { label: 'Bán kính quay vòng', value: '1480 mm' },
+      { label: 'Tốc độ di chuyển', value: '10.5 km/h' }
+    ],
+    price: '425000000',
+    priceLabel: '425.000.000đ',
+    badge: 'Mới',
+    status: 'PUBLISHED',
+    stockStatus: 'IN_STOCK',
+    isFeatured: true,
+    isBestSeller: true,
+    capacity: '1500 kg',
+    liftHeight: '4.5 m',
+    fuelType: 'Điện',
+    manufactureYear: 2019,
+    forkLength: '1070 mm',
+    condition: 'Nhật bãi 85%',
+    origin: 'Nhật Bản',
+    shortDescription: 'Xe nâng điện đứng lái Toyota 7FB15 tải trọng 1.5 tấn, nâng cao 4.5m, hoạt động êm ái, tiết kiệm năng lượng, phù hợp kho xưởng, kệ cao.',
+    description: 'Xe nâng điện đứng lái Toyota 7FB15 là lựa chọn tối ưu cho các kho xưởng, nhà máy, siêu thị với khả năng vận hành linh hoạt trong không gian hẹp. Được thiết kế bởi Toyota Nhật Bản, sản phẩm nổi bật với độ bền cao, vận hành êm ái, tiết kiệm điện năng và chi phí bảo trì thấp.',
+    advantages: [
+      'Thiết kế nhỏ gọn, bán kính quay vòng nhỏ, phù hợp lối đi hẹp.',
+      'Động cơ điện mạnh mẽ, vận hành êm, không khí thải, thân thiện môi trường.',
+      'Hệ thống điều khiển thông minh, an toàn và chính xác.',
+      'Pin dung lượng lớn, thời gian sử dụng dài, sạc nhanh.',
+      'Độ bền cao, phụ tùng dễ thay thế, chi phí bảo dưỡng thấp.'
+    ],
+    warrantyPolicy: 'Bảo hành 6 – 12 tháng hoặc 1000 giờ hoạt động tùy điều kiện nào đến trước. Hỗ trợ kỹ thuật 24/7 qua hotline, Zalo.',
+    seoTitle: null,
+    seoDescription: null,
+    ogImage: null,
+  }
+]
+
+function getStaticProductFallback(slug: string): PublicProductDetail | null {
+  const detailedMatch = fallbackProductDetails.find((p) => p.slug === slug)
+  if (detailedMatch) return detailedMatch
+
+  const homeMatch = homeData.featuredProducts.find(
+    (p) => toVietnameseSlug((p as any).slug || p.id || p.name) === slug
+  )
+  if (homeMatch) {
+    return {
+      id: homeMatch.id,
+      slug: toVietnameseSlug((homeMatch as any).slug || homeMatch.id || homeMatch.name),
+      sku: `KN-${homeMatch.id.toUpperCase()}`,
+      name: homeMatch.name,
+      model: homeMatch.name,
+      categoryId: 'xe-nang-dien',
+      categoryName: homeMatch.category,
+      categorySlug: toVietnameseSlug(homeMatch.category),
+      brandId: null,
+      brandName: null,
+      brandSlug: null,
+      thumbnail: homeMatch.image,
+      images: [homeMatch.image],
+      specs: homeMatch.specs,
+      price: null,
+      priceLabel: homeMatch.priceLabel,
+      badge: homeMatch.badge || null,
+      status: 'PUBLISHED',
+      stockStatus: 'IN_STOCK',
+      isFeatured: true,
+      isBestSeller: false,
+      capacity: null,
+      liftHeight: null,
+      fuelType: null,
+      manufactureYear: null,
+      forkLength: null,
+      condition: null,
+      origin: null,
+      shortDescription: `${homeMatch.name} chất lượng cao Nhật bãi.`,
+      description: `${homeMatch.name} chất lượng cao Nhật bãi. Vận hành ổn định, tiết kiệm năng lượng.`,
+      advantages: [],
+      warrantyPolicy: 'Bảo hành 6 - 12 tháng.',
+      seoTitle: null,
+      seoDescription: null,
+      ogImage: null,
+    }
+  }
+  return null
+}
+
 // 1. Settings
 export async function getSiteSettings(): Promise<PublicSiteConfig> {
   try {
-    const dbSettings = await prisma.setting.findMany()
-    const defaultSiteConfig: PublicSiteConfig = {
-      name: homeData.siteConfig.name,
-      tagline: homeData.siteConfig.tagline,
-      slogan: homeData.siteConfig.slogan,
-      hotline: homeData.siteConfig.hotline,
-      secondaryHotline: homeData.siteConfig.secondaryHotline,
-      email: homeData.siteConfig.email,
-      showroom: homeData.siteConfig.showroom,
-      branch: homeData.siteConfig.branch,
-      workingHours: homeData.siteConfig.workingHours,
+    const [general, contact, social, brand] = await Promise.all([
+      getSettingsByGroup('general.site', defaultSettings.generalSite),
+      getSettingsByGroup('contact.info', defaultSettings.contactInfo),
+      getSettingsByGroup('social.links', defaultSettings.socialLinks),
+      getSettingsByGroup('brand.identity', defaultSettings.brandIdentity),
+    ])
+    const logo = brand.logoId ? await prisma.mediaFile.findUnique({ where: { id: brand.logoId }, select: { url: true } }) : null
+    return {
+      name: general.siteName, tagline: general.slogan, slogan: general.description,
+      hotline: contact.hotline, secondaryHotline: contact.hotlineSecondary, email: contact.email,
+      showroom: contact.showroomAddress || contact.address, branch: contact.warehouseAddress,
+      workingHours: contact.workingHours, facebookLink: social.facebook, zaloLink: social.zalo,
+      youtubeLink: social.youtube, tiktokLink: social.tiktok, logoUrl: logo?.url,
     }
-    if (!dbSettings || dbSettings.length === 0) {
-      return defaultSiteConfig
-    }
-    return mapSettingRowsToSiteConfig(dbSettings, defaultSiteConfig)
   } catch (error) {
     logPublicDataFallback('getSiteSettings', error)
     return {
@@ -72,18 +188,17 @@ export async function getSiteSettings(): Promise<PublicSiteConfig> {
 // 2. Navigation / Menus
 export async function getPublicMenus(): Promise<PublicNavigationItem[]> {
   try {
-    const dbMenus = await prisma.menu.findMany({
-      where: { isVisible: true, deletedAt: null },
-      orderBy: { sortOrder: 'asc' },
-    })
-    if (!dbMenus || dbMenus.length === 0) {
-      return homeData.navigation
-    }
-    return mapMenuToNavigation(dbMenus)
+    const menu = await getHeaderMenu()
+    return menu.items.map((item) => ({ label: item.label, href: item.url, children: item.children.map((child) => ({ label: child.label, href: child.url })) }))
   } catch (error) {
     logPublicDataFallback('getPublicMenus', error)
     return homeData.navigation
   }
+}
+
+export async function getPublicMobileMenus(): Promise<PublicNavigationItem[]> {
+  const menu = await getMobileMenu()
+  return menu.items.map((item) => ({ label: item.label, href: item.url, children: item.children.map((child) => ({ label: child.label, href: child.url })) }))
 }
 
 // 3. Banners
@@ -177,10 +292,10 @@ export async function getFeaturedProducts(): Promise<PublicProductCard[]> {
     if (!dbProducts || dbProducts.length === 0) {
       return homeData.featuredProducts.map((p) => ({
         id: p.id,
-        slug: p.id,
+        slug: toVietnameseSlug((p as any).slug || p.id || p.name),
         badge: p.badge,
         category: p.category,
-        categorySlug: p.category.toLowerCase().replace(/\s+/g, '-'),
+        categorySlug: toVietnameseSlug(p.category),
         name: p.name,
         model: p.name,
         image: p.image,
@@ -194,10 +309,10 @@ export async function getFeaturedProducts(): Promise<PublicProductCard[]> {
     logPublicDataFallback('getFeaturedProducts', error)
     return homeData.featuredProducts.map((p) => ({
       id: p.id,
-      slug: p.id,
+      slug: toVietnameseSlug((p as any).slug || p.id || p.name),
       badge: p.badge,
       category: p.category,
-      categorySlug: p.category.toLowerCase().replace(/\s+/g, '-'),
+      categorySlug: toVietnameseSlug(p.category),
       name: p.name,
       model: p.name,
       image: p.image,
@@ -312,6 +427,7 @@ export async function getHomeData() {
   const [
     siteConfig,
     navigation,
+    mobileNavigation,
     categories,
     featuredProducts,
     services,
@@ -321,6 +437,7 @@ export async function getHomeData() {
   ] = await Promise.all([
     getSiteSettings(),
     getPublicMenus(),
+    getPublicMobileMenus(),
     getVisibleCategories(),
     getFeaturedProducts(),
     getVisibleServices(),
@@ -329,10 +446,14 @@ export async function getHomeData() {
     getVisibleBrands(),
   ])
 
+  const footerMenu = await getFooterMenu()
   return {
     siteConfig,
     navigation,
-    footerGroups: homeData.footerGroups,
+    mobileNavigation,
+    footerGroups: footerMenu.items.map((column) => ({
+      title: column.label, links: column.children.length ? column.children.map((link) => ({ label: link.label, href: link.url })) : [{ label: column.label, href: column.url }],
+    })),
     categories,
     featuredProducts,
     services,
@@ -356,6 +477,9 @@ export async function getProductList(params: ProductListParams): Promise<Product
       liftHeight,
       minPrice,
       maxPrice,
+      origin,
+      manufactureYear,
+      stockStatus,
       sort = 'latest',
       page = 1,
       limit = 12,
@@ -374,6 +498,7 @@ export async function getProductList(params: ProductListParams): Promise<Product
         { model: { contains: q, mode: 'insensitive' } },
         { sku: { contains: q, mode: 'insensitive' } },
         { description: { contains: q, mode: 'insensitive' } },
+        { brand: { name: { contains: q, mode: 'insensitive' } } },
       ]
     }
 
@@ -406,26 +531,31 @@ export async function getProductList(params: ProductListParams): Promise<Product
       where.liftHeight = liftHeight
     }
 
-    if (minPrice !== undefined) {
-      where.price = { gte: minPrice }
+    if (origin) {
+      where.origin = origin
     }
 
-    if (maxPrice !== undefined) {
-      where.price = { ...where.price, lte: maxPrice }
+    if (manufactureYear) {
+      where.manufactureYear = Number(manufactureYear)
+    }
+
+    if (stockStatus) {
+      where.stockStatus = stockStatus
+    }
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.price = {
+        ...(minPrice !== undefined ? { gte: minPrice } : {}),
+        ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
+      }
     }
 
     let orderBy: any = { sortOrder: 'asc' }
-    if (sort === 'latest') {
-      orderBy = { createdAt: 'desc' }
-    } else if (sort === 'featured') {
-      orderBy = { isFeatured: 'desc' }
-    } else if (sort === 'price-asc') {
-      orderBy = { price: 'asc' }
-    } else if (sort === 'price-desc') {
-      orderBy = { price: 'desc' }
-    } else if (sort === 'best-seller') {
-      orderBy = { isBestSeller: 'desc' }
-    }
+    if (sort === 'latest') orderBy = { createdAt: 'desc' }
+    if (sort === 'featured') orderBy = [{ isFeatured: 'desc' }, { sortOrder: 'asc' }]
+    if (sort === 'price-asc') orderBy = { price: 'asc' }
+    if (sort === 'price-desc') orderBy = { price: 'desc' }
+    if (sort === 'best-seller') orderBy = [{ isBestSeller: 'desc' }, { sortOrder: 'asc' }]
 
     const [items, total] = await Promise.all([
       prisma.product.findMany({
@@ -451,10 +581,10 @@ export async function getProductList(params: ProductListParams): Promise<Product
     // Hotfix: Fallback to static featuredProducts instead of returning empty list
     const mappedFallback = homeData.featuredProducts.map((p) => ({
       id: p.id,
-      slug: p.id,
+      slug: toVietnameseSlug((p as any).slug || p.id || p.name),
       badge: p.badge || undefined,
       category: p.category,
-      categorySlug: p.category.toLowerCase().replace(/\s+/g, '-'),
+      categorySlug: toVietnameseSlug(p.category),
       name: p.name,
       model: p.name,
       image: p.image,
@@ -489,11 +619,13 @@ export async function getProductBySlug(slug: string): Promise<PublicProductDetai
         specs: { orderBy: { sortOrder: 'asc' } },
       },
     })
-    if (!dbProduct) return null
+    if (!dbProduct) {
+      return getStaticProductFallback(slug)
+    }
     return mapProductToProductDetail(dbProduct)
   } catch (error) {
     logPublicDataFallback('getProductBySlug', error)
-    return null
+    return getStaticProductFallback(slug)
   }
 }
 
@@ -640,12 +772,22 @@ export async function getPostList(params: PostListParams): Promise<PostListResul
     }
   } catch (error) {
     logPublicDataFallback('getPostList', error)
+    const mappedFallback = homeData.latestPosts.map((p) => ({
+      id: p.id,
+      title: p.title,
+      excerpt: p.excerpt,
+      date: p.date,
+      image: p.image,
+      category: 'Tin tức',
+      categorySlug: 'tin-tuc',
+      slug: p.href.replace('/tin-tuc/', ''),
+    }))
     return {
-      items: [],
-      total: 0,
+      items: mappedFallback,
+      total: mappedFallback.length,
       page: 1,
       limit: params.limit || 9,
-      totalPages: 0,
+      totalPages: 1,
     }
   }
 }
@@ -711,5 +853,114 @@ export async function getAllPostCategorySlugs(): Promise<string[]> {
   } catch (error) {
     logPublicDataFallback('getAllPostCategorySlugs', error)
     return []
+  }
+}
+
+export function parseProductListParams(resolvedParams: any): ProductListParams {
+  const page = typeof resolvedParams.page === 'string' ? parseInt(resolvedParams.page, 10) : 1
+  const minPrice = typeof resolvedParams.minPrice === 'string' ? parseFloat(resolvedParams.minPrice) : undefined
+  const maxPrice = typeof resolvedParams.maxPrice === 'string' ? parseFloat(resolvedParams.maxPrice) : undefined
+
+  return {
+    q: typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined,
+    category: typeof resolvedParams.category === 'string' ? resolvedParams.category : undefined,
+    brand: typeof resolvedParams.brand === 'string' ? resolvedParams.brand : undefined,
+    fuel: typeof resolvedParams.fuel === 'string' ? resolvedParams.fuel : undefined,
+    condition: typeof resolvedParams.condition === 'string' ? resolvedParams.condition : undefined,
+    capacity: typeof resolvedParams.capacity === 'string' ? resolvedParams.capacity : undefined,
+    liftHeight: typeof resolvedParams.liftHeight === 'string' ? resolvedParams.liftHeight : undefined,
+    origin: typeof resolvedParams.origin === 'string' ? resolvedParams.origin : undefined,
+    manufactureYear: typeof resolvedParams.manufactureYear === 'string' ? resolvedParams.manufactureYear : undefined,
+    stockStatus: typeof resolvedParams.stockStatus === 'string' ? resolvedParams.stockStatus : undefined,
+    sort: typeof resolvedParams.sort === 'string' ? (resolvedParams.sort as any) : undefined,
+    page,
+    minPrice,
+    maxPrice,
+  }
+}
+
+export async function getProductFilterOptions(categorySlug?: string) {
+  try {
+    const where: any = {
+      status: 'PUBLISHED',
+      deletedAt: null,
+    }
+
+    if (categorySlug) {
+      where.category = {
+        OR: [
+          { slug: categorySlug },
+          { parent: { slug: categorySlug } },
+        ],
+      }
+    }
+
+    const products = await prisma.product.findMany({
+      where,
+      select: {
+        capacity: true,
+        liftHeight: true,
+        fuelType: true,
+        condition: true,
+        origin: true,
+        manufactureYear: true,
+        stockStatus: true,
+        brand: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    })
+
+    const unique = (values: (string | number | null | undefined)[]) =>
+      Array.from(new Set(values.filter(Boolean).map(String))).sort()
+
+    const brandsMap = new Map()
+    const categoriesMap = new Map()
+
+    for (const product of products) {
+      if (product.brand) {
+        brandsMap.set(product.brand.slug, product.brand)
+      }
+
+      if (product.category) {
+        categoriesMap.set(product.category.slug, product.category)
+      }
+    }
+
+    return {
+      categories: Array.from(categoriesMap.values()),
+      brands: Array.from(brandsMap.values()),
+      capacities: unique(products.map((p) => p.capacity)),
+      liftHeights: unique(products.map((p) => p.liftHeight)),
+      fuelTypes: unique(products.map((p) => p.fuelType)),
+      conditions: unique(products.map((p) => p.condition)),
+      origins: unique(products.map((p) => p.origin)),
+      manufactureYears: unique(products.map((p) => p.manufactureYear)).sort((a, b) => Number(b) - Number(a)),
+      stockStatuses: unique(products.map((p) => p.stockStatus)),
+    }
+  } catch (error) {
+    logPublicDataFallback('getProductFilterOptions', error)
+    return {
+      categories: [],
+      brands: [],
+      capacities: ['1.0 tấn', '1.5 tấn', '2.0 tấn', '2.5 tấn', '3.0 tấn', '5.0 tấn'],
+      liftHeights: ['3.0 m', '4.0 m', '4.5 m', '6.0 m'],
+      fuelTypes: ['Điện', 'Dầu', 'Xăng/Gas', 'Cơ/Tay'],
+      conditions: ['Bãi', 'Mới'],
+      origins: ['Nhật Bản', 'Trung Quốc', 'Hàn Quốc'],
+      manufactureYears: ['2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015'],
+      stockStatuses: ['IN_STOCK', 'OUT_OF_STOCK', 'CONTACT', 'SOLD'],
+    }
   }
 }

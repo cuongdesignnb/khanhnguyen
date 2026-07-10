@@ -14,6 +14,7 @@ export interface UploadResult {
   size: number
   width?: number
   height?: number
+  type: 'IMAGE' | 'DOCUMENT' | 'VIDEO' | 'OTHER'
 }
 
 export async function handleUpload(
@@ -28,9 +29,26 @@ export async function handleUpload(
     throw new Error(`Kích thước file vượt quá giới hạn cho phép (${maxUploadSizeMb}MB)`)
   }
 
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
-  if (!allowedTypes.includes(file.type)) {
-    throw new Error('Định dạng file không được hỗ trợ. Chỉ cho phép upload hình ảnh (JPG, PNG, WEBP, GIF, SVG).')
+  // Allowed image & document types
+  const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+  const docTypes = [
+    'application/pdf',
+    'application/msword', // .doc
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/vnd.ms-excel', // .xls
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'text/csv',
+    'text/plain'
+  ]
+
+  const fileMime = file.type || 'application/octet-stream'
+  const isImage = imageTypes.includes(fileMime)
+  const isDoc = docTypes.includes(fileMime)
+
+  if (!isImage && !isDoc) {
+    throw new Error(
+      'Định dạng file không được hỗ trợ. Chỉ cho phép upload hình ảnh (JPG, PNG, WEBP, GIF, SVG) và tài liệu (PDF, DOC, DOCX, XLS, XLSX, CSV, TXT).'
+    )
   }
 
   const now = new Date()
@@ -48,32 +66,69 @@ export async function handleUpload(
   const baseName = path.basename(file.name, fileExt)
   const slugifiedName = toSlug(baseName)
   const timestamp = Date.now()
-  
-  let finalFilename = `${slugifiedName}-${timestamp}.webp`
-  let finalPath = path.join(absoluteUploadDir, finalFilename)
-  let finalUrl = `/${relativeUploadDir}/${finalFilename}`.replace(/\\/g, '/')
-  let finalMime = 'image/webp'
-  let finalExt = '.webp'
+
+  let finalFilename = ''
+  let finalPath = ''
+  let finalUrl = ''
+  let finalMime = ''
+  let finalExt = ''
   let width: number | undefined
   let height: number | undefined
+  let mediaType: 'IMAGE' | 'DOCUMENT' | 'VIDEO' | 'OTHER' = 'OTHER'
 
-  try {
-    const sharp = require('sharp')
-    const sharpInstance = sharp(buffer)
-    const metadata = await sharpInstance.metadata()
-    
-    width = metadata.width
-    height = metadata.height
-    
-    await sharpInstance.webp({ quality: 80 }).toFile(finalPath)
-  } catch (error) {
-    console.warn('Sharp module failed, falling back to writing original file:', error)
+  if (isImage) {
+    mediaType = 'IMAGE'
+    // SVG is keeping original structure
+    if (fileMime === 'image/svg+xml') {
+      finalFilename = `${slugifiedName}-${timestamp}${fileExt}`
+      finalPath = path.join(absoluteUploadDir, finalFilename)
+      finalUrl = `/${relativeUploadDir}/${finalFilename}`.replace(/\\/g, '/')
+      finalMime = fileMime
+      finalExt = fileExt
+      fs.writeFileSync(finalPath, buffer)
+    } else {
+      // JPEG, PNG, WEBP, GIF -> WebP quality 82, resize max 2000px, keep ratio & transparency
+      finalFilename = `${slugifiedName}-${timestamp}.webp`
+      finalPath = path.join(absoluteUploadDir, finalFilename)
+      finalUrl = `/${relativeUploadDir}/${finalFilename}`.replace(/\\/g, '/')
+      finalMime = 'image/webp'
+      finalExt = '.webp'
+
+      try {
+        const sharp = require('sharp')
+        const sharpInstance = sharp(buffer)
+        const metadata = await sharpInstance.metadata()
+
+        width = metadata.width
+        height = metadata.height
+
+        // WebP quality 82, resize max width 2000px without enlarging
+        await sharpInstance
+          .resize({
+            width: 2000,
+            withoutEnlargement: true,
+            fit: 'inside',
+          })
+          .webp({ quality: 82 })
+          .toFile(finalPath)
+      } catch (error) {
+        console.warn('Sharp module failed, falling back to writing original image file:', error)
+        finalFilename = `${slugifiedName}-${timestamp}${fileExt}`
+        finalPath = path.join(absoluteUploadDir, finalFilename)
+        finalUrl = `/${relativeUploadDir}/${finalFilename}`.replace(/\\/g, '/')
+        finalMime = fileMime
+        finalExt = fileExt
+        fs.writeFileSync(finalPath, buffer)
+      }
+    }
+  } else {
+    // Document uploads - store original file unchanged
+    mediaType = 'DOCUMENT'
     finalFilename = `${slugifiedName}-${timestamp}${fileExt}`
     finalPath = path.join(absoluteUploadDir, finalFilename)
     finalUrl = `/${relativeUploadDir}/${finalFilename}`.replace(/\\/g, '/')
-    finalMime = file.type
+    finalMime = fileMime
     finalExt = fileExt
-
     fs.writeFileSync(finalPath, buffer)
   }
 
@@ -91,7 +146,7 @@ export async function handleUpload(
       size,
       width: width || null,
       height: height || null,
-      type: 'IMAGE',
+      type: mediaType,
     },
   })
 
@@ -106,5 +161,6 @@ export async function handleUpload(
     size: mediaFile.size,
     width: mediaFile.width || undefined,
     height: mediaFile.height || undefined,
+    type: mediaFile.type as 'IMAGE' | 'DOCUMENT',
   }
 }

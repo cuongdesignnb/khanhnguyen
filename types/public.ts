@@ -12,6 +12,7 @@ export interface PublicSiteConfig {
   zaloLink?: string
   youtubeLink?: string
   tiktokLink?: string
+  logoUrl?: string
 }
 
 export interface PublicNavigationItem {
@@ -183,6 +184,7 @@ export interface PublicBanner {
 export interface PublicHomeData {
   siteConfig: PublicSiteConfig
   navigation: PublicNavigationItem[]
+  mobileNavigation: PublicNavigationItem[]
   footerGroups: { title: string; links: { label: string; href: string }[] }[]
   categories: PublicCategory[]
   featuredProducts: PublicProductCard[]
@@ -206,6 +208,9 @@ export interface ProductListParams {
   sort?: 'latest' | 'featured' | 'price-asc' | 'price-desc' | 'best-seller'
   page?: number
   limit?: number
+  origin?: string
+  manufactureYear?: string
+  stockStatus?: string
 }
 
 export interface ProductListResult {

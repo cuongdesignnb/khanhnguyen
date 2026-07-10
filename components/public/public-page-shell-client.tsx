@@ -19,7 +19,7 @@ export default function PublicPageShellClient({
   return (
     <>
       <DesktopHeader siteConfig={data.siteConfig} navigation={data.navigation} onMenuOpen={() => setMenuOpen(true)} />
-      <MobileMenuDrawer siteConfig={data.siteConfig} navigation={data.navigation} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileMenuDrawer siteConfig={data.siteConfig} navigation={data.mobileNavigation || data.navigation} open={menuOpen} onClose={() => setMenuOpen(false)} />
       
       {children}
 
@@ -28,3 +28,4 @@ export default function PublicPageShellClient({
     </>
   )
 }
+

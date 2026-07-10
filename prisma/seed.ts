@@ -2,6 +2,9 @@ import { PrismaClient } from '@prisma/client'
 import { hashPassword } from 'better-auth/crypto'
 import * as homeData from '../data/home'
 import * as adminData from '../data/admin'
+import { toVietnameseSlug } from '../lib/slug'
+import { defaultSettings, settingGroupMap } from '../data/default-settings'
+import { defaultFooterMenu, defaultHeaderMenu, defaultMobileMenu, type DefaultMenuItem } from '../data/default-menus'
 
 const prisma = new PrismaClient() as any
 
@@ -71,24 +74,14 @@ async function main() {
 
   // 2. Seed Settings
   console.log('Seeding settings...')
-  const settingsKeys = Object.keys(homeData.siteConfig)
-  for (const key of settingsKeys) {
-    const val = (homeData.siteConfig as any)[key]
-    let type = 'text'
-    if (key === 'logo') type = 'image'
-    else if (key.endsWith('Url')) type = 'url'
-    else if (key === 'footerDescription') type = 'textarea'
-
+  for (const [group, defaultKey] of Object.entries(settingGroupMap)) {
     await prisma.setting.upsert({
-      where: { key },
-      update: { value: val.toString() },
+      where: { group_key: { group, key: 'main' } },
+      update: {},
       create: {
-        key,
-        label: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
-        value: val.toString(),
-        type,
-        group: 'general'
-      }
+        group, key: 'main', label: group, value: (defaultSettings as any)[defaultKey],
+        type: 'json', isPublic: group !== 'integrations.tracking',
+      },
     })
   }
 
@@ -137,7 +130,7 @@ async function main() {
   const brandIdMap = new Map<string, string>()
   for (let i = 0; i < homeData.brandNames.length; i++) {
     const name = homeData.brandNames[i]
-    const slug = name.toLowerCase()
+    const slug = toVietnameseSlug(name)
     
     // Find matching admin brand to get mock logo and details
     const adminBrand = adminData.adminBrands.find(b => b.name === name)
@@ -183,9 +176,67 @@ async function main() {
     }
   }
 
+  // Mandatory demo product
+  const toyotaDemo = {
+    name: 'Xe nâng điện đứng lái Toyota 1.5 tấn 7FB15',
+    slug: 'xe-nang-dien-dung-lai-toyota-15-tan-7fb15',
+    sku: 'KN-ED-7FB15-2019',
+    model: '7FB15',
+    category: 'Xe nâng điện',
+    brand: 'Toyota',
+    price: '425000000',
+    priceLabel: '425.000.000đ',
+    badge: 'Mới',
+    stockStatus: 'IN_STOCK',
+    isFeatured: true,
+    isBestSeller: true,
+    capacity: '1500 kg',
+    liftHeight: '4.5 m',
+    fuelType: 'Điện',
+    manufactureYear: 2019,
+    forkLength: '1070 mm',
+    condition: 'Nhật bãi 85%',
+    origin: 'Nhật Bản',
+    shortDescription: 'Xe nâng điện đứng lái Toyota 7FB15 tải trọng 1.5 tấn, nâng cao 4.5m, hoạt động êm ái, tiết kiệm năng lượng, phù hợp kho xưởng, kệ cao.',
+    description: 'Xe nâng điện đứng lái Toyota 7FB15 là lựa chọn tối ưu cho các kho xưởng, nhà máy, siêu thị với khả năng vận hành linh hoạt trong không gian hẹp. Được thiết kế bởi Toyota Nhật Bản, sản phẩm nổi bật với độ bền cao, vận hành êm ái, tiết kiệm điện năng và chi phí bảo trì thấp.',
+    advantages: [
+      'Thiết kế nhỏ gọn, bán kính quay vòng nhỏ, phù hợp lối đi hẹp.',
+      'Động cơ điện mạnh mẽ, vận hành êm, không khí thải, thân thiện môi trường.',
+      'Hệ thống điều khiển thông minh, an toàn và chính xác.',
+      'Pin dung lượng lớn, thời gian sử dụng dài, sạc nhanh.',
+      'Độ bền cao, phụ tùng dễ thay thế, chi phí bảo dưỡng thấp.'
+    ],
+    warrantyPolicy: 'Bảo hành 6 – 12 tháng hoặc 1000 giờ hoạt động tùy điều kiện nào đến trước. Hỗ trợ kỹ thuật 24/7 qua hotline, Zalo.',
+    image: '/images/seed/products/toyota-8fb25.jpg',
+    specs: {
+      'Model': '7FB15',
+      'Thương hiệu': 'Toyota',
+      'Tải trọng nâng': '1500 kg',
+      'Chiều cao nâng': '4500 mm',
+      'Tâm tải trọng': '500 mm',
+      'Chiều dài càng': '1070 mm',
+      'Nguồn năng lượng': 'Điện 48V',
+      'Loại pin': 'Ắc quy chì axit',
+      'Dung lượng pin': '48V – 420Ah',
+      'Năm sản xuất': '2019',
+      'Xuất xứ': 'Nhật Bản',
+      'Tình trạng': 'Nhật bãi 85%',
+      'Giờ hoạt động': '3.250 giờ',
+      'Tổng trọng lượng': '2650 kg',
+      'Bánh trước': 'Bánh đặc',
+      'Bánh sau': 'Bánh đặc',
+      'Bán kính quay vòng': '1480 mm',
+      'Tốc độ di chuyển': '10.5 km/h'
+    }
+  }
+
+  if (!productsToSeed.some(p => p.name === toyotaDemo.name)) {
+    productsToSeed.push(toyotaDemo as any)
+  }
+
   for (let i = 0; i < productsToSeed.length; i++) {
     const prod = productsToSeed[i] as any
-    const slug = prod.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    const slug = toVietnameseSlug(prod.slug || prod.name)
     const priceVal = prod.price ? parseFloat(prod.price) : null
     
     const media = await upsertMedia(prod.image)
@@ -194,7 +245,7 @@ async function main() {
     // Determine brand based on product name prefix
     let brandId: string | null = null
     for (const [bName, bId] of brandIdMap.entries()) {
-      if (prod.name.toUpperCase().startsWith(bName)) {
+      if (prod.name.toUpperCase().startsWith(bName) || (prod.brand && prod.brand.toUpperCase() === bName.toUpperCase())) {
         brandId = bId
         break
       }
@@ -203,8 +254,29 @@ async function main() {
     const dbProduct = await prisma.product.upsert({
       where: { slug },
       update: {
+        categoryId,
+        brandId,
+        thumbnailId: media.id,
+        name: prod.name,
+        sku: prod.sku || `KN-${(i + 1).toString().padStart(4, '0')}`,
+        model: prod.model || null,
         price: priceVal,
-        priceLabel: prod.priceLabel,
+        priceLabel: prod.priceLabel || 'Liên hệ',
+        badge: prod.badge || null,
+        isFeatured: prod.isFeatured ?? (i < 5),
+        isBestSeller: prod.isBestSeller ?? false,
+        stockStatus: prod.stockStatus || 'IN_STOCK',
+        capacity: prod.capacity || null,
+        liftHeight: prod.liftHeight || null,
+        fuelType: prod.fuelType || null,
+        manufactureYear: prod.manufactureYear ? parseInt(prod.manufactureYear.toString()) : null,
+        forkLength: prod.forkLength || null,
+        condition: prod.condition || null,
+        origin: prod.origin || null,
+        shortDescription: prod.shortDescription || null,
+        description: prod.description || null,
+        advantages: prod.advantages || null,
+        warrantyPolicy: prod.warrantyPolicy || null,
       },
       create: {
         categoryId,
@@ -212,28 +284,109 @@ async function main() {
         thumbnailId: media.id,
         name: prod.name,
         slug,
-        sku: `KN-${(i + 1).toString().padStart(4, '0')}`,
-        model: prod.model,
+        sku: prod.sku || `KN-${(i + 1).toString().padStart(4, '0')}`,
+        model: prod.model || null,
         price: priceVal,
-        priceLabel: prod.priceLabel,
-        isFeatured: i < 5,
-        status: 'PUBLISHED',
-        stockStatus: 'IN_STOCK'
+        priceLabel: prod.priceLabel || 'Liên hệ',
+        badge: prod.badge || null,
+        isFeatured: prod.isFeatured ?? (i < 5),
+        isBestSeller: prod.isBestSeller ?? false,
+        stockStatus: prod.stockStatus || 'IN_STOCK',
+        capacity: prod.capacity || null,
+        liftHeight: prod.liftHeight || null,
+        fuelType: prod.fuelType || null,
+        manufactureYear: prod.manufactureYear ? parseInt(prod.manufactureYear.toString()) : null,
+        forkLength: prod.forkLength || null,
+        condition: prod.condition || null,
+        origin: prod.origin || null,
+        shortDescription: prod.shortDescription || null,
+        description: prod.description || null,
+        advantages: prod.advantages || null,
+        warrantyPolicy: prod.warrantyPolicy || null,
       }
     })
     productIdMap.set(prod.name, dbProduct.id)
 
-    // Seed Specs for this product
-    const specLabels = Object.keys(prod.specs)
-    for (let sIdx = 0; sIdx < specLabels.length; sIdx++) {
-      const label = specLabels[sIdx]
-      const value = (prod.specs as any)[label]
-      await prisma.productSpec.create({
+    // Seed Specs for this product (idempotent: delete existing first)
+    await prisma.productSpec.deleteMany({ where: { productId: dbProduct.id } })
+    if (prod.specs) {
+      const specLabels = Object.keys(prod.specs)
+      for (let sIdx = 0; sIdx < specLabels.length; sIdx++) {
+        const label = specLabels[sIdx]
+        const value = (prod.specs as any)[label]
+        await prisma.productSpec.create({
+          data: {
+            productId: dbProduct.id,
+            label,
+            value: value.toString(),
+            sortOrder: sIdx
+          }
+        })
+      }
+    }
+
+    // Seed Album Images (idempotent: delete existing first)
+    await prisma.productImage.deleteMany({ where: { productId: dbProduct.id } })
+    if (prod.images && Array.isArray(prod.images)) {
+      for (let imgIdx = 0; imgIdx < prod.images.length; imgIdx++) {
+        const imgUrl = prod.images[imgIdx]
+        const imgMedia = await upsertMedia(imgUrl)
+        await prisma.productImage.create({
+          data: {
+            productId: dbProduct.id,
+            mediaId: imgMedia.id,
+            sortOrder: imgIdx,
+            isPrimary: imgIdx === 0
+          }
+        })
+      }
+    }
+  }
+
+  // 5.5. Seed Reviews
+  console.log('Seeding reviews...')
+  await prisma.productReview.deleteMany()
+  const demoProduct = await prisma.product.findFirst({
+    where: { slug: 'xe-nang-dien-dung-lai-toyota-15-tan-7fb15' }
+  })
+  if (demoProduct) {
+    const reviewsData = [
+      {
+        name: 'Anh Minh',
+        phone: '0901234567',
+        rating: 5,
+        content: 'Xe vận hành êm, nâng khỏe, kỹ thuật hỗ trợ rất nhanh.',
+        status: 'APPROVED' as any,
+        approvedAt: new Date()
+      },
+      {
+        name: 'Chị Hương',
+        phone: '0912345678',
+        rating: 5,
+        content: 'Đã nhận xe đúng hẹn, ngoại hình đẹp hơn mong đợi.',
+        status: 'APPROVED' as any,
+        approvedAt: new Date()
+      },
+      {
+        name: 'Anh Tuấn',
+        phone: '0987654321',
+        rating: 4,
+        content: 'Tư vấn kỹ, giá hợp lý, cần thêm ảnh thực tế trước khi giao.',
+        status: 'APPROVED' as any,
+        approvedAt: new Date()
+      }
+    ]
+
+    for (const r of reviewsData) {
+      await prisma.productReview.create({
         data: {
-          productId: dbProduct.id,
-          label,
-          value: value.toString(),
-          sortOrder: sIdx
+          productId: demoProduct.id,
+          name: r.name,
+          phone: r.phone,
+          rating: r.rating,
+          content: r.content,
+          status: r.status,
+          approvedAt: r.approvedAt
         }
       })
     }
@@ -243,7 +396,7 @@ async function main() {
   console.log('Seeding services...')
   for (let i = 0; i < homeData.services.length; i++) {
     const s = homeData.services[i] as any
-    const slug = s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    const slug = toVietnameseSlug(s.slug || s.title)
     
     // Find matching admin service details
     const adminS = adminData.adminServices.find(as => as.title === s.title)
@@ -283,6 +436,7 @@ async function main() {
 
   // 7. Seed Testimonials
   console.log('Seeding testimonials...')
+  await prisma.testimonial.deleteMany()
   for (let i = 0; i < homeData.testimonials.length; i++) {
     const t = homeData.testimonials[i] as any
     let imageId: string | null = null
@@ -310,7 +464,7 @@ async function main() {
   const postCatMap = new Map<string, string>()
   for (let i = 0; i < postCategories.length; i++) {
     const name = postCategories[i]
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    const slug = toVietnameseSlug(name)
     const dbCat = await prisma.postCategory.upsert({
       where: { slug },
       update: { name },
@@ -334,14 +488,14 @@ async function main() {
         date: adminPost.publishedAt,
         category: adminPost.category,
         image: adminPost.image,
-        slug: adminPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        slug: toVietnameseSlug(adminPost.title)
       } as any)
     }
   }
 
   for (let i = 0; i < postsToSeed.length; i++) {
     const p = postsToSeed[i] as any
-    const slug = p.slug || p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    const slug = toVietnameseSlug(p.slug || p.title)
     const media = await upsertMedia(p.image)
     const categoryId = postCatMap.get(p.category) || Array.from(postCatMap.values())[0]
 
@@ -365,6 +519,7 @@ async function main() {
 
   // 9. Seed Contacts
   console.log('Seeding contacts...')
+  await prisma.contact.deleteMany()
   for (const c of adminData.adminContacts) {
     await prisma.contact.create({
       data: {
@@ -383,6 +538,7 @@ async function main() {
 
   // 10. Seed Quote Requests
   console.log('Seeding quote requests...')
+  await prisma.quoteRequest.deleteMany()
   for (const q of adminData.adminQuoteRequests) {
     // Find matching product id
     let productId: string | null = null
@@ -414,6 +570,7 @@ async function main() {
 
   // 11. Seed Orders
   console.log('Seeding orders...')
+  await prisma.order.deleteMany()
   for (const o of adminData.adminOrders) {
     const order = await prisma.order.create({
       data: {
@@ -487,32 +644,28 @@ async function main() {
 
   // 12. Seed Menus
   console.log('Seeding menus...')
-  for (let i = 0; i < homeData.navigation.length; i++) {
-    const nav = homeData.navigation[i]
-    await prisma.menu.create({
-      data: {
-        label: nav.label,
-        href: nav.href,
-        group: 'header',
-        sortOrder: i,
-        isVisible: true
-      }
-    })
-  }
-
-  for (let gIdx = 0; gIdx < homeData.footerGroups.length; gIdx++) {
-    const group = homeData.footerGroups[gIdx]
-    for (let lIdx = 0; lIdx < group.links.length; lIdx++) {
-      const link = group.links[lIdx]
-      await prisma.menu.create({
-        data: {
-          label: link.label,
-          href: link.href,
-          group: `footer-${gIdx + 1}`,
-          sortOrder: lIdx,
-          isVisible: true
-        }
+  const menus = [
+    { name: 'Header Menu', slug: 'header-menu', location: 'HEADER', items: defaultHeaderMenu },
+    { name: 'Footer Menu', slug: 'footer-menu', location: 'FOOTER', items: defaultFooterMenu },
+    { name: 'Mobile Menu', slug: 'mobile-menu', location: 'MOBILE', items: defaultMobileMenu },
+  ]
+  async function seedMenuItems(menuId: string, items: DefaultMenuItem[], parentId: string | null = null) {
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index]
+      const created = await prisma.menuItem.create({
+        data: { menuId, parentId, label: item.label, url: item.url, type: 'INTERNAL', sortOrder: index },
       })
+      if (item.children?.length) await seedMenuItems(menuId, item.children, created.id)
+    }
+  }
+  for (const definition of menus) {
+    const menu = await prisma.menu.upsert({
+      where: { slug: definition.slug },
+      update: {},
+      create: { name: definition.name, slug: definition.slug, location: definition.location as any },
+    })
+    if (await prisma.menuItem.count({ where: { menuId: menu.id } }) === 0) {
+      await seedMenuItems(menu.id, definition.items)
     }
   }
 

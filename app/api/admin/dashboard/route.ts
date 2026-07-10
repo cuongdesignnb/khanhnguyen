@@ -18,7 +18,9 @@ export async function GET() {
       processingQuotes,
       quotedQuotes,
       closedQuotes,
-      ignoredQuotes
+      ignoredQuotes,
+      pendingReviewsCount,
+      approvedReviewsCount
     ] = await Promise.all([
       prisma.product.count({ where: { deletedAt: null } }),
       prisma.category.count({ where: { deletedAt: null } }),
@@ -57,7 +59,9 @@ export async function GET() {
       prisma.quoteRequest.count({ where: { status: 'PROCESSING', deletedAt: null } }),
       prisma.quoteRequest.count({ where: { status: 'QUOTED', deletedAt: null } }),
       prisma.quoteRequest.count({ where: { status: 'CLOSED', deletedAt: null } }),
-      prisma.quoteRequest.count({ where: { status: 'IGNORED', deletedAt: null } })
+      prisma.quoteRequest.count({ where: { status: 'IGNORED', deletedAt: null } }),
+      prisma.productReview.count({ where: { status: 'PENDING', deletedAt: null } }),
+      prisma.productReview.count({ where: { status: 'APPROVED', deletedAt: null } })
     ])
 
     const stats = [
@@ -66,7 +70,9 @@ export async function GET() {
       { label: 'Bài viết', value: totalPosts, change: 0, icon: 'Newspaper' },
       { label: 'Liên hệ mới', value: totalContacts, change: 0, icon: 'Phone' },
       { label: 'Báo giá mới', value: totalQuotes, change: 0, icon: 'ClipboardList' },
-      { label: 'Đơn hàng mới', value: totalOrders, change: 0, icon: 'ShoppingCart' }
+      { label: 'Đơn hàng mới', value: totalOrders, change: 0, icon: 'ShoppingCart' },
+      { label: 'Đánh giá chờ duyệt', value: pendingReviewsCount, change: 0, icon: 'MessageSquare' },
+      { label: 'Đánh giá đã duyệt', value: approvedReviewsCount, change: 0, icon: 'MessageSquare' }
     ]
 
     const requestStatusSummary = {

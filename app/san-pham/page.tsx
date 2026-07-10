@@ -20,32 +20,28 @@ interface PageProps {
 export default async function Page({ searchParams }: PageProps) {
   const resolvedParams = await searchParams
   const page = typeof resolvedParams.page === 'string' ? parseInt(resolvedParams.page, 10) : 1
-  const q = typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined
-  const category = typeof resolvedParams.category === 'string' ? resolvedParams.category : undefined
-  const brand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand : undefined
-  const fuel = typeof resolvedParams.fuel === 'string' ? resolvedParams.fuel : undefined
-  const condition = typeof resolvedParams.condition === 'string' ? resolvedParams.condition : undefined
-  const capacity = typeof resolvedParams.capacity === 'string' ? resolvedParams.capacity : undefined
-  const liftHeight = typeof resolvedParams.liftHeight === 'string' ? resolvedParams.liftHeight : undefined
   const minPrice = typeof resolvedParams.minPrice === 'string' ? parseFloat(resolvedParams.minPrice) : undefined
   const maxPrice = typeof resolvedParams.maxPrice === 'string' ? parseFloat(resolvedParams.maxPrice) : undefined
-  const sort = typeof resolvedParams.sort === 'string' ? (resolvedParams.sort as any) : undefined
+
+  const queryParams = {
+    q: typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined,
+    category: typeof resolvedParams.category === 'string' ? resolvedParams.category : undefined,
+    brand: typeof resolvedParams.brand === 'string' ? resolvedParams.brand : undefined,
+    fuel: typeof resolvedParams.fuel === 'string' ? resolvedParams.fuel : undefined,
+    condition: typeof resolvedParams.condition === 'string' ? resolvedParams.condition : undefined,
+    capacity: typeof resolvedParams.capacity === 'string' ? resolvedParams.capacity : undefined,
+    liftHeight: typeof resolvedParams.liftHeight === 'string' ? resolvedParams.liftHeight : undefined,
+    origin: typeof resolvedParams.origin === 'string' ? resolvedParams.origin : undefined,
+    manufactureYear: typeof resolvedParams.manufactureYear === 'string' ? resolvedParams.manufactureYear : undefined,
+    stockStatus: typeof resolvedParams.stockStatus === 'string' ? resolvedParams.stockStatus : undefined,
+    sort: typeof resolvedParams.sort === 'string' ? (resolvedParams.sort as any) : undefined,
+    page,
+    minPrice,
+    maxPrice,
+  }
 
   const [result, categories, brands] = await Promise.all([
-    getProductList({
-      q,
-      category,
-      brand,
-      fuel,
-      condition,
-      capacity,
-      liftHeight,
-      minPrice,
-      maxPrice,
-      sort,
-      page,
-      limit: 12,
-    }),
+    getProductList(queryParams),
     getVisibleCategories(),
     getVisibleBrands(),
   ])
@@ -56,19 +52,7 @@ export default async function Page({ searchParams }: PageProps) {
         result={result}
         categories={categories}
         brands={brands}
-        currentParams={{
-          q,
-          category,
-          brand,
-          fuel,
-          condition,
-          capacity,
-          liftHeight,
-          minPrice,
-          maxPrice,
-          sort,
-          page,
-        }}
+        currentParams={queryParams}
       />
     </PublicPageShell>
   )

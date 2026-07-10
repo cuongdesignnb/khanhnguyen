@@ -193,4 +193,21 @@ export const adminApi = {
   updateSetting(key: string, payload: any) {
     return adminPatch<any>(`/api/admin/settings/${key}`, payload)
   },
+
+  // ─── Product Reviews ───────────────────────────────────────────────────────
+  getProductReviews(params?: any) {
+    return adminGet<any[]>(`/api/admin/product-reviews${toQueryString(params)}`)
+  },
+  updateProductReview(id: string, payload: any) {
+    return adminPatch<any>(`/api/admin/product-reviews/${id}`, payload)
+  },
+  approveProductReview(id: string) {
+    return adminPost<any>(`/api/admin/product-reviews/${id}/approve`)
+  },
+  rejectProductReview(id: string) {
+    return adminPost<any>(`/api/admin/product-reviews/${id}/reject`)
+  },
+  deleteProductReview(id: string) {
+    return adminDelete<any>(`/api/admin/product-reviews/${id}`)
+  },
 }

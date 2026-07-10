@@ -14,6 +14,7 @@ import { mapPostToAdminItem } from '@/lib/admin-mappers'
 import AdminConfirmModal from '@/components/admin/admin-confirm-modal'
 import MediaPicker from '@/components/admin/media-picker'
 import { toast } from '@/lib/toast'
+import RichTextEditor from '@/components/admin/editor/rich-text-editor'
 import {
   Save,
   Image as ImageIcon,
@@ -345,11 +346,11 @@ function PostsTabContent() {
 
             <div>
               <label className={labelClass}>Nội dung bài viết</label>
-              <textarea
+              <RichTextEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Nhập nội dung HTML hoặc văn bản..."
-                className="w-full bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-[color:var(--muted)]/50 outline-none focus:border-[color:var(--gold)]/50 h-48 resize-y"
+                onChange={setContent}
+                placeholder="Nhập nội dung bài viết..."
+                minHeight={250}
               />
             </div>
 

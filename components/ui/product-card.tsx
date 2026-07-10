@@ -1,6 +1,9 @@
 import Image from 'next/image'
 import clsx from 'clsx'
 import { PublicProductCard } from '@/types/public'
+import WishlistButton from '../sales/wishlist-button'
+import CompareButton from '../sales/compare-button'
+import AddToCartButton from '../sales/add-to-cart-button'
 
 interface ProductCardProps {
   product: PublicProductCard
@@ -21,7 +24,7 @@ export function ProductCard({ product }: ProductCardProps) {
         'hover:border-[color:var(--line-gold)] transition-colors duration-300'
       )}
     >
-      {/* Image */}
+      {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">
         <Image
           src={product.image}
@@ -41,6 +44,12 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.badge}
           </span>
         )}
+
+        {/* Wishlist & Compare Hover Controls */}
+        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 z-10">
+          <WishlistButton productId={product.id} productName={product.name} />
+          <CompareButton productId={product.id} productName={product.name} />
+        </div>
       </div>
 
       {/* Content */}
@@ -76,19 +85,28 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.priceLabel}
         </p>
 
-        {/* CTA */}
-        <a
-          href={`/san-pham/${product.slug}`}
-          className={clsx(
-            'mt-1 block w-full rounded-lg border border-[color:var(--gold)] py-2.5 text-center',
-            'text-sm font-bold uppercase tracking-wider text-[color:var(--gold)]',
-            'hover:bg-[color:var(--gold)] hover:text-[color:var(--bg)] transition-colors duration-200',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]'
-          )}
-        >
-          Xem chi tiết
-        </a>
+        {/* CTAs */}
+        <div className="flex flex-col gap-2 mt-3 w-full">
+          <AddToCartButton
+            productId={product.id}
+            productName={product.name}
+            variant="solid"
+            className="w-full py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            label="Thêm báo giá"
+          />
+          <a
+            href={`/san-pham/${product.slug}`}
+            className={clsx(
+              'flex items-center justify-center rounded-lg border border-[color:var(--gold)]/30 py-2 text-center w-full',
+              'text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[color:var(--gold)] bg-[color:var(--gold)]/5 hover:bg-[color:var(--gold)] hover:text-black hover:border-[color:var(--gold)] transition-colors duration-200',
+              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]'
+            )}
+          >
+            Xem chi tiết
+          </a>
+        </div>
       </div>
     </article>
   )
 }
+

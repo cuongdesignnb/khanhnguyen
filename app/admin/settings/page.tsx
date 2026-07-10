@@ -8,6 +8,7 @@ import { Save, X, RefreshCw } from 'lucide-react'
 import { iconMap } from '@/components/admin/icon-map'
 import { adminApi } from '@/lib/admin-api'
 import { toast } from '@/lib/toast'
+import RichTextEditor from '@/components/admin/editor/rich-text-editor'
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any[]>([])
@@ -128,7 +129,13 @@ export default function SettingsPage() {
 
                     {isEditing ? (
                       <div className="space-y-2">
-                        {setting.type === 'textarea' ? (
+                        {setting.type === 'richtext' ? (
+                          <RichTextEditor
+                            value={editValue}
+                            onChange={setEditValue}
+                            minHeight={150}
+                          />
+                        ) : setting.type === 'textarea' ? (
                           <textarea
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}

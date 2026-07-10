@@ -7,6 +7,7 @@ import Breadcrumb from '@/components/public/breadcrumb'
 import BlogTableOfContents from './blog-table-of-contents'
 import RelatedPosts from './related-posts'
 import { PublicPostDetail, PublicPostCard } from '@/types/public'
+import RichContent from '@/components/public/rich-content'
 
 interface BlogDetailPageProps {
   post: PublicPostDetail
@@ -75,17 +76,7 @@ export default function BlogDetailPage({ post, relatedPosts }: BlogDetailPagePro
 
             {/* Content html body */}
             {post.content && (
-              <div
-                dangerouslySetInnerHTML={{ __html: post.content }}
-                className="text-sm sm:text-base text-[color:var(--silver)] leading-relaxed whitespace-pre-line space-y-4
-                  [&_h2]:text-lg [&_h2]:sm:text-xl [&_h2]:font-bold [&_h2]:text-white [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:uppercase [&_h2]:tracking-wide
-                  [&_h3]:text-base [&_h3]:sm:text-lg [&_h3]:font-bold [&_h3]:text-white [&_h3]:mt-6 [&_h3]:mb-2
-                  [&_p]:leading-relaxed [&_p]:mb-4
-                  [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_ul]:mb-4
-                  [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1.5 [&_ol]:mb-4
-                  [&_a]:text-[color:var(--gold)] [&_a]:hover:underline
-                  [&_img]:rounded-lg [&_img]:border [&_img]:border-white/10 [&_img]:my-6 [&_img]:mx-auto"
-              />
+              <RichContent html={post.content} />
             )}
           </article>
 

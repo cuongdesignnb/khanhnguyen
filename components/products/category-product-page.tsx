@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Filter, X, Search } from 'lucide-react'
 import PageHero from '@/components/public/page-hero'
 import Breadcrumb from '@/components/public/breadcrumb'
@@ -11,6 +11,7 @@ import ProductGrid from './product-grid'
 import ProductPagination from './product-pagination'
 import ProductListEmpty from './product-list-empty'
 import { ProductListResult, PublicCategory, PublicBrand, ProductListParams } from '@/types/public'
+import RichContent from '@/components/public/rich-content'
 
 interface CategoryProductPageProps {
   category: PublicCategory | null
@@ -20,6 +21,13 @@ interface CategoryProductPageProps {
   categories: PublicCategory[]
   brands: PublicBrand[]
   currentParams: ProductListParams
+}
+
+const stockStatusLabels: Record<string, string> = {
+  IN_STOCK: 'Còn hàng',
+  OUT_OF_STOCK: 'Hết hàng',
+  CONTACT: 'Liên hệ',
+  SOLD: 'Đã bán',
 }
 
 export default function CategoryProductPage({
@@ -32,6 +40,7 @@ export default function CategoryProductPage({
   currentParams,
 }: CategoryProductPageProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
   const [searchVal, setSearchVal] = useState(currentParams.q || '')
 
@@ -43,12 +52,18 @@ export default function CategoryProductPage({
 
     const query = new URLSearchParams()
     Object.entries(updated).forEach(([key, val]) => {
-      if (val !== undefined && val !== null && val !== '') {
+      if (
+        val !== undefined &&
+        val !== null &&
+        val !== '' &&
+        !(key === 'page' && Number(val) === 1)
+      ) {
         query.set(key, String(val))
       }
     })
 
-    router.push(`/${categorySlug}?${query.toString()}`)
+    const qs = query.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname)
   }
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -58,11 +73,11 @@ export default function CategoryProductPage({
 
   const clearAllFilters = () => {
     setSearchVal('')
-    router.push(`/${categorySlug}`)
+    router.push(pathname)
   }
 
   const activeFiltersCount = Object.entries(currentParams).filter(([key, val]) => {
-    if (key === 'page' || key === 'limit') return false
+    if (key === 'page' || key === 'limit' || key === 'sort') return false
     return val !== undefined && val !== null && val !== ''
   }).length
 
@@ -89,7 +104,7 @@ export default function CategoryProductPage({
           </form>
           <button
             onClick={() => setMobileFilterOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[color:var(--surface-2)] border border-white/10 rounded-lg text-sm text-[color:var(--silver)] font-semibold hover:border-[color:var(--gold)] hover:text-[color:var(--gold)]"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[color:var(--surface-2)] border border-white/10 rounded-lg text-sm text-[color:var(--silver)] font-semibold hover:border-[color:var(--gold)] hover:text-[color:var(--gold)] cursor-pointer"
           >
             <Filter size={16} />
             <span>Bộ lọc</span>
@@ -110,7 +125,7 @@ export default function CategoryProductPage({
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-xs text-[color:var(--gold)] hover:underline font-medium"
+                    className="text-xs text-[color:var(--gold)] hover:underline font-medium cursor-pointer"
                   >
                     Xóa tất cả
                   </button>
@@ -136,7 +151,7 @@ export default function CategoryProductPage({
           <main className="lg:col-span-3 space-y-6">
             {/* Top Toolbar (Sort / Search) */}
             <div className="hidden lg:flex items-center justify-between bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-5 py-3">
-              <form onSubmit={handleSearchSubmit} className="relative w-80">
+              <form onSubmit={handleSearchSubmit} className="relative w-96">
                 <input
                   type="search"
                   placeholder="Tìm trong danh mục này..."
@@ -147,7 +162,12 @@ export default function CategoryProductPage({
                 <Search className="absolute left-3 top-2.5 text-[color:var(--muted)]" size={15} />
               </form>
 
-              <ProductSortBar sort={currentParams.sort || 'latest'} onChange={(sort) => updateFilters({ sort })} />
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-[color:var(--muted)] font-medium">
+                  Tìm thấy <strong className="text-white">{result.total}</strong> sản phẩm
+                </span>
+                <ProductSortBar sort={currentParams.sort || 'latest'} onChange={(sort) => updateFilters({ sort })} />
+              </div>
             </div>
 
             {/* Mobile Toolbar (showing Active Filters summary only) */}
@@ -175,7 +195,7 @@ export default function CategoryProductPage({
                   <FilterBadge label={`Nhiên liệu: ${currentParams.fuel}`} onRemove={() => updateFilters({ fuel: '' })} />
                 )}
                 {currentParams.condition && (
-                  <FilterBadge label={`Tình trạng: ${currentParams.condition}`} onRemove={() => updateFilters({ condition: '' })} />
+                  <FilterBadge label={`Tình trạng: ${currentParams.condition === 'Bãi' ? 'Xe cũ (Nhật bãi)' : 'Mới'}`} onRemove={() => updateFilters({ condition: '' })} />
                 )}
                 {currentParams.capacity && (
                   <FilterBadge label={`Tải trọng: ${currentParams.capacity}`} onRemove={() => updateFilters({ capacity: '' })} />
@@ -183,9 +203,24 @@ export default function CategoryProductPage({
                 {currentParams.liftHeight && (
                   <FilterBadge label={`Chiều cao nâng: ${currentParams.liftHeight}`} onRemove={() => updateFilters({ liftHeight: '' })} />
                 )}
+                {currentParams.origin && (
+                  <FilterBadge label={`Xuất xứ: ${currentParams.origin}`} onRemove={() => updateFilters({ origin: '' })} />
+                )}
+                {currentParams.manufactureYear && (
+                  <FilterBadge label={`Năm SX: ${currentParams.manufactureYear}`} onRemove={() => updateFilters({ manufactureYear: '' })} />
+                )}
+                {currentParams.stockStatus && (
+                  <FilterBadge label={`Trạng thái: ${stockStatusLabels[currentParams.stockStatus] || currentParams.stockStatus}`} onRemove={() => updateFilters({ stockStatus: '' })} />
+                )}
+                {currentParams.minPrice !== undefined && (
+                  <FilterBadge label={`Giá từ: ${currentParams.minPrice.toLocaleString('vi-VN')} đ`} onRemove={() => updateFilters({ minPrice: undefined })} />
+                )}
+                {currentParams.maxPrice !== undefined && (
+                  <FilterBadge label={`Giá đến: ${currentParams.maxPrice.toLocaleString('vi-VN')} đ`} onRemove={() => updateFilters({ maxPrice: undefined })} />
+                )}
                 <button
                   onClick={clearAllFilters}
-                  className="text-xs text-[color:var(--gold)] hover:underline font-semibold"
+                  className="text-xs text-[color:var(--gold)] hover:underline font-semibold cursor-pointer"
                 >
                   Xóa hết
                 </button>
@@ -205,6 +240,12 @@ export default function CategoryProductPage({
             ) : (
               <ProductListEmpty onClear={clearAllFilters} />
             )}
+            {/* Category Description SEO text */}
+            {category?.description && (
+              <div className="bg-[color:var(--surface-2)] border border-white/10 rounded-xl p-5 sm:p-6 mt-8">
+                <RichContent html={category.description} />
+              </div>
+            )}
           </main>
         </div>
       </div>
@@ -212,19 +253,26 @@ export default function CategoryProductPage({
       {/* Mobile Filters Drawer */}
       {mobileFilterOpen && (
         <div className="fixed inset-0 z-[100] lg:hidden flex">
+          {/* Backdrop */}
           <div
             onClick={() => setMobileFilterOpen(false)}
             className="fixed inset-0 bg-black/70 backdrop-blur-sm"
           />
-          <div className="relative ml-auto flex h-full w-[85vw] max-w-[340px] flex-col bg-[color:var(--surface)] border-l border-[color:var(--line-gold)] shadow-2xl p-5 overflow-y-auto">
+          {/* Panel */}
+          <div className="relative ml-auto flex h-full w-[88vw] max-w-[380px] flex-col bg-[color:var(--surface)] border-l border-[color:var(--line-gold)] shadow-2xl p-5 overflow-y-auto pb-24">
             <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-5">
               <h2 className="font-bold text-base text-white tracking-wide flex items-center gap-2">
                 <Filter size={16} className="text-[color:var(--gold)]" />
                 <span>BỘ LỌC TÌM KIẾM</span>
+                {activeFiltersCount > 0 && (
+                  <span className="flex items-center justify-center bg-[color:var(--gold)] text-black font-bold text-xs rounded-full size-5">
+                    {activeFiltersCount}
+                  </span>
+                )}
               </h2>
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="text-[color:var(--muted)] hover:text-white"
+                className="text-[color:var(--muted)] hover:text-white cursor-pointer"
                 aria-label="Đóng bộ lọc"
               >
                 <X size={20} />
@@ -240,7 +288,6 @@ export default function CategoryProductPage({
                 } else {
                   updateFilters(p)
                 }
-                setMobileFilterOpen(false)
               }}
             />
           </div>
@@ -254,7 +301,7 @@ function FilterBadge({ label, onRemove }: { label: string; onRemove: () => void 
   return (
     <span className="inline-flex items-center gap-1 bg-[color:var(--surface-3)] border border-white/10 text-xs text-[color:var(--silver)] font-medium px-2.5 py-1 rounded-full">
       <span>{label}</span>
-      <button onClick={onRemove} className="text-[color:var(--muted)] hover:text-white transition" aria-label="Xóa bộ lọc">
+      <button onClick={onRemove} className="text-[color:var(--muted)] hover:text-white transition cursor-pointer" aria-label="Xóa bộ lọc">
         <X size={12} />
       </button>
     </span>

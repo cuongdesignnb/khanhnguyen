@@ -1,5 +1,5 @@
-import PostsAdminPage from '@/components/admin/posts/posts-admin-page'
+import { redirect } from 'next/navigation'
 
-export default function NewPostPage() {
-  return <PostsAdminPage />
+export default function Page() {
+  redirect('/admin/tin-tuc/viet-bai-moi')
 }

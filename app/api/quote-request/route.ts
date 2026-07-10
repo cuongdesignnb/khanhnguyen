@@ -37,6 +37,32 @@ export async function POST(request: NextRequest) {
 
     const code = `${prefix}${nextNum.toString().padStart(4, '0')}`
 
+    let productId = parsed.data.productId || null
+    if (productId) {
+      const dbProd = await prisma.product.findUnique({ where: { id: productId } }).catch(() => null)
+      if (!dbProd) {
+        productId = null
+      }
+    }
+
+    const itemCreations = []
+    if (parsed.data.items && parsed.data.items.length > 0) {
+      for (const item of parsed.data.items) {
+        let ipId = item.productId || null
+        if (ipId) {
+          const exists = await prisma.product.findUnique({ where: { id: ipId } }).catch(() => null)
+          if (!exists) {
+            ipId = null
+          }
+        }
+        itemCreations.push({
+          productId: ipId,
+          productName: item.productName,
+          quantity: item.quantity,
+        })
+      }
+    }
+
     const quote = await prisma.quoteRequest.create({
       data: {
         code,
@@ -44,12 +70,18 @@ export async function POST(request: NextRequest) {
         phone: parsed.data.phone,
         email: parsed.data.email || null,
         company: parsed.data.company || null,
-        productId: parsed.data.productId || null,
+        productId,
         productName: parsed.data.productName || null,
         quantity: parsed.data.quantity || 1,
         budget: parsed.data.budget || null,
         message: parsed.data.message || null,
         status: 'NEW',
+        items: itemCreations.length > 0 ? {
+          create: itemCreations
+        } : undefined,
+      },
+      include: {
+        items: true,
       },
     })
 

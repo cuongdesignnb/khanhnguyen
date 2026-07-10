@@ -3,13 +3,6 @@ import { Globe, Camera, Video, Music2 } from 'lucide-react'
 import { siteConfig as staticSiteConfig, footerGroups as staticFooterGroups } from '@/data/home'
 import { PublicSiteConfig } from '@/types/public'
 
-const socialLinks = [
-  { icon: Globe, label: 'Facebook', href: '#' },
-  { icon: Camera, label: 'Instagram', href: '#' },
-  { icon: Video, label: 'Youtube', href: '#' },
-  { icon: Music2, label: 'TikTok', href: '#' },
-] as const
-
 const legalLinks = [
   { label: 'Điều khoản sử dụng', href: '/dieu-khoan' },
   { label: 'Chính sách bảo mật', href: '/chinh-sach-bao-mat' },
@@ -22,8 +15,14 @@ interface FooterProps {
 }
 
 export default function Footer({ siteConfig, footerGroups }: FooterProps) {
-  const config = siteConfig || staticSiteConfig
+  const config: PublicSiteConfig = siteConfig || staticSiteConfig
   const displayGroups = footerGroups || staticFooterGroups
+  const socialLinks = [
+    { icon: Globe, label: 'Facebook', href: config.facebookLink },
+    { icon: Camera, label: 'Zalo', href: config.zaloLink },
+    { icon: Video, label: 'Youtube', href: config.youtubeLink },
+    { icon: Music2, label: 'TikTok', href: config.tiktokLink },
+  ].filter((item) => Boolean(item.href))
 
   return (
     <footer className="bg-black border-t border-[color:var(--line-gold)] pt-12 lg:pt-16 pb-24 lg:pb-6">
@@ -40,8 +39,7 @@ export default function Footer({ siteConfig, footerGroups }: FooterProps) {
               {config.tagline}
             </p>
             <p className="text-sm text-[color:var(--muted)] mt-3">
-              Chuyên cung cấp xe nâng Nhật bãi chất lượng, xe cẩu và thiết bị
-              nâng hạ uy tín hàng đầu Việt Nam.
+              {config.slogan}
             </p>
 
             {/* Social icons */}
@@ -49,7 +47,7 @@ export default function Footer({ siteConfig, footerGroups }: FooterProps) {
               {socialLinks.map(({ icon: Icon, label, href }) => (
                 <a
                   key={label}
-                  href={href}
+                  href={href || '#'}
                   aria-label={label}
                   className="w-9 h-9 rounded-full bg-[color:var(--surface-3)] flex items-center justify-center text-white hover:bg-[color:var(--gold)] hover:text-black transition"
                 >
@@ -114,7 +112,7 @@ export default function Footer({ siteConfig, footerGroups }: FooterProps) {
         {/* ── Bottom bar ── */}
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-[color:var(--muted)]">
-            © 2026 KHANH NGUYEN. All rights reserved.
+            © {new Date().getFullYear()} {config.name}. All rights reserved.
           </p>
 
           <nav

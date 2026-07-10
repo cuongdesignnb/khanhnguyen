@@ -14,6 +14,7 @@ import AdminConfirmModal from '@/components/admin/admin-confirm-modal'
 import MediaPicker from '@/components/admin/media-picker'
 import AdminLoading from '@/components/admin/admin-loading'
 import AdminErrorState from '@/components/admin/admin-error-state'
+import RichTextEditor from '@/components/admin/editor/rich-text-editor'
 import { Plus, Pencil, Trash2, Eye, ChevronRight, Save, X, Image as ImageIcon, RefreshCw } from 'lucide-react'
 import type { CategoryItem } from '@/types/admin'
 import type { MediaItem } from '@/types/admin'
@@ -376,17 +377,17 @@ export default function CategoriesPage() {
                 </AdminButton>
               </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-[color:var(--muted)] mb-1.5">
-                Mô tả ngắn
-              </label>
-              <textarea
-                placeholder="Mô tả danh mục..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-[color:var(--text)] placeholder:text-[color:var(--muted)]/50 outline-none focus:border-[color:var(--gold)]/50 resize-none h-20"
-              />
-            </div>
+             <div>
+               <label className="block text-xs font-medium text-[color:var(--muted)] mb-1.5">
+                 Mô tả danh mục
+               </label>
+               <RichTextEditor
+                 value={description}
+                 onChange={setDescription}
+                 placeholder="Mô tả danh mục..."
+                 minHeight={120}
+               />
+             </div>
             <div>
               <label className="block text-xs font-medium text-[color:var(--muted)] mb-1.5">
                 Thứ tự hiển thị

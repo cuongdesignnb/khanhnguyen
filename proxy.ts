@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { headers } from "next/headers"
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (
@@ -28,18 +27,9 @@ export async function middleware(request: NextRequest) {
 
     let session = null
     try {
-      const origin = request.nextUrl.origin
-      const cookie = request.headers.get('cookie') || ''
-      const res = await fetch(`${origin}/api/auth/get-session`, {
-        headers: {
-          cookie,
-        },
-      })
-      if (res.ok) {
-        session = await res.json()
-      }
+      session = await auth.api.getSession({ headers: request.headers })
     } catch (e) {
-      console.error('Middleware session fetch error:', e)
+      console.error('Middleware session check failed:', e instanceof Error ? e.message : 'Unknown error')
     }
 
     if (!session) {

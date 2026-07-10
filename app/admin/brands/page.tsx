@@ -16,6 +16,7 @@ import AdminModal from '@/components/admin/admin-modal'
 import AdminLoading from '@/components/admin/admin-loading'
 import AdminErrorState from '@/components/admin/admin-error-state'
 import { toast } from '@/lib/toast'
+import RichTextEditor from '@/components/admin/editor/rich-text-editor'
 import { Plus, Pencil, Trash2, X, Image as ImageIcon, Save, RefreshCw } from 'lucide-react'
 import type { BrandItem, MediaItem } from '@/types/admin'
 
@@ -292,13 +293,13 @@ export default function BrandsPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-[color:var(--muted)] mb-1.5">
-              Mô tả chi tiết
+              Mô tả thương hiệu
             </label>
-            <textarea
-              placeholder="Mô tả thương hiệu..."
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-[color:var(--text)] placeholder:text-[color:var(--muted)]/50 outline-none focus:border-[color:var(--gold)]/50 resize-none h-24"
+              onChange={setDescription}
+              placeholder="Mô tả thương hiệu..."
+              minHeight={120}
             />
           </div>
           <div>

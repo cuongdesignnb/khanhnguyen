@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import clsx from 'clsx'
 import {
   Phone,
@@ -20,6 +21,8 @@ import {
 import { siteConfig as staticSiteConfig } from '@/data/home'
 import SiteNavigation from '@/components/layout/site-navigation'
 import { PublicSiteConfig, PublicNavigationItem } from '@/types/public'
+import { useSalesContext } from '../sales/sales-provider'
+import { authClient } from '@/lib/auth-client'
 
 interface DesktopHeaderProps {
   siteConfig?: PublicSiteConfig
@@ -29,9 +32,13 @@ interface DesktopHeaderProps {
 
 export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: DesktopHeaderProps) {
   const [scrolled, setScrolled] = useState(false)
-  const config = siteConfig || staticSiteConfig
+  const [mounted, setMounted] = useState(false)
+  const config: PublicSiteConfig = siteConfig || staticSiteConfig
+  const { wishlistCount, compareCount, cartCount } = useSalesContext()
+  const { data: session } = authClient.useSession()
 
   useEffect(() => {
+    setMounted(true)
     const handleScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
@@ -62,11 +69,16 @@ export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: De
   ] as const
 
   const headerActions = [
-    { icon: GitCompare, label: 'So sánh', href: '/so-sanh', badge: null },
-    { icon: Heart, label: 'Yêu thích', href: '/yeu-thich', badge: null },
-    { icon: User, label: 'Tài khoản / Đăng nhập', href: '/tai-khoan', badge: null },
-    { icon: ShoppingCart, label: 'Giỏ hàng', href: '/gio-hang', badge: '0' },
-  ] as const
+    { icon: GitCompare, label: 'So sánh', href: '/so-sanh', badge: mounted && compareCount > 0 ? compareCount.toString() : null },
+    { icon: Heart, label: 'Yêu thích', href: '/yeu-thich', badge: mounted && wishlistCount > 0 ? wishlistCount.toString() : null },
+    {
+      icon: User,
+      label: session?.user ? (session.user.name.split(' ')[0] || 'Tài khoản') : 'Tài khoản / Đăng nhập',
+      href: session?.user ? '/tai-khoan' : '/dang-nhap',
+      badge: null
+    },
+    { icon: ShoppingCart, label: 'Giỏ hàng', href: '/gio-hang', badge: mounted ? cartCount.toString() : '0' },
+  ]
 
   return (
     <header
@@ -135,10 +147,10 @@ export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: De
 
             {/* Wordmark */}
             <Link href="/" aria-label="Trang chủ Khanh Nguyen">
-              <span className="text-xl font-black tracking-tight">
+              {config.logoUrl ? <Image src={config.logoUrl} alt={config.name} width={150} height={44} className="h-9 w-auto object-contain" /> : <span className="text-xl font-black tracking-tight">
                 <span className="text-[color:var(--gold)]">KHANH</span>
                 <span className="text-[color:var(--text)]"> NGUYEN</span>
-              </span>
+              </span>}
             </Link>
 
             {/* Right icons */}
@@ -157,7 +169,7 @@ export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: De
               >
                 <ShoppingCart className="size-5" />
                 <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center size-4 rounded-full bg-[color:var(--gold)] text-[10px] font-bold leading-none text-black">
-                  0
+                  {mounted ? cartCount : 0}
                 </span>
               </Link>
             </div>
@@ -171,10 +183,10 @@ export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: De
               aria-label="Trang chủ Khanh Nguyen"
               className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
             >
-              <span className="block text-2xl font-black tracking-tight leading-tight">
+              {config.logoUrl ? <Image src={config.logoUrl} alt={config.name} width={190} height={54} className="h-11 w-auto object-contain" /> : <span className="block text-2xl font-black tracking-tight leading-tight">
                 <span className="text-[color:var(--gold)]">KHANH</span>
                 <span className="text-[color:var(--text)]"> NGUYEN</span>
-              </span>
+              </span>}
               <span className="block text-xs text-[color:var(--muted)] mt-0.5">
                 {config.tagline}
               </span>

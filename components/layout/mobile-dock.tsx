@@ -1,9 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, MessageCircle, PhoneCall, ShoppingCart } from 'lucide-react'
 import clsx from 'clsx'
 import { siteConfig } from '@/data/home'
+import { useSalesContext } from '../sales/sales-provider'
 
 type MobileDockProps = {
   onMenuOpen: () => void
@@ -21,6 +23,13 @@ type DockItem = {
 )
 
 export default function MobileDock({ onMenuOpen }: MobileDockProps) {
+  const { cartCount } = useSalesContext()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const items: DockItem[] = [
     {
       key: 'call',
@@ -114,9 +123,9 @@ export default function MobileDock({ onMenuOpen }: MobileDockProps) {
               {item.key === 'cart' && (
                 <span
                   className="absolute right-1/2 top-2 -mr-4 flex h-4 min-w-4 items-center justify-center rounded-full bg-[color:var(--gold)] px-1 text-[9px] font-bold text-[color:var(--bg)]"
-                  aria-label="0 sản phẩm trong giỏ hàng"
+                  aria-label={`${mounted ? cartCount : 0} sản phẩm trong giỏ hàng`}
                 >
-                  0
+                  {mounted ? cartCount : 0}
                 </span>
               )}
             </Link>

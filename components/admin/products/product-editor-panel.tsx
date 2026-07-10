@@ -10,6 +10,7 @@ import { adminApi } from '@/lib/admin-api'
 import { toast } from '@/lib/toast'
 import MediaPicker from '../media-picker'
 import type { MediaItem } from '@/types/admin'
+import RichTextEditor from '@/components/admin/editor/rich-text-editor'
 
 interface ProductEditorPanelProps {
   isOpen: boolean
@@ -57,6 +58,7 @@ export default function ProductEditorPanel({
   const [isVisible, setIsVisible] = useState(true)
   const [shortDescription, setShortDescription] = useState('')
   const [description, setDescription] = useState('')
+  const [warrantyPolicy, setWarrantyPolicy] = useState('')
 
   // Specs state
   const [specs, setSpecs] = useState<Array<{ label: string; value: string }>>([])
@@ -91,6 +93,7 @@ export default function ProductEditorPanel({
             setIsVisible(data.status === 'PUBLISHED')
             setShortDescription(data.shortDescription || '')
             setDescription(data.description || '')
+            setWarrantyPolicy(data.warrantyPolicy || '')
             setSeoTitle(data.seoTitle || '')
             setSeoDescription(data.seoDescription || '')
 
@@ -160,6 +163,7 @@ export default function ProductEditorPanel({
         setIsVisible(true)
         setShortDescription('')
         setDescription('')
+        setWarrantyPolicy('')
         setSpecs([
           { label: 'Tải trọng nâng', value: '2.5 tấn' },
           { label: 'Chiều cao nâng', value: '3.0 mét' },
@@ -227,6 +231,7 @@ export default function ProductEditorPanel({
         showOnHome: true,
         shortDescription,
         description,
+        warrantyPolicy: warrantyPolicy || null,
         seoTitle,
         seoDescription,
         specs: specs
@@ -444,11 +449,21 @@ export default function ProductEditorPanel({
 
                   <div>
                     <label className={labelClass}>Mô tả chi tiết</label>
-                    <textarea
-                      className={`${inputClass} resize-none h-28`}
+                    <RichTextEditor
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      onChange={setDescription}
                       placeholder="Mô tả kỹ thuật hoặc tính năng nổi bật..."
+                      minHeight={200}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Chính sách bảo hành</label>
+                    <RichTextEditor
+                      value={warrantyPolicy}
+                      onChange={setWarrantyPolicy}
+                      placeholder="Chính sách bảo hành riêng cho sản phẩm này..."
+                      minHeight={150}
                     />
                   </div>
 

@@ -8,14 +8,16 @@ interface ProductSpecTableProps {
 
 export default function ProductSpecTable({ product }: ProductSpecTableProps) {
   // Build a list of specifications to display
-  const displaySpecs = product.specs.length > 0 ? product.specs : [
+  const displaySpecs = product.specs && product.specs.length > 0 ? product.specs : [
+    ...(product.model ? [{ label: 'Model', value: product.model }] : []),
+    ...(product.brandName ? [{ label: 'Thương hiệu', value: product.brandName }] : []),
     ...(product.capacity ? [{ label: 'Tải trọng nâng', value: product.capacity }] : []),
     ...(product.liftHeight ? [{ label: 'Chiều cao nâng', value: product.liftHeight }] : []),
-    ...(product.fuelType ? [{ label: 'Nhiên liệu', value: product.fuelType }] : []),
+    ...(product.fuelType ? [{ label: 'Nguồn năng lượng', value: product.fuelType }] : []),
     ...(product.manufactureYear ? [{ label: 'Năm sản xuất', value: String(product.manufactureYear) }] : []),
-    ...(product.condition ? [{ label: 'Tình trạng xe', value: product.condition }] : []),
-    ...(product.origin ? [{ label: 'Xuất xứ', value: product.origin }] : []),
     ...(product.forkLength ? [{ label: 'Chiều dài càng nâng', value: product.forkLength }] : []),
+    ...(product.condition ? [{ label: 'Tình trạng', value: product.condition }] : []),
+    ...(product.origin ? [{ label: 'Xuất xứ', value: product.origin }] : []),
   ]
 
   if (displaySpecs.length === 0) {
@@ -27,24 +29,20 @@ export default function ProductSpecTable({ product }: ProductSpecTableProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-white/5 bg-[color:var(--surface)] text-sm">
-      <table className="w-full text-left border-collapse">
-        <tbody className="divide-y divide-white/5">
-          {displaySpecs.map((spec, idx) => (
-            <tr
-              key={idx}
-              className={idx % 2 === 0 ? 'bg-white/[0.01]' : 'bg-transparent'}
-            >
-              <th className="px-4 py-3 font-semibold text-[color:var(--silver)] w-1/3 border-r border-white/5">
-                {spec.label}
-              </th>
-              <td className="px-4 py-3 text-white">
-                {spec.value}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 bg-[color:var(--surface)] text-sm">
+      {displaySpecs.map((spec, idx) => (
+        <div
+          key={idx}
+          className="flex justify-between items-center py-3.5 border-b border-white/5 gap-4"
+        >
+          <span className="font-semibold text-[color:var(--muted)] text-xs uppercase tracking-wide">
+            {spec.label}
+          </span>
+          <span className="text-white font-bold text-right">
+            {spec.value}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }

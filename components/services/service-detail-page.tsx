@@ -6,6 +6,7 @@ import ServiceFAQ from './service-faq'
 import ServiceCTAForm from './service-cta-form'
 import { PublicServiceDetail } from '@/types/public'
 import { Check, ClipboardList } from 'lucide-react'
+import RichContent from '@/components/public/rich-content'
 
 interface ServiceDetailPageProps {
   service: PublicServiceDetail
@@ -28,10 +29,10 @@ export default function ServiceDetailPage({ service }: ServiceDetailPageProps) {
               </p>
             )}
 
-            {/* Content html/markdown mock */}
+            {/* Content rich text area */}
             {service.content && (
-              <div className="text-sm text-[color:var(--silver)] leading-relaxed whitespace-pre-line bg-[color:var(--surface-2)] border border-white/10 rounded-xl p-5 sm:p-6">
-                {service.content}
+              <div className="bg-[color:var(--surface-2)] border border-white/10 rounded-xl p-5 sm:p-6">
+                <RichContent html={service.content} />
               </div>
             )}
 

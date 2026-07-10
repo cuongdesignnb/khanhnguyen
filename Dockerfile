@@ -15,14 +15,13 @@ COPY package.json package-lock.json* ./
 
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-# Stage 2: Install ONLY production dependencies
-FROM base AS prod-deps
+# Stage 2: Prune the already-resolved dependency tree for production.
+# Extending all-deps keeps Docker from running two expensive npm ci jobs in parallel.
+FROM all-deps AS prod-deps
 
 ENV NODE_ENV=production
 
-COPY package.json package-lock.json* ./
-
-RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
+RUN npm prune --omit=dev
 
 # Stage 3: Build the application
 FROM base AS builder
@@ -52,6 +51,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/data ./data
 COPY --from=builder /app/types ./types
+COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/next.config.* ./
 COPY --from=builder /app/tsconfig.json ./tsconfig.json

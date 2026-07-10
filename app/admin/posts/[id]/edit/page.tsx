@@ -1,5 +1,10 @@
-import PostsAdminPage from '@/components/admin/posts/posts-admin-page'
+import { redirect } from 'next/navigation'
 
-export default function EditPostPage() {
-  return <PostsAdminPage />
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function Page({ params }: PageProps) {
+  const { id } = await params
+  redirect(`/admin/tin-tuc/${id}/chinh-sua`)
 }

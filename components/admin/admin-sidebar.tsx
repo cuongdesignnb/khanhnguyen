@@ -19,6 +19,11 @@ import {
   ClipboardList,
   ShoppingCart,
   Settings,
+  MessageSquare,
+  Sparkles,
+  History,
+  Bot,
+  Menu,
 } from 'lucide-react'
 
 const sidebarIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -33,6 +38,11 @@ const sidebarIcons: Record<string, React.ComponentType<{ className?: string }>> 
   ClipboardList,
   ShoppingCart,
   Settings,
+  MessageSquare,
+  Sparkles,
+  History,
+  Bot,
+  Menu,
 }
 
 interface AdminSidebarProps {

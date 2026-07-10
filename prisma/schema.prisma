@@ -13,6 +13,7 @@ enum UserRole {
   ADMIN
   EDITOR
   STAFF
+  CUSTOMER
 }
 
 enum PublishStatus {
@@ -104,26 +105,73 @@ enum BannerPosition {
   FOOTER
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum AiJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum AiPostPublishMode {
+  DRAFT
+  PUBLISH_NOW
+  SCHEDULED
+}
+
+enum AiGeneratedItemStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum MenuLocation {
+  HEADER
+  FOOTER
+  MOBILE
+}
+
+enum MenuItemType {
+  INTERNAL
+  EXTERNAL
+  CATEGORY
+  PRODUCT
+  POST
+  SERVICE
+  CUSTOM
+}
+
 // ─── Better Auth Models ─────────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
-  role          UserRole  @default(STAFF)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          UserRole @default(STAFF)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  sessions      Session[]
-  accounts      Account[]
+  sessions Session[]
+  accounts Account[]
 
-  assignedContacts   Contact[]      @relation("AssignedContacts")
-  assignedQuotes     QuoteRequest[] @relation("AssignedQuotes")
-  assignedOrders     Order[]        @relation("AssignedOrders")
-  timelineEvents     OrderTimelineEvent[]
-  posts              Post[]
+  assignedContacts Contact[]            @relation("AssignedContacts")
+  assignedQuotes   QuoteRequest[]       @relation("AssignedQuotes")
+  assignedOrders   Order[]              @relation("AssignedOrders")
+  timelineEvents   OrderTimelineEvent[]
+  posts            Post[]
+  wishlists        CustomerWishlist[]
+  aiGenerationJobs AiGenerationJob[]
 
   @@map("user")
 }
@@ -138,7 +186,7 @@ model Session {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("session")
 }
@@ -158,7 +206,7 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
@@ -177,32 +225,59 @@ model Verification {
 // ─── Business Models ─────────────────────────────────────────────────────────
 
 model Setting {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  label     String
-  value     String?
-  type      String
-  group     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  group       String
+  key         String
+  value       Json?
+  type        String   @default("json")
+  label       String?
+  description String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([group, key])
+  @@index([group])
+}
+
+model AiSetting {
+  id                    String   @id @default(uuid())
+  provider              String   @default("openai")
+  apiKeyEncrypted       String?
+  apiKeyHint            String?
+  textModel             String   @default("gpt-5.4-mini")
+  imageModel            String   @default("chatgpt-image-2")
+  defaultTone           String?
+  defaultLanguage       String   @default("vi")
+  defaultWordCount      Int      @default(1500)
+  maxBulkItems          Int      @default(10)
+  generateFeaturedImage Boolean  @default(true)
+  generateHeadingImages Boolean  @default(true)
+  maxHeadingImages      Int      @default(3)
+  systemPrompt          String?  @db.Text
+  articlePrompt         String?  @db.Text
+  imagePrompt           String?  @db.Text
+  isEnabled             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model MediaFolder {
-  id        String        @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  slug      String        @unique
+  slug      String    @unique
   parentId  String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  parent    MediaFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
-  children  MediaFolder[] @relation("FolderHierarchy")
-  files     MediaFile[]
+  parent   MediaFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children MediaFolder[] @relation("FolderHierarchy")
+  files    MediaFile[]
 }
 
 model MediaFile {
-  id           String        @id @default(uuid())
+  id           String    @id @default(uuid())
   folderId     String?
   filename     String
   originalName String
@@ -215,88 +290,89 @@ model MediaFile {
   height       Int?
   alt          String?
   title        String?
-  type         MediaType     @default(IMAGE)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  type         MediaType @default(IMAGE)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
 
-  folder       MediaFolder?  @relation(fields: [folderId], references: [id])
+  folder MediaFolder? @relation(fields: [folderId], references: [id])
 
-  categoryBanners Category[]   @relation("CategoryBanner")
-  brandLogos      Brand[]      @relation("BrandLogo")
-  productThumbs   Product[]    @relation("ProductThumb")
-  productOgImages Product[]    @relation("ProductOgImage")
-  productImages   ProductImage[]
-  serviceImages   Service[]
-  postThumbs      Post[]       @relation("PostThumb")
-  postOgImages    Post[]       @relation("PostOgImage")
-  testimonials    Testimonial[]
-  banners         Banner[]
+  categoryBanners     Category[]           @relation("CategoryBanner")
+  brandLogos          Brand[]              @relation("BrandLogo")
+  productThumbs       Product[]            @relation("ProductThumb")
+  productOgImages     Product[]            @relation("ProductOgImage")
+  productImages       ProductImage[]
+  serviceImages       Service[]
+  postThumbs          Post[]               @relation("PostThumb")
+  postOgImages        Post[]               @relation("PostOgImage")
+  testimonials        Testimonial[]
+  banners             Banner[]
+  productReviewImages ProductReviewImage[]
 }
 
 model Category {
-  id             String     @id @default(uuid())
+  id             String    @id @default(uuid())
   parentId       String?
   name           String
-  slug           String     @unique
+  slug           String    @unique
   subtitle       String?
   description    String?
   icon           String?
   bannerImageId  String?
   seoTitle       String?
   seoDescription String?
-  sortOrder      Int        @default(0)
-  isVisible      Boolean    @default(true)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  sortOrder      Int       @default(0)
+  isVisible      Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  parent         Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children       Category[] @relation("CategoryHierarchy")
-  bannerImage    MediaFile? @relation("CategoryBanner", fields: [bannerImageId], references: [id])
-  products       Product[]
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  bannerImage MediaFile? @relation("CategoryBanner", fields: [bannerImageId], references: [id])
+  products    Product[]
 }
 
 model Brand {
-  id             String     @id @default(uuid())
+  id             String    @id @default(uuid())
   name           String
-  slug           String     @unique
+  slug           String    @unique
   logoId         String?
   description    String?
   seoTitle       String?
   seoDescription String?
-  isVisible      Boolean    @default(true)
-  sortOrder      Int        @default(0)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  isVisible      Boolean   @default(true)
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  logo           MediaFile? @relation("BrandLogo", fields: [logoId], references: [id])
-  products       Product[]
+  logo     MediaFile? @relation("BrandLogo", fields: [logoId], references: [id])
+  products Product[]
 }
 
 model Product {
-  id               String         @id @default(uuid())
+  id               String        @id @default(uuid())
   categoryId       String
   brandId          String?
   thumbnailId      String?
   name             String
-  slug             String         @unique
-  sku              String?        @unique
+  slug             String        @unique
+  sku              String?       @unique
   model            String?
   shortDescription String?
   description      String?
   advantages       Json?
   warrantyPolicy   String?
-  price            Decimal?       @db.Decimal(12, 2)
-  priceLabel       String         @default("Liên hệ")
+  price            Decimal?      @db.Decimal(12, 2)
+  priceLabel       String        @default("Liên hệ")
   badge            String?
-  status           ProductStatus  @default(PUBLISHED)
-  stockStatus      StockStatus    @default(IN_STOCK)
-  isFeatured       Boolean        @default(false)
-  showOnHome       Boolean        @default(true)
-  isBestSeller     Boolean        @default(false)
-  sortOrder        Int            @default(0)
+  status           ProductStatus @default(PUBLISHED)
+  stockStatus      StockStatus   @default(IN_STOCK)
+  isFeatured       Boolean       @default(false)
+  showOnHome       Boolean       @default(true)
+  isBestSeller     Boolean       @default(false)
+  sortOrder        Int           @default(0)
   capacity         String?
   liftHeight       String?
   fuelType         String?
@@ -307,31 +383,34 @@ model Product {
   seoTitle         String?
   seoDescription   String?
   ogImageId        String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
   deletedAt        DateTime?
 
-  category        Category       @relation(fields: [categoryId], references: [id])
-  brand           Brand?         @relation(fields: [brandId], references: [id])
-  thumbnail       MediaFile?     @relation("ProductThumb", fields: [thumbnailId], references: [id])
-  ogImage         MediaFile?     @relation("ProductOgImage", fields: [ogImageId], references: [id])
-  images          ProductImage[]
-  specs           ProductSpec[]
-  orderItems      OrderItem[]
-  quoteRequests   QuoteRequest[]
+  category          Category           @relation(fields: [categoryId], references: [id])
+  brand             Brand?             @relation(fields: [brandId], references: [id])
+  thumbnail         MediaFile?         @relation("ProductThumb", fields: [thumbnailId], references: [id])
+  ogImage           MediaFile?         @relation("ProductOgImage", fields: [ogImageId], references: [id])
+  images            ProductImage[]
+  specs             ProductSpec[]
+  orderItems        OrderItem[]
+  quoteRequests     QuoteRequest[]
+  quoteRequestItems QuoteRequestItem[]
+  reviews           ProductReview[]
+  wishlistedBy      CustomerWishlist[]
 }
 
 model ProductImage {
-  id         String   @id @default(uuid())
-  productId  String
-  mediaId    String
-  sortOrder  Int      @default(0)
-  isPrimary  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid())
+  productId String
+  mediaId   String
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  media      MediaFile @relation(fields: [mediaId], references: [id])
+  product Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  media   MediaFile @relation(fields: [mediaId], references: [id])
 }
 
 model ProductSpec {
@@ -343,13 +422,13 @@ model ProductSpec {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Service {
-  id             String       @id @default(uuid())
+  id             String        @id @default(uuid())
   title          String
-  slug           String       @unique
+  slug           String        @unique
   subtitle       String?
   description    String?
   content        String?
@@ -363,13 +442,13 @@ model Service {
   status         PublishStatus @default(PUBLISHED)
   seoTitle       String?
   seoDescription String?
-  sortOrder      Int          @default(0)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
 
-  image          MediaFile?   @relation(fields: [imageId], references: [id])
-  faqs           ServiceFAQ[]
+  image MediaFile?   @relation(fields: [imageId], references: [id])
+  faqs  ServiceFAQ[]
 }
 
 model ServiceFAQ {
@@ -381,7 +460,7 @@ model ServiceFAQ {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
 
 model PostCategory {
@@ -397,7 +476,8 @@ model PostCategory {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  posts          Post[]
+  posts            Post[]
+  aiGenerationJobs AiGenerationJob[]
 }
 
 model Post {
@@ -421,83 +501,151 @@ model Post {
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
 
-  category       PostCategory? @relation(fields: [categoryId], references: [id])
-  author         User?         @relation(fields: [authorId], references: [id])
-  thumbnail      MediaFile?    @relation("PostThumb", fields: [thumbnailId], references: [id])
-  ogImage        MediaFile?    @relation("PostOgImage", fields: [ogImageId], references: [id])
+  category         PostCategory?         @relation(fields: [categoryId], references: [id])
+  author           User?                 @relation(fields: [authorId], references: [id])
+  thumbnail        MediaFile?            @relation("PostThumb", fields: [thumbnailId], references: [id])
+  ogImage          MediaFile?            @relation("PostOgImage", fields: [ogImageId], references: [id])
+  aiGeneratedItems AiGeneratedPostItem[]
+}
+
+model AiGenerationJob {
+  id                    String            @id @default(uuid())
+  code                  String            @unique
+  status                AiJobStatus       @default(PENDING)
+  mode                  String            @default("bulk_posts")
+  publishMode           AiPostPublishMode @default(DRAFT)
+  postCategoryId        String?
+  scheduledStartAt      DateTime?
+  scheduleIntervalMin   Int?
+  totalItems            Int               @default(0)
+  completedItems        Int               @default(0)
+  failedItems           Int               @default(0)
+  textModel             String
+  imageModel            String
+  generateFeaturedImage Boolean           @default(true)
+  generateHeadingImages Boolean           @default(true)
+  maxHeadingImages      Int               @default(3)
+  tone                  String?
+  language              String            @default("vi")
+  wordCount             Int               @default(1500)
+  inputRaw              String?           @db.Text
+  errorMessage          String?           @db.Text
+  startedAt             DateTime?
+  finishedAt            DateTime?
+  createdById           String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  createdBy    User?                 @relation(fields: [createdById], references: [id])
+  postCategory PostCategory?         @relation(fields: [postCategoryId], references: [id])
+  items        AiGeneratedPostItem[]
+}
+
+model AiGeneratedPostItem {
+  id            String                @id @default(uuid())
+  jobId         String
+  keyword       String
+  title         String?
+  slug          String?
+  status        AiGeneratedItemStatus @default(PENDING)
+  postId        String?
+  scheduledAt   DateTime?
+  errorMessage  String?               @db.Text
+  rawAiResponse Json?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  job  AiGenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  post Post?           @relation(fields: [postId], references: [id])
+
+  @@index([jobId, status])
 }
 
 model Contact {
-  id            String        @id @default(uuid())
-  name          String
-  phone         String
-  email         String?
-  company       String?
-  need          String?
-  message       String?
-  status        ContactStatus @default(NEW)
-  internalNote  String?
-  assignedToId  String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  deletedAt     DateTime?
+  id           String        @id @default(uuid())
+  name         String
+  phone        String
+  email        String?
+  company      String?
+  need         String?
+  message      String?
+  status       ContactStatus @default(NEW)
+  internalNote String?
+  assignedToId String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
 
-  assignedTo    User?         @relation("AssignedContacts", fields: [assignedToId], references: [id])
+  assignedTo User? @relation("AssignedContacts", fields: [assignedToId], references: [id])
 }
 
 model QuoteRequest {
-  id            String        @id @default(uuid())
-  code          String        @unique
-  name          String
-  phone         String
-  email         String?
-  company       String?
-  productId     String?
-  productName   String?
-  quantity      Int?          @default(1)
-  budget        String?
-  message       String?
-  status        QuoteStatus   @default(NEW)
-  internalNote  String?
-  assignedToId  String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  deletedAt     DateTime?
+  id           String      @id @default(uuid())
+  code         String      @unique
+  name         String
+  phone        String
+  email        String?
+  company      String?
+  productId    String?
+  productName  String?
+  quantity     Int?        @default(1)
+  budget       String?
+  message      String?
+  status       QuoteStatus @default(NEW)
+  internalNote String?
+  assignedToId String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
 
-  product       Product?      @relation(fields: [productId], references: [id])
-  assignedTo    User?         @relation("AssignedQuotes", fields: [assignedToId], references: [id])
+  product    Product?           @relation(fields: [productId], references: [id])
+  assignedTo User?              @relation("AssignedQuotes", fields: [assignedToId], references: [id])
+  items      QuoteRequestItem[]
+}
+
+model QuoteRequestItem {
+  id             String   @id @default(uuid())
+  quoteRequestId String
+  productId      String?
+  productName    String
+  quantity       Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  quoteRequest QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id])
 }
 
 model Order {
-  id                 String               @id @default(uuid())
-  code               String               @unique
+  id                 String         @id @default(uuid())
+  code               String         @unique
   customerName       String
   company            String?
   phone              String
   email              String?
   address            String?
-  totalAmount        Decimal              @db.Decimal(12, 2)
-  depositAmount      Decimal              @db.Decimal(12, 2) @default(0)
-  remainingAmount    Decimal              @db.Decimal(12, 2)
-  discountAmount     Decimal              @db.Decimal(12, 2) @default(0)
-  shippingFee        Decimal              @db.Decimal(12, 2) @default(0)
-  orderStatus        OrderStatus          @default(PENDING)
-  paymentStatus      PaymentStatus        @default(UNPAID)
-  source             OrderSource          @default(WEBSITE)
-  deliveryMethod     DeliveryMethod       @default(DELIVERY)
+  totalAmount        Decimal        @db.Decimal(12, 2)
+  depositAmount      Decimal        @default(0) @db.Decimal(12, 2)
+  remainingAmount    Decimal        @db.Decimal(12, 2)
+  discountAmount     Decimal        @default(0) @db.Decimal(12, 2)
+  shippingFee        Decimal        @default(0) @db.Decimal(12, 2)
+  orderStatus        OrderStatus    @default(PENDING)
+  paymentStatus      PaymentStatus  @default(UNPAID)
+  source             OrderSource    @default(WEBSITE)
+  deliveryMethod     DeliveryMethod @default(DELIVERY)
   paymentMethod      PaymentMethod?
   assignedToId       String?
   note               String?
   internalNote       String?
   expectedDeliveryAt DateTime?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   deletedAt          DateTime?
 
-  assignedTo         User?                @relation("AssignedOrders", fields: [assignedToId], references: [id])
-  items              OrderItem[]
-  payments           OrderPayment[]
-  timeline           OrderTimelineEvent[]
+  assignedTo User?                @relation("AssignedOrders", fields: [assignedToId], references: [id])
+  items      OrderItem[]
+  payments   OrderPayment[]
+  timeline   OrderTimelineEvent[]
 }
 
 model OrderItem {
@@ -514,8 +662,8 @@ model OrderItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product? @relation(fields: [productId], references: [id])
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
 }
 
 model OrderTimelineEvent {
@@ -527,8 +675,8 @@ model OrderTimelineEvent {
   createdById String?
   createdAt   DateTime @default(now())
 
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  createdBy   User?    @relation(fields: [createdById], references: [id])
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdBy User? @relation(fields: [createdById], references: [id])
 }
 
 model OrderPayment {
@@ -543,7 +691,7 @@ model OrderPayment {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model Testimonial {
@@ -559,35 +707,100 @@ model Testimonial {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  image     MediaFile? @relation(fields: [imageId], references: [id])
+  image MediaFile? @relation(fields: [imageId], references: [id])
 }
 
 model Banner {
-  id           String         @id @default(uuid())
-  title        String
-  subtitle     String?
-  imageId      String?
-  href         String?
-  buttonText   String?
-  position     BannerPosition @default(HOME_HERO)
-  isVisible    Boolean        @default(true)
-  sortOrder    Int            @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  deletedAt    DateTime?
+  id         String         @id @default(uuid())
+  title      String
+  subtitle   String?
+  imageId    String?
+  href       String?
+  buttonText String?
+  position   BannerPosition @default(HOME_HERO)
+  isVisible  Boolean        @default(true)
+  sortOrder  Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  deletedAt  DateTime?
 
-  image        MediaFile?     @relation(fields: [imageId], references: [id])
+  image MediaFile? @relation(fields: [imageId], references: [id])
 }
 
 model Menu {
-  id        String    @id @default(uuid())
-  label     String
-  href      String
+  id          String       @id @default(uuid())
+  name        String
+  slug        String       @unique
+  location    MenuLocation
+  description String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  items MenuItem[]
+}
+
+model MenuItem {
+  id        String       @id @default(uuid())
+  menuId    String
   parentId  String?
-  group     String
-  sortOrder Int       @default(0)
-  isVisible Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  label     String
+  url       String
+  type      MenuItemType @default(INTERNAL)
+  target    String       @default("_self")
+  icon      String?
+  badge     String?
+  isActive  Boolean      @default(true)
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  menu     Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent   MenuItem?  @relation("MenuItemChildren", fields: [parentId], references: [id])
+  children MenuItem[] @relation("MenuItemChildren")
+
+  @@index([menuId])
+  @@index([parentId])
+  @@index([sortOrder])
+}
+
+model ProductReview {
+  id         String       @id @default(uuid())
+  productId  String
+  name       String
+  phone      String
+  rating     Int          @default(5)
+  content    String
+  status     ReviewStatus @default(PENDING)
+  adminNote  String?
+  approvedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  deletedAt  DateTime?
+
+  product Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images  ProductReviewImage[]
+}
+
+model ProductReviewImage {
+  id        String   @id @default(uuid())
+  reviewId  String
+  mediaId   String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  review ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  media  MediaFile     @relation(fields: [mediaId], references: [id])
+}
+
+model CustomerWishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
 }

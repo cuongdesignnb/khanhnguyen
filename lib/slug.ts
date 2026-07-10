@@ -1,14 +1,20 @@
 import slugify from 'slugify'
 
-export function toSlug(input: string): string {
+export function toVietnameseSlug(input: string): string {
   if (!input) return ''
-  return slugify(input, {
-    replacement: '-',
-    remove: /[*+~.()'"!:@]/g,
-    lower: true,
-    locale: 'vi',
-    trim: true,
-  })
+  return input
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export function toSlug(input: string): string {
+  return toVietnameseSlug(input)
 }
 
 export async function generateUniqueSlug(

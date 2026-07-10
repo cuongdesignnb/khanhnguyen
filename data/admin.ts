@@ -22,12 +22,18 @@ export const adminMenuItems: AdminMenuItem[] = [
   { label: 'Danh mục', href: '/admin/categories', icon: 'Folder' },
   { label: 'Thương hiệu', href: '/admin/brands', icon: 'ShieldCheck' },
   { label: 'Dịch vụ', href: '/admin/services', icon: 'Wrench' },
-  { label: 'Tin tức', href: '/admin/posts', icon: 'Newspaper' },
+  { label: 'Tin tức', href: '/admin/tin-tuc', icon: 'Newspaper' },
+  { label: 'Viết bài bằng AI', href: '/admin/tin-tuc/ai', icon: 'Sparkles' },
+  { label: 'Sinh bài hàng loạt', href: '/admin/tin-tuc/ai/hang-loat', icon: 'Sparkles' },
+  { label: 'Lịch sử AI', href: '/admin/tin-tuc/ai/lich-su', icon: 'History' },
   { label: 'Media Library', href: '/admin/media', icon: 'Image' },
   { label: 'Liên hệ', href: '/admin/contacts', icon: 'Phone' },
   { label: 'Báo giá', href: '/admin/quote-requests', icon: 'ClipboardList' },
   { label: 'Đơn hàng', href: '/admin/orders', icon: 'ShoppingCart' },
-  { label: 'Cài đặt website', href: '/admin/settings', icon: 'Settings' },
+  { label: 'Đánh giá sản phẩm', href: '/admin/danh-gia-san-pham', icon: 'MessageSquare' },
+  { label: 'Cài đặt website', href: '/admin/cai-dat', icon: 'Settings' },
+  { label: 'Quản lý Menu', href: '/admin/menu', icon: 'Menu' },
+  { label: 'Cài đặt AI', href: '/admin/cai-dat/ai', icon: 'Bot' },
 ]
 
 // ─── Dashboard Stats ─────────────────────────────────────────────────────────
@@ -39,6 +45,8 @@ export const adminStats: AdminStat[] = [
   { label: 'Liên hệ mới', value: 23, change: 21.1, icon: 'Phone' },
   { label: 'Báo giá mới', value: 17, change: 30.8, icon: 'ClipboardList' },
   { label: 'Đơn hàng mới', value: 12, change: 9.4, icon: 'ShoppingCart' },
+  { label: 'Đánh giá chờ duyệt', value: 3, change: 0, icon: 'MessageSquare' },
+  { label: 'Đánh giá đã duyệt', value: 12, change: 0, icon: 'MessageSquare' },
 ]
 
 // ─── Order Stats ─────────────────────────────────────────────────────────────

@@ -1,16 +1,16 @@
 import PublicPageShell from '@/components/public/public-page-shell'
-import ComingSoonPage from '@/components/public/coming-soon-page'
+import OrderLookupPage from '@/components/sales/order-lookup-page'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Kiểm tra đơn hàng | Khanh Nguyên Forklift',
-  description: 'Tra cứu thông tin, tiến độ giao hàng xe nâng của bạn nhanh chóng và chính xác.',
+  description: 'Tra cứu tiến độ thực hiện đơn hàng xe nâng và yêu cầu báo giá của bạn.',
 }
 
 export default function Page() {
   return (
     <PublicPageShell>
-      <ComingSoonPage title="Kiểm tra đơn hàng" subtitle="Tra cứu tiến độ đơn hàng xe nâng" />
+      <OrderLookupPage />
     </PublicPageShell>
   )
 }
