@@ -1,10 +1,45 @@
 'use client'
 
 import { useLocalStorage } from './use-local-storage'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
+import { authClient } from '@/lib/auth-client'
 
 export function useWishlist() {
   const [wishlist, setWishlist] = useLocalStorage<string[]>('kn_wishlist', [])
+  const { data: session } = authClient.useSession()
+
+  // Sync with DB on mount / session change if logged in
+  useEffect(() => {
+    if (!session?.user) return
+
+    let active = true
+
+    async function sync() {
+      try {
+        const response = await fetch('/api/customer/wishlist', {
+          credentials: 'include',
+          headers: { Accept: 'application/json' },
+        })
+        if (response.ok && active) {
+          const result = await response.json()
+          if (result.success && Array.isArray(result.data)) {
+            const dbIds = result.data.map((item: any) => item.productId)
+            const mismatch = dbIds.length !== wishlist.length || dbIds.some((id: string) => !wishlist.includes(id))
+            if (mismatch) {
+              setWishlist(dbIds)
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore
+      }
+    }
+    sync()
+
+    return () => {
+      active = false
+    }
+  }, [session, setWishlist])
 
   const add = useCallback(
     (id: string) => {

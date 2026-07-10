@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Heart } from 'lucide-react'
+import { useSalesContext } from '@/components/sales/sales-provider'
+import { toast } from '@/components/sales/toast-notification'
 
 export default function WishlistButton({
   productId,
@@ -15,32 +17,9 @@ export default function WishlistButton({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [active, setActive] = useState(initialActive)
+  const { wishlist, addToWishlist, removeFromWishlist } = useSalesContext()
+  const active = wishlist.includes(productId)
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    async function checkStatus() {
-      try {
-        const response = await fetch('/api/customer/wishlist', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-          },
-        })
-        if (response.ok) {
-          const result = await response.json()
-          if (result.success && Array.isArray(result.data)) {
-            const isWishlisted = result.data.some((item: any) => item.productId === productId)
-            setActive(isWishlisted)
-          }
-        }
-      } catch (e) {
-        // Ignore
-      }
-    }
-    checkStatus()
-  }, [productId])
 
   async function toggleWishlist() {
     if (loading) return
@@ -72,7 +51,13 @@ export default function WishlistButton({
         throw new Error(result?.error || 'Không thể cập nhật yêu thích')
       }
 
-      setActive(!active)
+      if (active) {
+        removeFromWishlist(productId)
+        toast('Đã xóa sản phẩm khỏi yêu thích', 'info')
+      } else {
+        addToWishlist(productId)
+        toast('Đã thêm sản phẩm vào yêu thích')
+      }
       router.refresh()
     } catch (error: any) {
       alert(error?.message || 'Không thể cập nhật yêu thích')

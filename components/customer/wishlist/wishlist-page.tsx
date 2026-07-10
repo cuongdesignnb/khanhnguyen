@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProductCard } from '@/components/ui/product-card'
+import { useSalesContext } from '@/components/sales/sales-provider'
 
 type WishlistItem = {
   id: string
@@ -26,6 +27,7 @@ type WishlistItem = {
 
 export default function WishlistPage() {
   const router = useRouter()
+  const { removeFromWishlist } = useSalesContext()
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -84,6 +86,7 @@ export default function WishlistPage() {
         throw new Error(result?.error || 'Không thể xóa sản phẩm khỏi yêu thích')
       }
 
+      removeFromWishlist(productId)
       await loadWishlist()
     } catch (error: any) {
       alert(error?.message || 'Không thể xóa sản phẩm khỏi yêu thích')

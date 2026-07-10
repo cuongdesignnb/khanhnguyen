@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Heart } from 'lucide-react'
 import clsx from 'clsx'
+import { useSalesContext } from './sales-provider'
 import { toast } from './toast-notification'
 
 interface WishlistButtonProps {
@@ -21,32 +22,9 @@ export default function WishlistButton({
 }: WishlistButtonProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const [active, setActive] = useState(false)
+  const { wishlist, addToWishlist, removeFromWishlist } = useSalesContext()
+  const active = wishlist.includes(productId)
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    async function checkStatus() {
-      try {
-        const response = await fetch('/api/customer/wishlist', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-          },
-        })
-        if (response.ok) {
-          const result = await response.json()
-          if (result.success && Array.isArray(result.data)) {
-            const isWishlisted = result.data.some((item: any) => item.productId === productId)
-            setActive(isWishlisted)
-          }
-        }
-      } catch (e) {
-        // Ignore
-      }
-    }
-    checkStatus()
-  }, [productId])
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -81,11 +59,12 @@ export default function WishlistButton({
         throw new Error(result?.error || 'Không thể cập nhật yêu thích')
       }
 
-      setActive(!active)
-      if (!active) {
-        toast(`Đã thêm "${productName}" vào yêu thích`)
-      } else {
+      if (active) {
+        removeFromWishlist(productId)
         toast(`Đã xóa "${productName}" khỏi yêu thích`, 'info')
+      } else {
+        addToWishlist(productId)
+        toast(`Đã thêm "${productName}" vào yêu thích`)
       }
       router.refresh()
     } catch (error: any) {
