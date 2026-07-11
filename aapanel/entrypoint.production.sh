@@ -3,6 +3,9 @@ set -eu
 
 echo "Starting Khanh Nguyen production container..."
 
+echo "Generating Prisma client..."
+npx prisma generate
+
 if [ "${RUN_DB_PUSH:-true}" = "true" ]; then
   echo "Synchronizing Prisma schema..."
   npx prisma db push --skip-generate

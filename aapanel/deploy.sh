@@ -9,7 +9,7 @@ if [ ! -f .env.production ]; then
   exit 1
 fi
 
-if grep -q 'CHANGE_ME' .env.production; then
+if grep -v '^[[:space:]]*#' .env.production | grep -q 'CHANGE_ME'; then
   echo "Replace every CHANGE_ME value in .env.production before deploying."
   exit 1
 fi
