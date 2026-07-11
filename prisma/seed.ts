@@ -5,6 +5,7 @@ import * as adminData from '../data/admin'
 import { toVietnameseSlug } from '../lib/slug'
 import { defaultSettings, settingGroupMap } from '../data/default-settings'
 import { defaultFooterMenu, defaultHeaderMenu, defaultMobileMenu, type DefaultMenuItem } from '../data/default-menus'
+import { defaultPages } from '../data/default-pages'
 
 const prisma = new PrismaClient() as any
 
@@ -83,6 +84,9 @@ async function main() {
         type: 'json', isPublic: group !== 'integrations.tracking',
       },
     })
+  }
+  for (const [pageKey, name] of defaultPages) {
+    await prisma.pageConfiguration.upsert({ where: { pageKey }, update: {}, create: { pageKey, name, isActive: true } })
   }
 
   // 3. Seed Categories

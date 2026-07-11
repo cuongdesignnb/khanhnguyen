@@ -17,6 +17,7 @@ import AdminLoading from '@/components/admin/admin-loading'
 import AdminErrorState from '@/components/admin/admin-error-state'
 import { toast } from '@/lib/toast'
 import RichTextEditor from '@/components/admin/editor/rich-text-editor'
+import SeoFormSection from '@/components/admin/seo/seo-form-section'
 import { Plus, Pencil, Trash2, X, Image as ImageIcon, Save, RefreshCw } from 'lucide-react'
 import type { BrandItem, MediaItem } from '@/types/admin'
 
@@ -33,6 +34,15 @@ export default function BrandsPage() {
   const [sortOrder, setSortOrder] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
   const [logoMedia, setLogoMedia] = useState<MediaItem | null>(null)
+  const [seoTitle, setSeoTitle] = useState('')
+  const [seoDescription, setSeoDescription] = useState('')
+  const [canonicalUrl, setCanonicalUrl] = useState('')
+  const [ogTitle, setOgTitle] = useState('')
+  const [ogDescription, setOgDescription] = useState('')
+  const [ogImageId, setOgImageId] = useState<string | null>(null)
+  const [ogImageUrl, setOgImageUrl] = useState<string | null>(null)
+  const [robotsIndex, setRobotsIndex] = useState(true)
+  const [robotsFollow, setRobotsFollow] = useState(true)
 
   const {
     items: brands,
@@ -69,6 +79,7 @@ export default function BrandsPage() {
             : null
         )
         setIsFormOpen(true)
+        adminApi.getBrandById(editingId).then((data: any) => { setSeoTitle(data.seoTitle || ''); setSeoDescription(data.seoDescription || ''); setCanonicalUrl(data.canonicalUrl || ''); setOgTitle(data.ogTitle || ''); setOgDescription(data.ogDescription || ''); setOgImageId(data.ogImageId || null); setOgImageUrl(data.ogImage?.url || null); setRobotsIndex(data.robotsIndex ?? true); setRobotsFollow(data.robotsFollow ?? true) }).catch(() => undefined)
       }
     } else {
       resetForm()
@@ -82,6 +93,7 @@ export default function BrandsPage() {
     setSortOrder(0)
     setIsVisible(true)
     setLogoMedia(null)
+    setSeoTitle(''); setSeoDescription(''); setCanonicalUrl(''); setOgTitle(''); setOgDescription(''); setOgImageId(null); setOgImageUrl(null); setRobotsIndex(true); setRobotsFollow(true)
   }
 
   const { mutate: saveBrand, loading: saving } = useAdminMutation(
@@ -93,6 +105,8 @@ export default function BrandsPage() {
         description,
         sortOrder: Number(sortOrder),
         isVisible,
+        seoTitle: seoTitle || null, seoDescription: seoDescription || null, canonicalUrl: canonicalUrl || null,
+        ogTitle: ogTitle || null, ogDescription: ogDescription || null, ogImageId, robotsIndex, robotsFollow,
       }
 
       if (editingId) {
@@ -313,6 +327,7 @@ export default function BrandsPage() {
               className="w-full bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-[color:var(--text)] outline-none focus:border-[color:var(--gold)]/50"
             />
           </div>
+          <SeoFormSection path={`/thuong-hieu/${slug || 'slug-thuong-hieu'}`} value={{ seoTitle, seoDescription, canonicalUrl, ogTitle, ogDescription, ogImageId, ogImageUrl, robotsIndex, robotsFollow }} onChange={(seo) => { setSeoTitle(seo.seoTitle); setSeoDescription(seo.seoDescription); setCanonicalUrl(seo.canonicalUrl); setOgTitle(seo.ogTitle); setOgDescription(seo.ogDescription); setOgImageId(seo.ogImageId); setOgImageUrl(seo.ogImageUrl || null); setRobotsIndex(seo.robotsIndex); setRobotsFollow(seo.robotsFollow) }} />
           <div className="flex items-center justify-between">
             <span className="text-sm text-[color:var(--silver)]">Hiển thị thương hiệu</span>
             <button

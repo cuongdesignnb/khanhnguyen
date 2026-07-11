@@ -1,0 +1,55 @@
+FROM node:24-bookworm-slim AS base
+
+WORKDIR /app
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+FROM base AS dependencies
+ENV NODE_ENV=development
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM dependencies AS production-dependencies
+ENV NODE_ENV=production
+RUN npm prune --omit=dev
+
+FROM base AS builder
+ARG NEXT_PUBLIC_SITE_URL=https://xenangkhanhnguyen.com
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+FROM base AS runner
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
+COPY --from=builder --chown=node:node /app/package.json ./package.json
+COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/.next ./.next
+COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/prisma ./prisma
+COPY --from=builder --chown=node:node /app/data ./data
+COPY --from=builder --chown=node:node /app/types ./types
+COPY --from=builder --chown=node:node /app/lib ./lib
+COPY --from=builder --chown=node:node /app/scripts ./scripts
+COPY --from=builder --chown=node:node /app/next.config.* ./
+COPY --from=builder --chown=node:node /app/tsconfig.json ./tsconfig.json
+COPY --chown=node:node aapanel/entrypoint.production.sh /app/entrypoint.production.sh
+
+RUN mkdir -p /app/public/uploads \
+  && chown -R node:node /app/public/uploads \
+  && chmod +x /app/entrypoint.production.sh
+
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+
+ENTRYPOINT ["/app/entrypoint.production.sh"]

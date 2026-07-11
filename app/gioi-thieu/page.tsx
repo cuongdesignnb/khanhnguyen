@@ -2,16 +2,20 @@ import PublicPageShell from '@/components/public/public-page-shell'
 import PageHero from '@/components/public/page-hero'
 import Breadcrumb from '@/components/public/breadcrumb'
 import { Award, Users, CheckCircle, Clock } from 'lucide-react'
-import type { Metadata } from 'next'
+import JsonLd from '@/components/seo/json-ld'
+import { buildPageMetadata } from '@/lib/seo/metadata'
+import { getSeoConfig } from '@/lib/seo/config'
+import { buildAboutPageSchema, buildOrganizationSchema, buildBreadcrumbSchema } from '@/lib/seo/schemas'
 
-export const metadata: Metadata = {
-  title: 'Giới thiệu | Khanh Nguyên Forklift',
-  description: 'Tìm hiểu về Khanh Nguyên Forklift - Đơn vị nhập khẩu mua bán xe nâng Nhật bãi chính hãng uy tín hàng đầu tại TP.HCM và toàn quốc.',
-}
+export const generateMetadata = () => buildPageMetadata({ title: 'Giới thiệu', description: 'Tìm hiểu về doanh nghiệp, kinh nghiệm và cam kết chất lượng của chúng tôi.', canonicalPath: '/gioi-thieu' })
 
-export default function Page() {
+export default async function Page() {
+  const config = await getSeoConfig()
+  const url = `${config.siteUrl}/gioi-thieu`
+  const schemas = [buildAboutPageSchema({ name: 'Giới thiệu', description: config.organization.description, url, siteUrl: config.siteUrl }), buildOrganizationSchema(config), buildBreadcrumbSchema([{ label: 'Trang chủ', url: config.siteUrl }, { label: 'Giới thiệu', url }])]
   return (
     <PublicPageShell>
+      <JsonLd data={schemas} />
       <div className="bg-[color:var(--surface)] min-h-screen text-white pb-16">
         <PageHero title="GIỚI THIỆU KHANH NGUYÊN" subtitle="Uy tín – Chất lượng – Tạo niềm tin" />
         <Breadcrumb items={[{ label: 'Giới thiệu' }]} />

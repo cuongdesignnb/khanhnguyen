@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma'
 import * as api from '@/lib/api-response'
 import { postSchema } from '@/lib/validators/post'
 import { generateUniqueSlug } from '@/lib/slug'
+import { recordSeoRedirect } from '@/lib/seo/redirects'
+import { revalidatePath } from 'next/cache'
 
 export async function GET(
   request: NextRequest,
@@ -80,10 +82,17 @@ export async function PATCH(
         seoTitle: parsed.data.seoTitle !== undefined ? parsed.data.seoTitle : undefined,
         seoDescription: parsed.data.seoDescription !== undefined ? parsed.data.seoDescription : undefined,
         ogImageId: parsed.data.ogImageId !== undefined ? parsed.data.ogImageId : undefined,
+        canonicalUrl: parsed.data.canonicalUrl !== undefined ? parsed.data.canonicalUrl : undefined,
+        ogTitle: parsed.data.ogTitle !== undefined ? parsed.data.ogTitle : undefined,
+        ogDescription: parsed.data.ogDescription !== undefined ? parsed.data.ogDescription : undefined,
+        robotsIndex: parsed.data.robotsIndex,
+        robotsFollow: parsed.data.robotsFollow,
         isFeatured: parsed.data.isFeatured,
       },
       include: { category: true, thumbnail: true }
     })
+    if (slug !== existing.slug) await recordSeoRedirect(`/tin-tuc/${existing.slug}`, `/tin-tuc/${slug}`)
+    revalidatePath('/'); revalidatePath('/tin-tuc'); revalidatePath(`/tin-tuc/${slug}`); revalidatePath('/sitemap.xml')
 
     return api.ok(updated, 'Cập nhật bài viết thành công')
   } catch (error: any) {

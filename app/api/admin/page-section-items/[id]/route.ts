@@ -1,0 +1,3 @@
+import{NextRequest}from'next/server';import prisma from'@/lib/prisma';import{requireSettingsAdmin}from'@/lib/site-config/admin'
+export async function PATCH(r:NextRequest,{params}:{params:Promise<{id:string}>}){const denied=await requireSettingsAdmin(r);if(denied)return denied;const{id}=await params;const b=await r.json();delete b.id;delete b.section;delete b.image;return Response.json({success:true,data:await prisma.pageSectionItem.update({where:{id},data:b})})}
+export async function DELETE(r:NextRequest,{params}:{params:Promise<{id:string}>}){const denied=await requireSettingsAdmin(r);if(denied)return denied;const{id}=await params;await prisma.pageSectionItem.delete({where:{id}});return Response.json({success:true})}

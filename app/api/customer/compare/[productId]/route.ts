@@ -1,0 +1,2 @@
+import {NextRequest,NextResponse} from 'next/server';import prisma from '@/lib/prisma';import {requireCustomerSession} from '@/lib/customer-auth'
+export async function DELETE(r:NextRequest,{params}:{params:Promise<{productId:string}>}){const a=await requireCustomerSession(r);if(a.response)return a.response;const {productId}=await params;await prisma.customerCompareItem.deleteMany({where:{userId:a.session!.user.id,productId}});return NextResponse.json({success:true})}

@@ -16,6 +16,10 @@
     "docker:down": "docker compose --env-file .env.docker down",
     "docker:logs": "docker compose --env-file .env.docker logs -f app",
     "docker:ps": "docker compose --env-file .env.docker ps"
+    ,"audit:hardcode": "tsx scripts/audit-hardcoded-content.ts"
+    ,"check:mojibake": "tsx scripts/check-mojibake.ts"
+    ,"audit:admin-media": "tsx scripts/audit-admin-media-fields.ts"
+    ,"audit:admin-colors": "tsx scripts/audit-admin-color-fields.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

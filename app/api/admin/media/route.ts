@@ -12,8 +12,11 @@ export async function GET(request: NextRequest) {
     const folderId = searchParams.get('folderId')
     const type = searchParams.get('type')
     const format = searchParams.get('format')
+    const ids = searchParams.get('ids')?.split(',').filter(Boolean) || []
 
     const where: any = { deletedAt: null }
+
+    if (ids.length) where.id = { in: ids }
 
     if (q) {
       where.OR = [

@@ -7,6 +7,7 @@ import AdminButton from '@/components/admin/admin-button'
 import { adminApi } from '@/lib/admin-api'
 import MediaPicker from '@/components/admin/media-picker'
 import RichTextEditor from '@/components/admin/editor/rich-text-editor'
+import SeoFormSection from '@/components/admin/seo/seo-form-section'
 import { toast } from '@/lib/toast'
 import {
   Save,
@@ -61,6 +62,13 @@ export default function PostEditorPage({ mode, postId }: PostEditorPageProps) {
   const [thumbnailMedia, setThumbnailMedia] = useState<MediaItem | null>(null)
   const [seoTitle, setSeoTitle] = useState('')
   const [seoDescription, setSeoDescription] = useState('')
+  const [canonicalUrl, setCanonicalUrl] = useState('')
+  const [ogTitle, setOgTitle] = useState('')
+  const [ogDescription, setOgDescription] = useState('')
+  const [ogImageId, setOgImageId] = useState<string | null>(null)
+  const [ogImageUrl, setOgImageUrl] = useState<string | null>(null)
+  const [robotsIndex, setRobotsIndex] = useState(true)
+  const [robotsFollow, setRobotsFollow] = useState(true)
   
   // App states
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
@@ -92,6 +100,13 @@ export default function PostEditorPage({ mode, postId }: PostEditorPageProps) {
           setContent(res.content || '')
           setSeoTitle(res.seoTitle || '')
           setSeoDescription(res.seoDescription || '')
+          setCanonicalUrl(res.canonicalUrl || '')
+          setOgTitle(res.ogTitle || '')
+          setOgDescription(res.ogDescription || '')
+          setOgImageId(res.ogImageId || null)
+          setOgImageUrl(res.ogImage?.url || null)
+          setRobotsIndex(res.robotsIndex ?? true)
+          setRobotsFollow(res.robotsFollow ?? true)
           if (res.thumbnail) {
             setThumbnailMedia({
               id: res.thumbnail.id,
@@ -175,6 +190,12 @@ export default function PostEditorPage({ mode, postId }: PostEditorPageProps) {
       thumbnailId: thumbnailMedia?.id || null,
       seoTitle: seoTitle.trim(),
       seoDescription: seoDescription.trim(),
+      canonicalUrl: canonicalUrl.trim() || null,
+      ogTitle: ogTitle.trim() || null,
+      ogDescription: ogDescription.trim() || null,
+      ogImageId,
+      robotsIndex,
+      robotsFollow,
     }
 
     try {
@@ -475,36 +496,7 @@ export default function PostEditorPage({ mode, postId }: PostEditorPageProps) {
             </div>
           </div>
 
-          {/* Card: SEO Metadata */}
-          <div className="rounded-2xl border border-white/10 bg-[color:var(--surface-2)] p-5 space-y-4">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-              <Globe size={16} className="text-[color:var(--gold)]" />
-              <h3 className="text-sm font-bold text-white">SEO & Meta</h3>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className={labelClass}>SEO Title</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={seoTitle}
-                  onChange={(e) => setSeoTitle(e.target.value)}
-                  placeholder="Tiêu đề hiển thị Google..."
-                />
-              </div>
-
-              <div>
-                <label className={labelClass}>SEO Description</label>
-                <textarea
-                  value={seoDescription}
-                  onChange={(e) => setSeoDescription(e.target.value)}
-                  placeholder="Mô tả hiển thị Google..."
-                  className="w-full bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-[color:var(--text)] placeholder:text-[color:var(--muted)]/50 outline-none focus:border-[color:var(--gold)]/50 resize-none h-20"
-                />
-              </div>
-            </div>
-          </div>
+          <SeoFormSection path={`/tin-tuc/${slug || 'slug-bai-viet'}`} value={{ seoTitle, seoDescription, canonicalUrl, ogTitle, ogDescription, ogImageId, ogImageUrl, robotsIndex, robotsFollow }} onChange={(seo) => { setSeoTitle(seo.seoTitle); setSeoDescription(seo.seoDescription); setCanonicalUrl(seo.canonicalUrl); setOgTitle(seo.ogTitle); setOgDescription(seo.ogDescription); setOgImageId(seo.ogImageId); setOgImageUrl(seo.ogImageUrl || null); setRobotsIndex(seo.robotsIndex); setRobotsFollow(seo.robotsFollow) }} />
         </aside>
       </div>
 

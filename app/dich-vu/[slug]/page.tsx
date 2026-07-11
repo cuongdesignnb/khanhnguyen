@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation'
 import PublicPageShell from '@/components/public/public-page-shell'
 import ServiceDetailPage from '@/components/services/service-detail-page'
 import JsonLd from '@/components/seo/json-ld'
-import { faqSchema, breadcrumbSchema } from '@/lib/schema'
-import { getSiteUrl } from '@/lib/site-url'
+import { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from '@/lib/seo/schemas'
+import { buildServiceMetadata } from '@/lib/seo/metadata'
+import { getSeoConfig } from '@/lib/seo/config'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -17,13 +18,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!service) {
     return { title: 'Không tìm thấy dịch vụ' }
   }
-  return {
-    title: `${service.title} | Khanh Nguyên Forklift`,
-    description: service.seoDescription || service.description || `${service.title} chuyên nghiệp, uy tín tại TP.HCM và các tỉnh lân cận. Hỗ trợ tận tâm 24/7.`,
-    alternates: {
-      canonical: `/dich-vu/${service.slug}`,
-    },
-  }
+  return buildServiceMetadata({ title: service.seoTitle || service.title, description: service.seoDescription || service.description,
+    canonicalPath: `/dich-vu/${service.slug}`, canonicalUrl: service.canonicalUrl, ogTitle: service.ogTitle,
+    ogDescription: service.ogDescription, ogImage: service.ogImage || service.image, robotsIndex: service.robotsIndex, robotsFollow: service.robotsFollow })
 }
 
 export default async function Page({ params }: PageProps) {
@@ -33,7 +30,8 @@ export default async function Page({ params }: PageProps) {
     notFound()
   }
 
-  const origin = getSiteUrl()
+  const seoConfig = await getSeoConfig()
+  const origin = seoConfig.siteUrl
   
   const breadcrumbs = [
     { label: 'Trang chủ', url: origin },
@@ -43,9 +41,10 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
-      <JsonLd schema={breadcrumbSchema(breadcrumbs)} />
-      {service.faqs && service.faqs.length > 0 && (
-        <JsonLd schema={faqSchema(service.faqs)} />
+      {seoConfig.schemas.serviceEnabled && <JsonLd data={buildServiceSchema(service, seoConfig)} />}
+      {seoConfig.schemas.breadcrumbEnabled && <JsonLd data={buildBreadcrumbSchema(breadcrumbs)} />}
+      {seoConfig.schemas.faqEnabled && service.faqs && service.faqs.length > 0 && (
+        <JsonLd data={buildFaqSchema(service.faqs)} />
       )}
       <PublicPageShell>
         <ServiceDetailPage service={service} />

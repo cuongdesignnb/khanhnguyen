@@ -6,6 +6,8 @@ import { useCompare } from '@/hooks/sales/use-compare'
 import { useQuoteCart, QuoteCartItem } from '@/hooks/sales/use-quote-cart'
 import { useRecentlyViewed } from '@/hooks/sales/use-recently-viewed'
 import { ToastContainer } from './toast-notification'
+import type { CompareActionResult } from '@/lib/compare/types'
+import CompareFloatingTray from '@/components/compare/compare-floating-tray'
 
 interface SalesContextType {
   wishlist: string[]
@@ -18,11 +20,15 @@ interface SalesContextType {
 
   compare: string[]
   compareCount: number
-  addToCompare: (id: string) => boolean
-  removeFromCompare: (id: string) => void
-  toggleCompare: (id: string) => { success: boolean; action: 'added' | 'removed' | 'none' }
+  compareMaxItems: number
+  compareLoading: boolean
+  compareSyncing: boolean
+  addToCompare: (id: string) => Promise<CompareActionResult>
+  removeFromCompare: (id: string) => Promise<void>
+  toggleCompare: (id: string) => Promise<CompareActionResult>
   isInCompare: (id: string) => boolean
-  clearCompare: () => void
+  clearCompare: () => Promise<void>
+  reorderCompare: (ids: string[]) => Promise<void>
   isCompareFull: boolean
 
   cartItems: QuoteCartItem[]
@@ -56,11 +62,15 @@ export function SalesProvider({ children }: { children: ReactNode }) {
 
     compare: compareHook.compare,
     compareCount: compareHook.count,
+    compareMaxItems: compareHook.maxItems,
+    compareLoading: compareHook.isLoading,
+    compareSyncing: compareHook.isSyncing,
     addToCompare: compareHook.add,
     removeFromCompare: compareHook.remove,
     toggleCompare: compareHook.toggle,
     isInCompare: compareHook.has,
     clearCompare: compareHook.clear,
+    reorderCompare: compareHook.reorder,
     isCompareFull: compareHook.isFull,
 
     cartItems: cartHook.items,
@@ -78,6 +88,7 @@ export function SalesProvider({ children }: { children: ReactNode }) {
   return (
     <SalesContext.Provider value={value}>
       {children}
+      <CompareFloatingTray />
       <ToastContainer />
     </SalesContext.Provider>
   )

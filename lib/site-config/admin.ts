@@ -1,0 +1,2 @@
+import type {NextRequest}from'next/server';import{requireAdminSession}from'@/lib/admin-auth'
+export async function requireSettingsAdmin(request:NextRequest){const auth=await requireAdminSession(request);if(auth.response)return auth.response;if((auth.session?.user as {role?:string})?.role!=='ADMIN')return Response.json({success:false,error:'Chỉ ADMIN được sửa cài đặt website'},{status:403});return null}

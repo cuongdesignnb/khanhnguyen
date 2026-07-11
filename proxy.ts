@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import prisma from '@/lib/prisma'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -15,6 +16,18 @@ export async function proxy(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith('/admin')
   const isAdminApiRoute = pathname.startsWith('/api/admin')
+
+  if (!isAdminRoute && !pathname.startsWith('/api')) {
+    try {
+      const redirect = await prisma.seoRedirect.findFirst({ where: { sourcePath: pathname, isActive: true } })
+      if (redirect && redirect.targetPath !== pathname) {
+        await prisma.seoRedirect.update({ where: { id: redirect.id }, data: { hitCount: { increment: 1 } } })
+        return NextResponse.redirect(new URL(redirect.targetPath, request.url), redirect.statusCode)
+      }
+    } catch (error) {
+      console.error('SEO redirect lookup failed:', error instanceof Error ? error.message : 'Unknown error')
+    }
+  }
 
   if (isAdminRoute || isAdminApiRoute) {
     if (process.env.NODE_ENV === 'development') {
@@ -52,5 +65,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 }

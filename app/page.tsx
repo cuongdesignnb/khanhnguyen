@@ -1,37 +1,28 @@
 import { getHomeData, getSiteSettings } from '@/lib/public-data'
 import HomePageClient from '@/components/home/home-page-client'
 import JsonLd from '@/components/seo/json-ld'
-import { organizationSchema, localBusinessSchema } from '@/lib/schema'
-import { getSiteUrl } from '@/lib/site-url'
+import { buildOrganizationSchema, buildLocalBusinessSchema, buildWebSiteSchema, buildWebPageSchema } from '@/lib/seo/schemas'
+import { buildPageMetadata } from '@/lib/seo/metadata'
+import { getSeoConfig } from '@/lib/seo/config'
 import type { Metadata } from 'next'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings()
-  return {
-    title: `${settings.name} | ${settings.tagline}`,
-    description: settings.slogan || `${settings.name} chuyên cung cấp xe nâng, xe cẩu Nhật bãi uy tín.`,
-    alternates: {
-      canonical: '/',
-    },
-    openGraph: {
-      title: `${settings.name} | ${settings.tagline}`,
-      description: settings.slogan || `${settings.name} chuyên cung cấp xe nâng, xe cẩu Nhật bãi uy tín.`,
-      url: '/',
-      siteName: settings.name,
-      locale: 'vi_VN',
-      type: 'website',
-    },
-  }
+  return buildPageMetadata({ title: `${settings.name} | ${settings.tagline}`, description: settings.slogan, canonicalPath: '/' })
 }
 
 export default async function HomePage() {
   const data = await getHomeData()
-  const origin = getSiteUrl()
+  const seoConfig = await getSeoConfig()
 
   return (
     <>
-      <JsonLd schema={organizationSchema(data.siteConfig, origin)} />
-      <JsonLd schema={localBusinessSchema(data.siteConfig, origin)} />
+      <JsonLd data={[
+        ...(seoConfig.schemas.organizationEnabled ? [buildOrganizationSchema(seoConfig)] : []),
+        ...(seoConfig.schemas.localBusinessEnabled ? [buildLocalBusinessSchema(seoConfig)] : []),
+        buildWebSiteSchema(seoConfig),
+        buildWebPageSchema({ name: seoConfig.seo.defaultTitle, description: seoConfig.seo.defaultDescription, url: seoConfig.siteUrl, siteUrl: seoConfig.siteUrl }),
+      ]} />
       <HomePageClient data={data} />
     </>
   )

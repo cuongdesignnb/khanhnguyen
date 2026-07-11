@@ -24,6 +24,7 @@ import {
   History,
   Bot,
   Menu,
+  Search,
 } from 'lucide-react'
 
 const sidebarIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -43,6 +44,7 @@ const sidebarIcons: Record<string, React.ComponentType<{ className?: string }>> 
   History,
   Bot,
   Menu,
+  Search,
 }
 
 interface AdminSidebarProps {

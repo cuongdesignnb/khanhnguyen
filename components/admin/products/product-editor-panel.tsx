@@ -11,6 +11,7 @@ import { toast } from '@/lib/toast'
 import MediaPicker from '../media-picker'
 import type { MediaItem } from '@/types/admin'
 import RichTextEditor from '@/components/admin/editor/rich-text-editor'
+import SeoFormSection from '@/components/admin/seo/seo-form-section'
 
 interface ProductEditorPanelProps {
   isOpen: boolean
@@ -70,6 +71,13 @@ export default function ProductEditorPanel({
   // SEO states
   const [seoTitle, setSeoTitle] = useState('')
   const [seoDescription, setSeoDescription] = useState('')
+  const [canonicalUrl, setCanonicalUrl] = useState('')
+  const [ogTitle, setOgTitle] = useState('')
+  const [ogDescription, setOgDescription] = useState('')
+  const [ogImageId, setOgImageId] = useState<string | null>(null)
+  const [ogImageUrl, setOgImageUrl] = useState<string | null>(null)
+  const [robotsIndex, setRobotsIndex] = useState(true)
+  const [robotsFollow, setRobotsFollow] = useState(true)
 
   // Fetch full details when editing
   useEffect(() => {
@@ -96,6 +104,13 @@ export default function ProductEditorPanel({
             setWarrantyPolicy(data.warrantyPolicy || '')
             setSeoTitle(data.seoTitle || '')
             setSeoDescription(data.seoDescription || '')
+            setCanonicalUrl(data.canonicalUrl || '')
+            setOgTitle(data.ogTitle || '')
+            setOgDescription(data.ogDescription || '')
+            setOgImageId(data.ogImageId || null)
+            setOgImageUrl(data.ogImage?.url || null)
+            setRobotsIndex(data.robotsIndex ?? true)
+            setRobotsFollow(data.robotsFollow ?? true)
 
             // Specs
             if (data.specs) {
@@ -173,6 +188,13 @@ export default function ProductEditorPanel({
         setAlbumMedias([])
         setSeoTitle('')
         setSeoDescription('')
+        setCanonicalUrl('')
+        setOgTitle('')
+        setOgDescription('')
+        setOgImageId(null)
+        setOgImageUrl(null)
+        setRobotsIndex(true)
+        setRobotsFollow(true)
       }
       setActiveTab(0)
     }
@@ -234,6 +256,12 @@ export default function ProductEditorPanel({
         warrantyPolicy: warrantyPolicy || null,
         seoTitle,
         seoDescription,
+        canonicalUrl: canonicalUrl || null,
+        ogTitle: ogTitle || null,
+        ogDescription: ogDescription || null,
+        ogImageId,
+        robotsIndex,
+        robotsFollow,
         specs: specs
           .filter((s) => s.label && s.value)
           .map((s, idx) => ({
@@ -612,29 +640,7 @@ export default function ProductEditorPanel({
                     </div>
                   </div>
 
-                  {/* SEO Form */}
-                  <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl space-y-4">
-                    <label className={labelClass}>SEO Metadata</label>
-                    <div>
-                      <label className="text-[10px] text-[color:var(--muted)] uppercase mb-1 block">SEO Title</label>
-                      <input
-                        type="text"
-                        className={inputClass}
-                        value={seoTitle}
-                        onChange={(e) => setSeoTitle(e.target.value)}
-                        placeholder="Tiêu đề SEO"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-[color:var(--muted)] uppercase mb-1 block">SEO Description</label>
-                      <textarea
-                        className={`${inputClass} resize-none h-20`}
-                        value={seoDescription}
-                        onChange={(e) => setSeoDescription(e.target.value)}
-                        placeholder="Mô tả SEO..."
-                      />
-                    </div>
-                  </div>
+                  <SeoFormSection path={`/san-pham/${slug || 'slug-san-pham'}`} value={{ seoTitle, seoDescription, canonicalUrl, ogTitle, ogDescription, ogImageId, ogImageUrl, robotsIndex, robotsFollow }} onChange={(seo) => { setSeoTitle(seo.seoTitle); setSeoDescription(seo.seoDescription); setCanonicalUrl(seo.canonicalUrl); setOgTitle(seo.ogTitle); setOgDescription(seo.ogDescription); setOgImageId(seo.ogImageId); setOgImageUrl(seo.ogImageUrl || null); setRobotsIndex(seo.robotsIndex); setRobotsFollow(seo.robotsFollow) }} />
                 </div>
               )}
             </div>

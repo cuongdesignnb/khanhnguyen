@@ -14,6 +14,7 @@ import { mapPostToAdminItem } from '@/lib/admin-mappers'
 import AdminConfirmModal from '@/components/admin/admin-confirm-modal'
 import { RefreshCw, Plus } from 'lucide-react'
 import type { PostAdminItem } from '@/types/admin'
+import SeoFormSection from '@/components/admin/seo/seo-form-section'
 
 const postTabs = ['Bài viết', 'Danh mục tin']
 
@@ -150,6 +151,15 @@ function PostCategoriesTabContent() {
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
+  const [seoTitle, setSeoTitle] = useState('')
+  const [seoDescription, setSeoDescription] = useState('')
+  const [canonicalUrl, setCanonicalUrl] = useState('')
+  const [ogTitle, setOgTitle] = useState('')
+  const [ogDescription, setOgDescription] = useState('')
+  const [ogImageId, setOgImageId] = useState<string | null>(null)
+  const [ogImageUrl, setOgImageUrl] = useState<string | null>(null)
+  const [robotsIndex, setRobotsIndex] = useState(true)
+  const [robotsFollow, setRobotsFollow] = useState(true)
 
   const loadCategories = () => {
     setLoading(true)
@@ -166,13 +176,14 @@ function PostCategoriesTabContent() {
 
   const { mutate: createCategory, loading: creating } = useAdminMutation(
     async () => {
-      return adminApi.createPostCategory({ name, slug: slug || undefined })
+      return adminApi.createPostCategory({ name, slug: slug || undefined, seoTitle: seoTitle || null, seoDescription: seoDescription || null, canonicalUrl: canonicalUrl || null, ogTitle: ogTitle || null, ogDescription: ogDescription || null, ogImageId, robotsIndex, robotsFollow })
     },
     {
       successMessage: 'Tạo danh mục tin thành công',
       onSuccess: () => {
         setName('')
         setSlug('')
+        setSeoTitle(''); setSeoDescription(''); setCanonicalUrl(''); setOgTitle(''); setOgDescription(''); setOgImageId(null); setOgImageUrl(null); setRobotsIndex(true); setRobotsFollow(true)
         loadCategories()
       },
     }
@@ -233,6 +244,7 @@ function PostCategoriesTabContent() {
               required
             />
           </div>
+          <SeoFormSection path={`/tin-tuc/danh-muc/${slug || 'slug-danh-muc'}`} value={{ seoTitle, seoDescription, canonicalUrl, ogTitle, ogDescription, ogImageId, ogImageUrl, robotsIndex, robotsFollow }} onChange={(seo) => { setSeoTitle(seo.seoTitle); setSeoDescription(seo.seoDescription); setCanonicalUrl(seo.canonicalUrl); setOgTitle(seo.ogTitle); setOgDescription(seo.ogDescription); setOgImageId(seo.ogImageId); setOgImageUrl(seo.ogImageUrl || null); setRobotsIndex(seo.robotsIndex); setRobotsFollow(seo.robotsFollow) }} />
           <div>
             <label className={labelClass}>Slug (Đường dẫn tĩnh)</label>
             <input

@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma'
 import * as api from '@/lib/api-response'
 import { z } from 'zod'
 import { generateUniqueSlug } from '@/lib/slug'
+import { recordSeoRedirect } from '@/lib/seo/redirects'
+import { revalidatePath } from 'next/cache'
 
 const postCategorySchema = z.object({
   name: z.string().min(1, 'Tên danh mục tin tức không được để trống'),
@@ -10,6 +12,8 @@ const postCategorySchema = z.object({
   description: z.string().nullable().optional(),
   seoTitle: z.string().nullable().optional(),
   seoDescription: z.string().nullable().optional(),
+  canonicalUrl: z.string().nullable().optional(), ogTitle: z.string().nullable().optional(), ogDescription: z.string().nullable().optional(),
+  ogImageId: z.string().uuid('Ảnh SEO không hợp lệ').nullable().optional(), robotsIndex: z.boolean().optional().default(true), robotsFollow: z.boolean().optional().default(true),
   sortOrder: z.number().int().optional().default(0),
   isVisible: z.boolean().optional().default(true),
 })
@@ -78,10 +82,17 @@ export async function PATCH(
         description: parsed.data.description !== undefined ? parsed.data.description : undefined,
         seoTitle: parsed.data.seoTitle !== undefined ? parsed.data.seoTitle : undefined,
         seoDescription: parsed.data.seoDescription !== undefined ? parsed.data.seoDescription : undefined,
+        canonicalUrl: parsed.data.canonicalUrl !== undefined ? parsed.data.canonicalUrl : undefined,
+        ogTitle: parsed.data.ogTitle !== undefined ? parsed.data.ogTitle : undefined,
+        ogDescription: parsed.data.ogDescription !== undefined ? parsed.data.ogDescription : undefined,
+        ogImageId: parsed.data.ogImageId !== undefined ? parsed.data.ogImageId : undefined,
+        robotsIndex: parsed.data.robotsIndex, robotsFollow: parsed.data.robotsFollow,
         sortOrder: parsed.data.sortOrder !== undefined ? parsed.data.sortOrder : undefined,
         isVisible: parsed.data.isVisible !== undefined ? parsed.data.isVisible : undefined,
       },
     })
+    if (slug !== existingCategory.slug) await recordSeoRedirect(`/tin-tuc/danh-muc/${existingCategory.slug}`, `/tin-tuc/danh-muc/${slug}`)
+    revalidatePath('/tin-tuc'); revalidatePath(`/tin-tuc/danh-muc/${slug}`); revalidatePath('/sitemap.xml')
 
     return api.ok(updatedCategory, 'Cập nhật danh mục tin tức thành công')
   } catch (error: any) {

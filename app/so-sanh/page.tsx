@@ -1,16 +1,5 @@
+import type {Metadata} from 'next'
 import PublicPageShell from '@/components/public/public-page-shell'
-import ComparePage from '@/components/sales/compare-page'
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'So sánh xe nâng | Khanh Nguyên Forklift',
-  description: 'So sánh chi tiết cấu hình, thông số tải trọng và động cơ các dòng xe nâng Nhật bãi.',
-}
-
-export default function Page() {
-  return (
-    <PublicPageShell>
-      <ComparePage />
-    </PublicPageShell>
-  )
-}
+import CompareWorkspace from '@/components/compare/compare-workspace'
+export const metadata:Metadata={title:'So sánh sản phẩm',description:'So sánh thông số kỹ thuật các sản phẩm xe nâng tại Khanh Nguyên.',robots:{index:false,follow:true},alternates:{canonical:'/so-sanh'}}
+export default function Page(){return <PublicPageShell><CompareWorkspace/></PublicPageShell>}

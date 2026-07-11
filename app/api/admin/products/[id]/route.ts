@@ -4,6 +4,8 @@ import * as api from '@/lib/api-response'
 import { productSchema } from '@/lib/validators/product'
 import { generateUniqueSlug } from '@/lib/slug'
 import { Prisma } from '@prisma/client'
+import { recordSeoRedirect } from '@/lib/seo/redirects'
+import { revalidatePath } from 'next/cache'
 
 export async function GET(
   request: NextRequest,
@@ -97,6 +99,12 @@ export async function PATCH(
           origin: parsed.data.origin !== undefined ? parsed.data.origin : undefined,
           seoTitle: parsed.data.seoTitle !== undefined ? parsed.data.seoTitle : undefined,
           seoDescription: parsed.data.seoDescription !== undefined ? parsed.data.seoDescription : undefined,
+          canonicalUrl: parsed.data.canonicalUrl !== undefined ? parsed.data.canonicalUrl : undefined,
+          ogTitle: parsed.data.ogTitle !== undefined ? parsed.data.ogTitle : undefined,
+          ogDescription: parsed.data.ogDescription !== undefined ? parsed.data.ogDescription : undefined,
+          ogImageId: parsed.data.ogImageId !== undefined ? parsed.data.ogImageId : undefined,
+          robotsIndex: parsed.data.robotsIndex,
+          robotsFollow: parsed.data.robotsFollow,
         }
       })
 
@@ -141,6 +149,8 @@ export async function PATCH(
         specs: true
       }
     })
+    if (slug !== existingProduct.slug) await recordSeoRedirect(`/san-pham/${existingProduct.slug}`, `/san-pham/${slug}`)
+    revalidatePath('/'); revalidatePath('/san-pham'); revalidatePath(`/san-pham/${slug}`); revalidatePath('/sitemap.xml')
 
     return api.ok(finalProduct, 'Cập nhật sản phẩm thành công')
   } catch (error: any) {

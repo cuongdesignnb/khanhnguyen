@@ -5,21 +5,25 @@ import { ContactSection } from '@/components/home/contact-section'
 import { getSiteSettings } from '@/lib/public-data'
 import { Phone, Mail, MapPin, Clock } from 'lucide-react'
 import type { Metadata } from 'next'
+import JsonLd from '@/components/seo/json-ld'
+import { buildPageMetadata } from '@/lib/seo/metadata'
+import { getSeoConfig } from '@/lib/seo/config'
+import { buildContactPageSchema, buildLocalBusinessSchema, buildBreadcrumbSchema } from '@/lib/seo/schemas'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings()
-  return {
-    title: `Liên hệ | Khanh Nguyên Forklift`,
-    description: `Liên hệ Khanh Nguyên Forklift. Hotline: ${settings.hotline}. Showroom: ${settings.showroom}. Gửi yêu cầu tư vấn báo giá ngay để nhận ưu đãi tốt nhất.`,
-    alternates: { canonical: '/lien-he' },
-  }
+  return buildPageMetadata({ title: 'Liên hệ', description: `Liên hệ tư vấn qua hotline ${settings.hotline} hoặc gửi yêu cầu để nhận báo giá.`, canonicalPath: '/lien-he' })
 }
 
 export default async function Page() {
   const siteConfig = await getSiteSettings()
+  const seoConfig = await getSeoConfig()
+  const url = `${seoConfig.siteUrl}/lien-he`
+  const schemas = [buildContactPageSchema({ name: 'Liên hệ', description: seoConfig.organization.description, url, siteUrl: seoConfig.siteUrl }), buildLocalBusinessSchema(seoConfig), buildBreadcrumbSchema([{ label: 'Trang chủ', url: seoConfig.siteUrl }, { label: 'Liên hệ', url }])]
 
   return (
     <PublicPageShell>
+      <JsonLd data={schemas} />
       <div className="bg-[color:var(--surface)] min-h-screen text-white pb-16">
         <PageHero title="LIÊN HỆ VỚI KHANH NGUYÊN" subtitle="Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ quý khách" />
         <Breadcrumb items={[{ label: 'Liên hệ' }]} />

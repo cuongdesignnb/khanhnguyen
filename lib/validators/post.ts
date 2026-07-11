@@ -14,5 +14,10 @@ export const postSchema = z.object({
   seoTitle: z.string().nullable().optional(),
   seoDescription: z.string().nullable().optional(),
   ogImageId: z.string().uuid('Ảnh SEO không hợp lệ').nullable().optional(),
+  canonicalUrl: z.string().nullable().optional(),
+  ogTitle: z.string().nullable().optional(),
+  ogDescription: z.string().nullable().optional(),
+  robotsIndex: z.boolean().optional().default(true),
+  robotsFollow: z.boolean().optional().default(true),
   isFeatured: z.boolean().optional().default(false),
 })

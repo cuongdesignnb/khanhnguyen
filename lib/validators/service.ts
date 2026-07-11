@@ -22,6 +22,12 @@ export const serviceSchema = z.object({
   status: z.enum(['DRAFT', 'PUBLISHED', 'SCHEDULED', 'HIDDEN']).default('PUBLISHED'),
   seoTitle: z.string().nullable().optional(),
   seoDescription: z.string().nullable().optional(),
+  canonicalUrl: z.string().nullable().optional(),
+  ogTitle: z.string().nullable().optional(),
+  ogDescription: z.string().nullable().optional(),
+  ogImageId: z.string().uuid('Ảnh SEO không hợp lệ').nullable().optional(),
+  robotsIndex: z.boolean().optional().default(true),
+  robotsFollow: z.boolean().optional().default(true),
   sortOrder: z.number().int().optional().default(0),
   faqs: z.array(serviceFaqSchema).optional().default([]),
 })

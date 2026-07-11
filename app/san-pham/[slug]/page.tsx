@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation'
 import PublicPageShell from '@/components/public/public-page-shell'
 import ProductDetailPage from '@/components/products/product-detail-page'
 import JsonLd from '@/components/seo/json-ld'
-import { productSchema, breadcrumbSchema } from '@/lib/schema'
-import { getSiteUrl } from '@/lib/site-url'
+import { buildProductSchema, buildBreadcrumbSchema } from '@/lib/seo/schemas'
+import { buildProductMetadata } from '@/lib/seo/metadata'
+import { getSeoConfig } from '@/lib/seo/config'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -17,13 +18,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!product) {
     return { title: 'Không tìm thấy sản phẩm' }
   }
-  return {
-    title: `${product.name} | Khanh Nguyên Forklift`,
-    description: product.seoDescription || product.shortDescription || `${product.name} chất lượng cao Nhật bãi. Tải trọng ${product.capacity || ''}, nâng cao ${product.liftHeight || ''}.`,
-    alternates: {
-      canonical: `/san-pham/${product.slug}`,
-    },
-  }
+  return buildProductMetadata({ title: product.seoTitle || product.name, description: product.seoDescription || product.shortDescription,
+    canonicalPath: `/san-pham/${product.slug}`, canonicalUrl: product.canonicalUrl, ogTitle: product.ogTitle,
+    ogDescription: product.ogDescription, ogImage: product.ogImage || product.thumbnail, robotsIndex: product.robotsIndex, robotsFollow: product.robotsFollow })
 }
 
 export default async function Page({ params }: PageProps) {
@@ -34,7 +31,8 @@ export default async function Page({ params }: PageProps) {
   }
 
   const relatedProducts = await getRelatedProducts(product.id, product.categoryId, 6)
-  const origin = getSiteUrl()
+  const seoConfig = await getSeoConfig()
+  const origin = seoConfig.siteUrl
   
   const breadcrumbs = [
     { label: 'Trang chủ', url: origin },
@@ -45,8 +43,8 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
-      <JsonLd schema={productSchema(product, origin)} />
-      <JsonLd schema={breadcrumbSchema(breadcrumbs)} />
+      {seoConfig.schemas.productEnabled && <JsonLd data={buildProductSchema(product, seoConfig)} />}
+      {seoConfig.schemas.breadcrumbEnabled && <JsonLd data={buildBreadcrumbSchema(breadcrumbs)} />}
       <PublicPageShell>
         <ProductDetailPage product={product} relatedProducts={relatedProducts} />
       </PublicPageShell>

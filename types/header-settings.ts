@@ -1,0 +1,4 @@
+export type HeaderDataSource='hotline'|'secondaryHotline'|'email'|'supportEmail'|'address'|'showroomAddress'|'warehouseAddress'|'custom'
+export type HeaderActionType='phone'|'email'|'internal'|'external'|'download'|'catalogue'|'orderTracking'|'zalo'
+export interface HeaderUtilityItem{id:string;label:string;icon:string;dataSource?:HeaderDataSource;actionType:HeaderActionType;value?:string;url?:string;mediaId?:string|null;target:'_self'|'_blank';isEnabled:boolean;sortOrder:number}
+export interface HeaderConfig{topNoticeEnabled:boolean;topNoticeText:string;topNoticeIcon?:string;topNoticeBackgroundColor?:string;topNoticeTextColor?:string;utilityLeft:HeaderUtilityItem[];utilityRight:HeaderUtilityItem[];stickyHeader:boolean;showLogo:boolean;showTagline:boolean;showSearch:boolean;showWishlist:boolean;showCompare:boolean;showAccount:boolean;showCart:boolean}

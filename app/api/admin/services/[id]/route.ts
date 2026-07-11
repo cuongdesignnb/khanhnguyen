@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma'
 import * as api from '@/lib/api-response'
 import { serviceSchema } from '@/lib/validators/service'
 import { generateUniqueSlug } from '@/lib/slug'
+import { recordSeoRedirect } from '@/lib/seo/redirects'
+import { revalidatePath } from 'next/cache'
 
 export async function GET(
   request: NextRequest,
@@ -91,6 +93,12 @@ export async function PATCH(
           status: parsed.data.status,
           seoTitle: parsed.data.seoTitle !== undefined ? parsed.data.seoTitle : undefined,
           seoDescription: parsed.data.seoDescription !== undefined ? parsed.data.seoDescription : undefined,
+          canonicalUrl: parsed.data.canonicalUrl !== undefined ? parsed.data.canonicalUrl : undefined,
+          ogTitle: parsed.data.ogTitle !== undefined ? parsed.data.ogTitle : undefined,
+          ogDescription: parsed.data.ogDescription !== undefined ? parsed.data.ogDescription : undefined,
+          ogImageId: parsed.data.ogImageId !== undefined ? parsed.data.ogImageId : undefined,
+          robotsIndex: parsed.data.robotsIndex,
+          robotsFollow: parsed.data.robotsFollow,
           sortOrder: parsed.data.sortOrder !== undefined ? parsed.data.sortOrder : undefined,
           ...(parsed.data.faqs !== undefined && parsed.data.faqs.length > 0
             ? {
@@ -117,6 +125,8 @@ export async function PATCH(
         },
       },
     })
+    if (slug !== existingService.slug) await recordSeoRedirect(`/dich-vu/${existingService.slug}`, `/dich-vu/${slug}`)
+    revalidatePath('/'); revalidatePath('/dich-vu'); revalidatePath(`/dich-vu/${slug}`); revalidatePath('/sitemap.xml')
 
     return api.ok(finalService, 'Cập nhật dịch vụ thành công')
   } catch (error: any) {

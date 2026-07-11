@@ -23,14 +23,18 @@ import SiteNavigation from '@/components/layout/site-navigation'
 import { PublicSiteConfig, PublicNavigationItem } from '@/types/public'
 import { useSalesContext } from '../sales/sales-provider'
 import { authClient } from '@/lib/auth-client'
+import type { HeaderConfig } from '@/types/header-settings'
+import { resolveHeaderUtilityItem, type HeaderContact } from '@/lib/header/resolve-header-utility-item'
 
 interface DesktopHeaderProps {
   siteConfig?: PublicSiteConfig
   navigation?: PublicNavigationItem[]
   onMenuOpen: () => void
+  headerConfig?: HeaderConfig
+  contactConfig?: HeaderContact
 }
 
-export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: DesktopHeaderProps) {
+export default function DesktopHeader({ siteConfig, navigation, onMenuOpen, headerConfig, contactConfig = {} }: DesktopHeaderProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mounted, setMounted] = useState(false)
   const config: PublicSiteConfig = siteConfig || staticSiteConfig
@@ -44,29 +48,10 @@ export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: De
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const utilityLeft = [
-    {
-      icon: Phone,
-      text: config.secondaryHotline ? `${config.hotline} – ${config.secondaryHotline}` : config.hotline,
-      href: `tel:${config.hotline.replace(/\s/g, '')}`,
-    },
-    {
-      icon: Mail,
-      text: config.email,
-      href: `mailto:${config.email}`,
-    },
-    {
-      icon: MapPin,
-      text: `Showroom: ${config.showroom}`,
-      href: '#lien-he',
-    },
-  ] as const
-
-  const utilityRight = [
-    { icon: Headset, text: 'Hỗ trợ 24/7', href: `tel:${config.hotline.replace(/\s/g, '')}` },
-    { icon: FileDown, text: 'Tải catalogue', href: '/catalogue' },
-    { icon: PackageSearch, text: 'Kiểm tra đơn hàng', href: '/kiem-tra-don-hang' },
-  ] as const
+  const resolvedContact = { hotline: config.hotline, hotlineSecondary: config.secondaryHotline, email: config.email, showroomAddress: config.showroom, ...contactConfig }
+  const utilityLeft = (headerConfig?.utilityLeft || []).filter((item) => item.isEnabled).sort((a, b) => a.sortOrder - b.sortOrder).map((item) => resolveHeaderUtilityItem(item, resolvedContact))
+  const utilityRight = (headerConfig?.utilityRight || []).filter((item) => item.isEnabled).sort((a, b) => a.sortOrder - b.sortOrder).map((item) => resolveHeaderUtilityItem(item, resolvedContact))
+  const utilityIcons: Record<string, typeof Phone> = { Phone, Mail, MapPin, Headset, FileDown, PackageSearch }
 
   const headerActions = [
     { icon: GitCompare, label: 'So sánh', href: '/so-sanh', badge: mounted && compareCount > 0 ? compareCount.toString() : null },
@@ -94,16 +79,16 @@ export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: De
             {/* Left */}
             <ul className="flex items-center gap-5" role="list">
               {utilityLeft.map((item) => (
-                <li key={item.text}>
+                <li key={item.id}>
                   <Link
                     href={item.href}
                     className="group flex items-center gap-1.5 text-[11px] text-[color:var(--muted)] transition-colors hover:text-[color:var(--text)]"
                   >
-                    <item.icon
+                    {(() => { const UtilityIcon = utilityIcons[item.icon] || Phone; return <UtilityIcon
                       className="size-3.5 text-[color:var(--gold)] shrink-0"
                       aria-hidden="true"
-                    />
-                    <span>{item.text}</span>
+                    /> })()}
+                    <span>{item.label}{item.value ? `: ${item.value}` : ''}</span>
                   </Link>
                 </li>
               ))}
@@ -112,16 +97,16 @@ export default function DesktopHeader({ siteConfig, navigation, onMenuOpen }: De
             {/* Right */}
             <ul className="flex items-center gap-5" role="list">
               {utilityRight.map((item) => (
-                <li key={item.text}>
+                <li key={item.id}>
                   <Link
                     href={item.href}
                     className="group flex items-center gap-1.5 text-[11px] text-[color:var(--muted)] transition-colors hover:text-[color:var(--text)]"
                   >
-                    <item.icon
+                    {(() => { const UtilityIcon = utilityIcons[item.icon] || Headset; return <UtilityIcon
                       className="size-3.5 text-[color:var(--gold)] shrink-0"
                       aria-hidden="true"
-                    />
-                    <span>{item.text}</span>
+                    /> })()}
+                    <span>{item.label}</span>
                   </Link>
                 </li>
               ))}

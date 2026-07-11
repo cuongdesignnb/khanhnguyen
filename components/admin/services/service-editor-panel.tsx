@@ -11,6 +11,7 @@ import { adminApi } from '@/lib/admin-api'
 import { toast } from '@/lib/toast'
 import MediaPicker from '../media-picker'
 import RichTextEditor from '@/components/admin/editor/rich-text-editor'
+import SeoFormSection from '@/components/admin/seo/seo-form-section'
 
 interface ServiceEditorPanelProps {
   isOpen: boolean
@@ -59,6 +60,13 @@ export default function ServiceEditorPanel({
   // SEO states
   const [seoTitle, setSeoTitle] = useState('')
   const [seoDescription, setSeoDescription] = useState('')
+  const [canonicalUrl, setCanonicalUrl] = useState('')
+  const [ogTitle, setOgTitle] = useState('')
+  const [ogDescription, setOgDescription] = useState('')
+  const [ogImageId, setOgImageId] = useState<string | null>(null)
+  const [ogImageUrl, setOgImageUrl] = useState<string | null>(null)
+  const [robotsIndex, setRobotsIndex] = useState(true)
+  const [robotsFollow, setRobotsFollow] = useState(true)
 
   // Load details when editing
   useEffect(() => {
@@ -81,6 +89,13 @@ export default function ServiceEditorPanel({
             setCtaButtonHref(res.ctaButtonHref || '')
             setSeoTitle(res.seoTitle || '')
             setSeoDescription(res.seoDescription || '')
+            setCanonicalUrl(res.canonicalUrl || '')
+            setOgTitle(res.ogTitle || '')
+            setOgDescription(res.ogDescription || '')
+            setOgImageId(res.ogImageId || null)
+            setOgImageUrl(res.ogImage?.url || null)
+            setRobotsIndex(res.robotsIndex ?? true)
+            setRobotsFollow(res.robotsFollow ?? true)
 
             // FAQs
             if (res.faqs) {
@@ -133,6 +148,13 @@ export default function ServiceEditorPanel({
         setFaqs([{ question: 'Thời gian thuê tối thiểu bao lâu?', answer: 'Tối thiểu từ 1 tháng.' }])
         setSeoTitle('')
         setSeoDescription('')
+        setCanonicalUrl('')
+        setOgTitle('')
+        setOgDescription('')
+        setOgImageId(null)
+        setOgImageUrl(null)
+        setRobotsIndex(true)
+        setRobotsFollow(true)
       }
       setActiveTab(0)
     }
@@ -197,6 +219,12 @@ export default function ServiceEditorPanel({
         ctaButtonHref: ctaButtonHref || null,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
+        canonicalUrl: canonicalUrl || null,
+        ogTitle: ogTitle || null,
+        ogDescription: ogDescription || null,
+        ogImageId,
+        robotsIndex,
+        robotsFollow,
         faqs: faqs
           .filter((f) => f.question && f.answer)
           .map((f, idx) => ({
@@ -551,26 +579,7 @@ export default function ServiceEditorPanel({
                   )}
 
                   {activeTab === 3 && (
-                    <div className="space-y-4">
-                      <div>
-                        <label className={labelClass}>Tiêu đề SEO</label>
-                        <input
-                          className={inputClass}
-                          value={seoTitle}
-                          onChange={(e) => setSeoTitle(e.target.value)}
-                          placeholder="Meta title"
-                        />
-                      </div>
-                      <div>
-                        <label className={labelClass}>Mô tả SEO</label>
-                        <textarea
-                          className={clsx(inputClass, 'h-24 resize-none')}
-                          value={seoDescription}
-                          onChange={(e) => setSeoDescription(e.target.value)}
-                          placeholder="Meta description"
-                        />
-                      </div>
-                    </div>
+                    <SeoFormSection path={`/dich-vu/${slug || 'slug-dich-vu'}`} value={{ seoTitle, seoDescription, canonicalUrl, ogTitle, ogDescription, ogImageId, ogImageUrl, robotsIndex, robotsFollow }} onChange={(seo) => { setSeoTitle(seo.seoTitle); setSeoDescription(seo.seoDescription); setCanonicalUrl(seo.canonicalUrl); setOgTitle(seo.ogTitle); setOgDescription(seo.ogDescription); setOgImageId(seo.ogImageId); setOgImageUrl(seo.ogImageUrl || null); setRobotsIndex(seo.robotsIndex); setRobotsFollow(seo.robotsFollow) }} />
                   )}
                 </>
               )}

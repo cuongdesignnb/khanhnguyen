@@ -1,2 +1,2 @@
-import SettingsPage from '@/components/admin/settings/settings-page'
-export default function Page() { return <SettingsPage /> }
+import {redirect}from'next/navigation'
+export default function SettingsIndex(){redirect('/admin/cai-dat/tong-quan')}

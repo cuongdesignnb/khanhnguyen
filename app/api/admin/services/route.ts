@@ -69,6 +69,12 @@ export async function POST(request: NextRequest) {
         status: parsed.data.status,
         seoTitle: parsed.data.seoTitle || null,
         seoDescription: parsed.data.seoDescription || null,
+        canonicalUrl: parsed.data.canonicalUrl || null,
+        ogTitle: parsed.data.ogTitle || null,
+        ogDescription: parsed.data.ogDescription || null,
+        ogImageId: parsed.data.ogImageId || null,
+        robotsIndex: parsed.data.robotsIndex,
+        robotsFollow: parsed.data.robotsFollow,
         sortOrder: parsed.data.sortOrder,
         faqs: {
           create: parsed.data.faqs.map(faq => ({

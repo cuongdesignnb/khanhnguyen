@@ -17,6 +17,7 @@ import type {
 // ─── Sidebar Menu Items ──────────────────────────────────────────────────────
 
 export const adminMenuItems: AdminMenuItem[] = [
+  { label: 'Tổng quan SEO', href: '/admin/seo', icon: 'Search' },
   { label: 'Tổng quan', href: '/admin', icon: 'Home' },
   { label: 'Sản phẩm', href: '/admin/products', icon: 'Package' },
   { label: 'Danh mục', href: '/admin/categories', icon: 'Folder' },

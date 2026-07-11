@@ -138,6 +138,12 @@ export function mapProductToProductDetail(p: any): PublicProductDetail {
     seoTitle: p.seoTitle || null,
     seoDescription: p.seoDescription || null,
     ogImage: p.ogImage?.url || null,
+    canonicalUrl: p.canonicalUrl || null,
+    ogTitle: p.ogTitle || null,
+    ogDescription: p.ogDescription || null,
+    robotsIndex: p.robotsIndex !== false,
+    robotsFollow: p.robotsFollow !== false,
+    approvedReviews: Array.isArray(p.reviews) ? p.reviews.map((review: any) => ({ name: review.name, rating: review.rating, content: review.content, status: 'APPROVED' as const })) : [],
   }
 }
 
@@ -185,6 +191,12 @@ export function mapServiceToServiceDetail(s: any): PublicServiceDetail {
     ctaButtonHref: s.ctaButtonHref || null,
     seoTitle: s.seoTitle || null,
     seoDescription: s.seoDescription || null,
+    ogImage: s.ogImage?.url || null,
+    canonicalUrl: s.canonicalUrl || null,
+    ogTitle: s.ogTitle || null,
+    ogDescription: s.ogDescription || null,
+    robotsIndex: s.robotsIndex !== false,
+    robotsFollow: s.robotsFollow !== false,
   }
 }
 
@@ -216,6 +228,14 @@ export function mapPostToPostDetail(p: any): PublicPostDetail {
     seoTitle: p.seoTitle || null,
     seoDescription: p.seoDescription || null,
     ogImage: p.ogImage?.url || null,
+    canonicalUrl: p.canonicalUrl || null,
+    ogTitle: p.ogTitle || null,
+    ogDescription: p.ogDescription || null,
+    robotsIndex: p.robotsIndex !== false,
+    robotsFollow: p.robotsFollow !== false,
+    publishedAtIso: p.publishedAt ? new Date(p.publishedAt).toISOString() : null,
+    updatedAtIso: new Date(p.updatedAt).toISOString(),
+    authorName: p.author?.name || null,
   }
 }
 

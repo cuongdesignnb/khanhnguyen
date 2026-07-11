@@ -1,0 +1,2 @@
+import{NextRequest}from'next/server';import prisma from'@/lib/prisma';import{requireSettingsAdmin}from'@/lib/site-config/admin'
+export async function PATCH(r:NextRequest){const denied=await requireSettingsAdmin(r);if(denied)return denied;const{ids}=await r.json();if(!Array.isArray(ids))return Response.json({success:false,error:'Thứ tự không hợp lệ'},{status:400});await prisma.$transaction(ids.map((id:string,sortOrder:number)=>prisma.pageSection.update({where:{id},data:{sortOrder}})));return Response.json({success:true})}

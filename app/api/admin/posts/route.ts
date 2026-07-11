@@ -90,6 +90,11 @@ export async function POST(request: NextRequest) {
         seoTitle: parsed.data.seoTitle || null,
         seoDescription: parsed.data.seoDescription || null,
         ogImageId: parsed.data.ogImageId || null,
+        canonicalUrl: parsed.data.canonicalUrl || null,
+        ogTitle: parsed.data.ogTitle || null,
+        ogDescription: parsed.data.ogDescription || null,
+        robotsIndex: parsed.data.robotsIndex,
+        robotsFollow: parsed.data.robotsFollow,
         isFeatured: parsed.data.isFeatured,
       },
       include: { category: true, thumbnail: true }

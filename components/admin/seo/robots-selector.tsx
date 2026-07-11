@@ -1,0 +1,3 @@
+export default function RobotsSelector({ index, follow, onChange }: { index: boolean; follow: boolean; onChange: (value: { robotsIndex: boolean; robotsFollow: boolean }) => void }) {
+  return <div className="grid gap-3 sm:grid-cols-2"><label className="flex items-center gap-3 rounded-xl border border-white/10 p-3 text-sm"><input type="checkbox" checked={index} onChange={(event) => onChange({ robotsIndex: event.target.checked, robotsFollow: follow })} /> Cho phép lập chỉ mục</label><label className="flex items-center gap-3 rounded-xl border border-white/10 p-3 text-sm"><input type="checkbox" checked={follow} onChange={(event) => onChange({ robotsIndex: index, robotsFollow: event.target.checked })} /> Cho phép theo liên kết</label></div>
+}

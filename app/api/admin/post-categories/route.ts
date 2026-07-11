@@ -10,6 +10,8 @@ const postCategorySchema = z.object({
   description: z.string().nullable().optional(),
   seoTitle: z.string().nullable().optional(),
   seoDescription: z.string().nullable().optional(),
+  canonicalUrl: z.string().nullable().optional(), ogTitle: z.string().nullable().optional(), ogDescription: z.string().nullable().optional(),
+  ogImageId: z.string().uuid('Ảnh SEO không hợp lệ').nullable().optional(), robotsIndex: z.boolean().optional().default(true), robotsFollow: z.boolean().optional().default(true),
   sortOrder: z.number().int().optional().default(0),
   isVisible: z.boolean().optional().default(true),
 })
@@ -60,6 +62,8 @@ export async function POST(request: NextRequest) {
         description: parsed.data.description || null,
         seoTitle: parsed.data.seoTitle || null,
         seoDescription: parsed.data.seoDescription || null,
+        canonicalUrl: parsed.data.canonicalUrl || null, ogTitle: parsed.data.ogTitle || null, ogDescription: parsed.data.ogDescription || null,
+        ogImageId: parsed.data.ogImageId || null, robotsIndex: parsed.data.robotsIndex, robotsFollow: parsed.data.robotsFollow,
         sortOrder: parsed.data.sortOrder,
         isVisible: parsed.data.isVisible,
       },

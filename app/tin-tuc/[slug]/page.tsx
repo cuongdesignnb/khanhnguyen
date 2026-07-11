@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation'
 import PublicPageShell from '@/components/public/public-page-shell'
 import BlogDetailPage from '@/components/blog/blog-detail-page'
 import JsonLd from '@/components/seo/json-ld'
-import { articleSchema, breadcrumbSchema } from '@/lib/schema'
-import { getSiteUrl } from '@/lib/site-url'
+import { buildArticleSchema, buildBreadcrumbSchema } from '@/lib/seo/schemas'
+import { buildPostMetadata } from '@/lib/seo/metadata'
+import { getSeoConfig } from '@/lib/seo/config'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -17,13 +18,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!post) {
     return { title: 'Không tìm thấy bài viết' }
   }
-  return {
-    title: `${post.title} | Khanh Nguyên Forklift`,
-    description: post.seoDescription || post.excerpt || `${post.title} - Chuyên mục tin tức kinh nghiệm xe nâng Khanh Nguyên.`,
-    alternates: {
-      canonical: `/tin-tuc/${post.slug}`,
-    },
-  }
+  return buildPostMetadata({ title: post.seoTitle || post.title, description: post.seoDescription || post.excerpt,
+    canonicalPath: `/tin-tuc/${post.slug}`, canonicalUrl: post.canonicalUrl, ogTitle: post.ogTitle,
+    ogDescription: post.ogDescription, ogImage: post.ogImage || post.thumbnail, robotsIndex: post.robotsIndex,
+    robotsFollow: post.robotsFollow, publishedTime: post.publishedAtIso || undefined, modifiedTime: post.updatedAtIso })
 }
 
 export default async function Page({ params }: PageProps) {
@@ -36,7 +34,8 @@ export default async function Page({ params }: PageProps) {
   const recentPostsResult = await getPostList({ limit: 4 })
   const relatedPosts = recentPostsResult.items.filter((p) => p.id !== post.id).slice(0, 3)
 
-  const origin = getSiteUrl()
+  const seoConfig = await getSeoConfig()
+  const origin = seoConfig.siteUrl
   
   const breadcrumbs = [
     { label: 'Trang chủ', url: origin },
@@ -47,8 +46,8 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
-      <JsonLd schema={articleSchema(post, origin)} />
-      <JsonLd schema={breadcrumbSchema(breadcrumbs)} />
+      {seoConfig.schemas.articleEnabled && <JsonLd data={buildArticleSchema(post, seoConfig)} />}
+      {seoConfig.schemas.breadcrumbEnabled && <JsonLd data={buildBreadcrumbSchema(breadcrumbs)} />}
       <PublicPageShell>
         <BlogDetailPage post={post} relatedPosts={relatedPosts} />
       </PublicPageShell>

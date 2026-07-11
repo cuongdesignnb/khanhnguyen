@@ -100,6 +100,12 @@ const fallbackProductDetails: PublicProductDetail[] = [
     seoTitle: null,
     seoDescription: null,
     ogImage: null,
+    canonicalUrl: null,
+    ogTitle: null,
+    ogDescription: null,
+    robotsIndex: true,
+    robotsFollow: true,
+    approvedReviews: [],
   }
 ]
 
@@ -147,6 +153,12 @@ function getStaticProductFallback(slug: string): PublicProductDetail | null {
       seoTitle: null,
       seoDescription: null,
       ogImage: null,
+      canonicalUrl: null,
+      ogTitle: null,
+      ogDescription: null,
+      robotsIndex: true,
+      robotsFollow: true,
+      approvedReviews: [],
     }
   }
   return null
@@ -286,6 +298,7 @@ export async function getFeaturedProducts(): Promise<PublicProductCard[]> {
         brand: true,
         thumbnail: true,
         specs: { orderBy: { sortOrder: 'asc' } },
+        reviews: { where: { status: 'APPROVED', deletedAt: null }, select: { name: true, rating: true, content: true, status: true } },
       },
       orderBy: { sortOrder: 'asc' },
     })
@@ -706,7 +719,7 @@ export async function getServiceBySlug(slug: string): Promise<PublicServiceDetai
   try {
     const dbService = await prisma.service.findFirst({
       where: { slug, status: 'PUBLISHED', deletedAt: null },
-      include: { image: true, faqs: { orderBy: { sortOrder: 'asc' } } },
+      include: { image: true, ogImage: true, faqs: { orderBy: { sortOrder: 'asc' } } },
     })
     if (!dbService) return null
     return mapServiceToServiceDetail(dbService)
@@ -796,7 +809,7 @@ export async function getPostBySlug(slug: string): Promise<PublicPostDetail | nu
   try {
     const dbPost = await prisma.post.findFirst({
       where: { slug, status: 'PUBLISHED', deletedAt: null },
-      include: { category: true, thumbnail: true, ogImage: true },
+      include: { category: true, author: true, thumbnail: true, ogImage: true },
     })
     if (!dbPost) return null
 

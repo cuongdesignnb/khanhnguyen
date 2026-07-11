@@ -4,8 +4,7 @@ import './globals.css'
 import { SalesProvider } from '@/components/sales/sales-provider'
 import FloatingCartIndicator from '@/components/sales/floating-cart-indicator'
 import TrackingScripts from '@/components/layout/tracking-scripts'
-import { defaultSettings } from '@/data/default-settings'
-import { getSettingsByGroup } from '@/lib/settings'
+import { buildBaseMetadata } from '@/lib/seo/metadata'
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ['vietnamese'],
@@ -16,20 +15,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 })
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [seo, tracking] = await Promise.all([
-    getSettingsByGroup('seo.default', defaultSettings.seoDefault),
-    getSettingsByGroup('integrations.tracking', defaultSettings.integrationsTracking),
-  ])
-  return {
-    title: { default: seo.defaultTitle, template: seo.titleTemplate },
-    description: seo.defaultDescription,
-    keywords: seo.defaultKeywords,
-    metadataBase: seo.canonicalUrl ? new URL(seo.canonicalUrl) : undefined,
-    openGraph: { title: seo.ogTitle || seo.defaultTitle, description: seo.ogDescription || seo.defaultDescription },
-    twitter: { card: seo.twitterCard as 'summary' | 'summary_large_image' },
-    robots: { index: seo.robotsIndex, follow: seo.robotsFollow },
-    verification: { google: tracking.googleSearchConsoleCode || undefined },
-  }
+  return buildBaseMetadata()
 }
 
 export default function RootLayout({

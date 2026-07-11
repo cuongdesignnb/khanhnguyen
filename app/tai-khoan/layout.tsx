@@ -4,6 +4,9 @@ import { auth } from '@/lib/auth'
 import PublicPageShell from '@/components/public/public-page-shell'
 import Breadcrumb from '@/components/public/breadcrumb'
 import AccountSidebar from './account-sidebar'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'Tài khoản', robots: { index: false, follow: false, nocache: true } }
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({

@@ -1,0 +1,136 @@
+# Deploy Khanh Nguyên lên aaPanel
+
+Bộ cấu hình này chạy Next.js và PostgreSQL bằng Docker. aaPanel Nginx chịu trách nhiệm domain, SSL và reverse proxy. PostgreSQL không mở cổng ra Internet; ứng dụng chỉ bind vào `127.0.0.1:4317`.
+
+## 1. Chuẩn bị DNS
+
+Tạo bản ghi:
+
+- `A` cho `xenangkhanhnguyen.com` trỏ tới IP VPS.
+- `A` cho `www.xenangkhanhnguyen.com` trỏ tới IP VPS.
+
+Chờ DNS cập nhật trước khi cấp SSL.
+
+## 2. Chuẩn bị aaPanel
+
+1. Cài Docker và Docker Compose trong App Store của aaPanel.
+2. Cài Nginx nếu server chưa có.
+3. Tạo website `xenangkhanhnguyen.com`, thêm domain phụ `www.xenangkhanhnguyen.com`.
+4. Upload hoặc clone toàn bộ repo vào `/www/wwwroot/xenangkhanhnguyen.com`.
+
+Không chỉ upload riêng thư mục `aapanel`, vì Docker cần source ở thư mục cha để build.
+
+## 3. Tạo biến môi trường production
+
+```bash
+cd /www/wwwroot/xenangkhanhnguyen.com/aapanel
+cp env.production.example .env.production
+openssl rand -hex 32
+openssl rand -base64 48
+```
+
+Sửa `.env.production`:
+
+- Thay toàn bộ `CHANGE_ME`.
+- `POSTGRES_PASSWORD` nên dùng chuỗi hex từ `openssl rand -hex 32`.
+- Điền cùng mật khẩu đó vào phần password của `DATABASE_URL`.
+- `BETTER_AUTH_SECRET` và `AI_SETTINGS_SECRET` phải là hai chuỗi khác nhau.
+- Đặt mật khẩu Admin mạnh, không dùng mật khẩu mặc định.
+- Chỉ điền `OPENAI_API_KEY` nếu muốn dùng tính năng AI.
+
+Phân quyền file:
+
+```bash
+chmod 600 .env.production
+chmod +x deploy.sh backup.sh restore-database.sh entrypoint.production.sh
+```
+
+## 4. Build và chạy
+
+```bash
+./deploy.sh
+```
+
+Kiểm tra:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml ps
+docker compose --env-file .env.production -f docker-compose.production.yml logs -f app
+curl -I http://127.0.0.1:4317
+```
+
+## 5. Reverse proxy trong aaPanel
+
+Trong website `xenangkhanhnguyen.com`:
+
+1. Mở **Reverse Proxy**.
+2. Proxy name: `khanhnguyen-nextjs`.
+3. Target URL: `http://127.0.0.1:4317`.
+4. Sent Domain: `$host`.
+5. Nếu aaPanel cho sửa config Nginx, dùng nội dung trong `nginx-reverse-proxy.conf`.
+
+Không proxy tới IP container PostgreSQL và không mở cổng 5432 trên firewall.
+
+## 6. SSL và chuyển hướng domain
+
+1. Vào tab SSL của website và cấp Let's Encrypt cho cả domain gốc lẫn `www`.
+2. Bật **Force HTTPS**.
+3. Chọn domain chính là `xenangkhanhnguyen.com`.
+4. Redirect `www.xenangkhanhnguyen.com` về `https://xenangkhanhnguyen.com$request_uri`.
+
+Sau đó kiểm tra:
+
+```bash
+curl -I https://xenangkhanhnguyen.com
+curl -I https://www.xenangkhanhnguyen.com
+curl https://xenangkhanhnguyen.com/api/health
+curl https://xenangkhanhnguyen.com/robots.txt
+curl https://xenangkhanhnguyen.com/sitemap.xml
+```
+
+## 7. Khởi tạo dữ liệu
+
+Mặc định `RUN_DB_SEED=false` để tránh tự chèn dữ liệu mẫu lên production.
+
+- Nếu chuyển từ hệ thống hiện tại: backup database và uploads ở máy cũ, sau đó restore lên server.
+- Nếu là website hoàn toàn mới và muốn dùng dữ liệu seed của repo: tạm đặt `RUN_DB_SEED=true`, chạy `./deploy.sh` một lần, rồi đổi lại `false` và chạy lại.
+
+Đăng nhập Admin tại `https://xenangkhanhnguyen.com/dang-nhap`, sau đó vào **Cài đặt → SEO toàn website** và xác nhận URL chính thức là `https://xenangkhanhnguyen.com`.
+
+## 8. Backup tự động
+
+Chạy thử:
+
+```bash
+./backup.sh
+```
+
+Trong aaPanel Cron, tạo Shell Script chạy mỗi ngày lúc 02:30:
+
+```bash
+cd /www/wwwroot/xenangkhanhnguyen.com/aapanel && ./backup.sh >> /www/wwwlogs/khanhnguyen-backup.log 2>&1
+```
+
+Script giữ backup 14 ngày. Nên đồng bộ thêm thư mục `aapanel/backups` sang một máy hoặc object storage khác.
+
+## 9. Cập nhật phiên bản mới
+
+```bash
+cd /www/wwwroot/xenangkhanhnguyen.com
+git pull
+cd aapanel
+./backup.sh
+./deploy.sh
+```
+
+Không chạy `docker compose down -v`, vì tùy chọn `-v` sẽ xóa database và uploads.
+
+## 10. Rollback nhanh
+
+Trước khi cập nhật, đánh tag image hiện tại:
+
+```bash
+docker tag khanhnguyen-production-app:latest khanhnguyen-production-app:rollback
+```
+
+Nếu bản mới lỗi, có thể đổi `image` tạm thời trong Compose sang `khanhnguyen-production-app:rollback`, rồi chạy lại Compose. Database cần restore riêng nếu schema/dữ liệu đã thay đổi.

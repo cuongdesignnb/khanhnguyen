@@ -165,12 +165,13 @@ model User {
   sessions Session[]
   accounts Account[]
 
-  assignedContacts Contact[]            @relation("AssignedContacts")
-  assignedQuotes   QuoteRequest[]       @relation("AssignedQuotes")
-  assignedOrders   Order[]              @relation("AssignedOrders")
+  assignedContacts Contact[]             @relation("AssignedContacts")
+  assignedQuotes   QuoteRequest[]        @relation("AssignedQuotes")
+  assignedOrders   Order[]               @relation("AssignedOrders")
   timelineEvents   OrderTimelineEvent[]
   posts            Post[]
   wishlists        CustomerWishlist[]
+  compareItems     CustomerCompareItem[]
   aiGenerationJobs AiGenerationJob[]
 
   @@map("user")
@@ -297,39 +298,120 @@ model MediaFile {
 
   folder MediaFolder? @relation(fields: [folderId], references: [id])
 
-  categoryBanners     Category[]           @relation("CategoryBanner")
-  brandLogos          Brand[]              @relation("BrandLogo")
-  productThumbs       Product[]            @relation("ProductThumb")
-  productOgImages     Product[]            @relation("ProductOgImage")
-  productImages       ProductImage[]
-  serviceImages       Service[]
-  postThumbs          Post[]               @relation("PostThumb")
-  postOgImages        Post[]               @relation("PostOgImage")
-  testimonials        Testimonial[]
-  banners             Banner[]
-  productReviewImages ProductReviewImage[]
+  categoryBanners        Category[]           @relation("CategoryBanner")
+  categoryOgImages       Category[]           @relation("CategoryOgImage")
+  brandLogos             Brand[]              @relation("BrandLogo")
+  brandOgImages          Brand[]              @relation("BrandOgImage")
+  productThumbs          Product[]            @relation("ProductThumb")
+  productOgImages        Product[]            @relation("ProductOgImage")
+  productImages          ProductImage[]
+  serviceImages          Service[]
+  serviceOgImages        Service[]            @relation("ServiceOgImage")
+  postThumbs             Post[]               @relation("PostThumb")
+  postOgImages           Post[]               @relation("PostOgImage")
+  postCategoryOgImages   PostCategory[]       @relation("PostCategoryOgImage")
+  testimonials           Testimonial[]
+  banners                Banner[]
+  productReviewImages    ProductReviewImage[]
+  pageSectionImages      PageSection[]        @relation("PageSectionImage")
+  pageSectionBackgrounds PageSection[]        @relation("PageSectionBackground")
+  pageSectionItems       PageSectionItem[]
+}
+
+model PageConfiguration {
+  id          String        @id @default(uuid())
+  pageKey     String        @unique
+  name        String
+  description String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  sections    PageSection[]
+}
+
+model PageSection {
+  id             String            @id @default(uuid())
+  pageId         String
+  sectionKey     String
+  sectionType    String
+  name           String
+  title          String?
+  subtitle       String?
+  description    String?           @db.Text
+  content        String?           @db.Text
+  imageId        String?
+  backgroundId   String?
+  buttonLabel    String?
+  buttonUrl      String?
+  secondaryLabel String?
+  secondaryUrl   String?
+  isEnabled      Boolean           @default(true)
+  sortOrder      Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  page           PageConfiguration @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  image          MediaFile?        @relation("PageSectionImage", fields: [imageId], references: [id], onDelete: SetNull)
+  background     MediaFile?        @relation("PageSectionBackground", fields: [backgroundId], references: [id], onDelete: SetNull)
+  items          PageSectionItem[]
+
+  @@unique([pageId, sectionKey])
+  @@index([pageId, sortOrder])
+}
+
+model PageSectionItem {
+  id             String      @id @default(uuid())
+  sectionId      String
+  itemType       String      @default("default")
+  title          String?
+  subtitle       String?
+  description    String?     @db.Text
+  content        String?     @db.Text
+  value          String?
+  suffix         String?
+  icon           String?
+  imageId        String?
+  buttonLabel    String?
+  buttonUrl      String?
+  secondaryLabel String?
+  secondaryUrl   String?
+  isEnabled      Boolean     @default(true)
+  sortOrder      Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  section        PageSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  image          MediaFile?  @relation(fields: [imageId], references: [id], onDelete: SetNull)
+
+  @@index([sectionId, sortOrder])
 }
 
 model Category {
-  id             String    @id @default(uuid())
-  parentId       String?
-  name           String
-  slug           String    @unique
-  subtitle       String?
-  description    String?
-  icon           String?
-  bannerImageId  String?
-  seoTitle       String?
-  seoDescription String?
-  sortOrder      Int       @default(0)
-  isVisible      Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
+  id              String    @id @default(uuid())
+  parentId        String?
+  name            String
+  slug            String    @unique
+  subtitle        String?
+  description     String?
+  icon            String?
+  bannerImageId   String?
+  seoTitle        String?
+  seoDescription  String?
+  canonicalUrl    String?
+  ogTitle         String?
+  ogDescription   String?
+  ogImageId       String?
+  robotsIndex     Boolean   @default(true)
+  robotsFollow    Boolean   @default(true)
+  sortOrder       Int       @default(0)
+  isVisible       Boolean   @default(true)
+  comparisonGroup String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
 
   parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryHierarchy")
   bannerImage MediaFile? @relation("CategoryBanner", fields: [bannerImageId], references: [id])
+  ogImage     MediaFile? @relation("CategoryOgImage", fields: [ogImageId], references: [id])
   products    Product[]
 }
 
@@ -341,6 +423,12 @@ model Brand {
   description    String?
   seoTitle       String?
   seoDescription String?
+  canonicalUrl   String?
+  ogTitle        String?
+  ogDescription  String?
+  ogImageId      String?
+  robotsIndex    Boolean   @default(true)
+  robotsFollow   Boolean   @default(true)
   isVisible      Boolean   @default(true)
   sortOrder      Int       @default(0)
   createdAt      DateTime  @default(now())
@@ -348,6 +436,7 @@ model Brand {
   deletedAt      DateTime?
 
   logo     MediaFile? @relation("BrandLogo", fields: [logoId], references: [id])
+  ogImage  MediaFile? @relation("BrandOgImage", fields: [ogImageId], references: [id])
   products Product[]
 }
 
@@ -383,14 +472,19 @@ model Product {
   seoTitle         String?
   seoDescription   String?
   ogImageId        String?
+  canonicalUrl     String?
+  ogTitle          String?
+  ogDescription    String?
+  robotsIndex      Boolean       @default(true)
+  robotsFollow     Boolean       @default(true)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   deletedAt        DateTime?
 
-  category          Category           @relation(fields: [categoryId], references: [id])
-  brand             Brand?             @relation(fields: [brandId], references: [id])
-  thumbnail         MediaFile?         @relation("ProductThumb", fields: [thumbnailId], references: [id])
-  ogImage           MediaFile?         @relation("ProductOgImage", fields: [ogImageId], references: [id])
+  category          Category              @relation(fields: [categoryId], references: [id])
+  brand             Brand?                @relation(fields: [brandId], references: [id])
+  thumbnail         MediaFile?            @relation("ProductThumb", fields: [thumbnailId], references: [id])
+  ogImage           MediaFile?            @relation("ProductOgImage", fields: [ogImageId], references: [id])
   images            ProductImage[]
   specs             ProductSpec[]
   orderItems        OrderItem[]
@@ -398,6 +492,7 @@ model Product {
   quoteRequestItems QuoteRequestItem[]
   reviews           ProductReview[]
   wishlistedBy      CustomerWishlist[]
+  comparedBy        CustomerCompareItem[]
 }
 
 model ProductImage {
@@ -414,15 +509,34 @@ model ProductImage {
 }
 
 model ProductSpec {
+  id           String   @id @default(uuid())
+  productId    String
+  label        String
+  value        String
+  key          String?
+  group        String?
+  unit         String?
+  isComparable Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model CustomerCompareItem {
   id        String   @id @default(uuid())
+  userId    String
   productId String
-  label     String
-  value     String
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, sortOrder])
 }
 
 model Service {
@@ -442,13 +556,20 @@ model Service {
   status         PublishStatus @default(PUBLISHED)
   seoTitle       String?
   seoDescription String?
+  canonicalUrl   String?
+  ogTitle        String?
+  ogDescription  String?
+  ogImageId      String?
+  robotsIndex    Boolean       @default(true)
+  robotsFollow   Boolean       @default(true)
   sortOrder      Int           @default(0)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
 
-  image MediaFile?   @relation(fields: [imageId], references: [id])
-  faqs  ServiceFAQ[]
+  image   MediaFile?   @relation(fields: [imageId], references: [id])
+  ogImage MediaFile?   @relation("ServiceOgImage", fields: [ogImageId], references: [id])
+  faqs    ServiceFAQ[]
 }
 
 model ServiceFAQ {
@@ -470,6 +591,12 @@ model PostCategory {
   description    String?
   seoTitle       String?
   seoDescription String?
+  canonicalUrl   String?
+  ogTitle        String?
+  ogDescription  String?
+  ogImageId      String?
+  robotsIndex    Boolean   @default(true)
+  robotsFollow   Boolean   @default(true)
   sortOrder      Int       @default(0)
   isVisible      Boolean   @default(true)
   createdAt      DateTime  @default(now())
@@ -477,6 +604,7 @@ model PostCategory {
   deletedAt      DateTime?
 
   posts            Post[]
+  ogImage          MediaFile?        @relation("PostCategoryOgImage", fields: [ogImageId], references: [id])
   aiGenerationJobs AiGenerationJob[]
 }
 
@@ -495,6 +623,11 @@ model Post {
   seoTitle       String?
   seoDescription String?
   ogImageId      String?
+  canonicalUrl   String?
+  ogTitle        String?
+  ogDescription  String?
+  robotsIndex    Boolean       @default(true)
+  robotsFollow   Boolean       @default(true)
   viewCount      Int           @default(0)
   isFeatured     Boolean       @default(false)
   createdAt      DateTime      @default(now())
@@ -762,6 +895,19 @@ model MenuItem {
   @@index([menuId])
   @@index([parentId])
   @@index([sortOrder])
+}
+
+model SeoRedirect {
+  id         String   @id @default(uuid())
+  sourcePath String   @unique
+  targetPath String
+  statusCode Int      @default(301)
+  isActive   Boolean  @default(true)
+  hitCount   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isActive])
 }
 
 model ProductReview {

@@ -94,6 +94,12 @@ export interface PublicProductDetail {
   seoTitle: string | null
   seoDescription: string | null
   ogImage: string | null
+  canonicalUrl: string | null
+  ogTitle: string | null
+  ogDescription: string | null
+  robotsIndex: boolean
+  robotsFollow: boolean
+  approvedReviews: { name: string; rating: number; content: string; status: 'APPROVED' }[]
 }
 
 export interface PublicService {
@@ -126,6 +132,12 @@ export interface PublicServiceDetail {
   ctaButtonHref: string | null
   seoTitle: string | null
   seoDescription: string | null
+  ogImage: string | null
+  canonicalUrl: string | null
+  ogTitle: string | null
+  ogDescription: string | null
+  robotsIndex: boolean
+  robotsFollow: boolean
 }
 
 export interface PublicPostCard {
@@ -153,6 +165,14 @@ export interface PublicPostDetail {
   seoTitle: string | null
   seoDescription: string | null
   ogImage: string | null
+  canonicalUrl: string | null
+  ogTitle: string | null
+  ogDescription: string | null
+  robotsIndex: boolean
+  robotsFollow: boolean
+  publishedAtIso: string | null
+  updatedAtIso: string
+  authorName: string | null
 }
 
 export interface PublicPostCategory {

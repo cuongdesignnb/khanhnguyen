@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma'
 import * as api from '@/lib/api-response'
 import { categorySchema } from '@/lib/validators/category'
 import { generateUniqueSlug } from '@/lib/slug'
+import { recordSeoRedirect } from '@/lib/seo/redirects'
+import { revalidatePath } from 'next/cache'
 
 export async function GET(
   request: NextRequest,
@@ -93,6 +95,12 @@ export async function PATCH(
         bannerImageId: parsed.data.bannerImageId !== undefined ? parsed.data.bannerImageId : undefined,
         seoTitle: parsed.data.seoTitle !== undefined ? parsed.data.seoTitle : undefined,
         seoDescription: parsed.data.seoDescription !== undefined ? parsed.data.seoDescription : undefined,
+        canonicalUrl: parsed.data.canonicalUrl !== undefined ? parsed.data.canonicalUrl : undefined,
+        ogTitle: parsed.data.ogTitle !== undefined ? parsed.data.ogTitle : undefined,
+        ogDescription: parsed.data.ogDescription !== undefined ? parsed.data.ogDescription : undefined,
+        ogImageId: parsed.data.ogImageId !== undefined ? parsed.data.ogImageId : undefined,
+        robotsIndex: parsed.data.robotsIndex,
+        robotsFollow: parsed.data.robotsFollow,
         sortOrder: parsed.data.sortOrder !== undefined ? parsed.data.sortOrder : undefined,
         isVisible: parsed.data.isVisible !== undefined ? parsed.data.isVisible : undefined,
       },
@@ -101,6 +109,8 @@ export async function PATCH(
         parent: true,
       },
     })
+    if (slug !== existingCategory.slug) await recordSeoRedirect(`/${existingCategory.slug}`, `/${slug}`)
+    revalidatePath('/'); revalidatePath('/san-pham'); revalidatePath(`/${slug}`); revalidatePath('/sitemap.xml')
 
     return api.ok(updatedCategory, 'Cập nhật danh mục thành công')
   } catch (error: any) {

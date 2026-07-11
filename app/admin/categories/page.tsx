@@ -15,6 +15,7 @@ import MediaPicker from '@/components/admin/media-picker'
 import AdminLoading from '@/components/admin/admin-loading'
 import AdminErrorState from '@/components/admin/admin-error-state'
 import RichTextEditor from '@/components/admin/editor/rich-text-editor'
+import SeoFormSection from '@/components/admin/seo/seo-form-section'
 import { Plus, Pencil, Trash2, Eye, ChevronRight, Save, X, Image as ImageIcon, RefreshCw } from 'lucide-react'
 import type { CategoryItem } from '@/types/admin'
 import type { MediaItem } from '@/types/admin'
@@ -32,6 +33,15 @@ export default function CategoriesPage() {
   const [sortOrder, setSortOrder] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
   const [bannerMedia, setBannerMedia] = useState<MediaItem | null>(null)
+  const [seoTitle, setSeoTitle] = useState('')
+  const [seoDescription, setSeoDescription] = useState('')
+  const [canonicalUrl, setCanonicalUrl] = useState('')
+  const [ogTitle, setOgTitle] = useState('')
+  const [ogDescription, setOgDescription] = useState('')
+  const [ogImageId, setOgImageId] = useState<string | null>(null)
+  const [ogImageUrl, setOgImageUrl] = useState<string | null>(null)
+  const [robotsIndex, setRobotsIndex] = useState(true)
+  const [robotsFollow, setRobotsFollow] = useState(true)
 
   const {
     items: categories,
@@ -63,6 +73,7 @@ export default function CategoriesPage() {
         setIsVisible(cat.isVisible ?? true)
         // Set mock image or fetched image url if available
         setBannerMedia(cat.icon ? { id: '', src: cat.icon, alt: '', type: 'other', format: 'jpg', size: '', uploadedAt: '' } : null)
+        adminApi.getCategoryById(editingId).then((data: any) => { setSeoTitle(data.seoTitle || ''); setSeoDescription(data.seoDescription || ''); setCanonicalUrl(data.canonicalUrl || ''); setOgTitle(data.ogTitle || ''); setOgDescription(data.ogDescription || ''); setOgImageId(data.ogImageId || null); setOgImageUrl(data.ogImage?.url || null); setRobotsIndex(data.robotsIndex ?? true); setRobotsFollow(data.robotsFollow ?? true) }).catch(() => undefined)
       }
     } else {
       resetForm()
@@ -77,6 +88,7 @@ export default function CategoriesPage() {
     setSortOrder(0)
     setIsVisible(true)
     setBannerMedia(null)
+    setSeoTitle(''); setSeoDescription(''); setCanonicalUrl(''); setOgTitle(''); setOgDescription(''); setOgImageId(null); setOgImageUrl(null); setRobotsIndex(true); setRobotsFollow(true)
   }
 
   const { mutate: saveCategory, loading: saving } = useAdminMutation(
@@ -89,6 +101,8 @@ export default function CategoriesPage() {
         sortOrder: Number(sortOrder),
         isVisible,
         bannerImageId: bannerMedia?.id || null,
+        seoTitle: seoTitle || null, seoDescription: seoDescription || null, canonicalUrl: canonicalUrl || null,
+        ogTitle: ogTitle || null, ogDescription: ogDescription || null, ogImageId, robotsIndex, robotsFollow,
       }
 
       if (editingId) {
@@ -388,6 +402,7 @@ export default function CategoriesPage() {
                  minHeight={120}
                />
              </div>
+            <SeoFormSection path={`/${slug || 'slug-danh-muc'}`} value={{ seoTitle, seoDescription, canonicalUrl, ogTitle, ogDescription, ogImageId, ogImageUrl, robotsIndex, robotsFollow }} onChange={(seo) => { setSeoTitle(seo.seoTitle); setSeoDescription(seo.seoDescription); setCanonicalUrl(seo.canonicalUrl); setOgTitle(seo.ogTitle); setOgDescription(seo.ogDescription); setOgImageId(seo.ogImageId); setOgImageUrl(seo.ogImageUrl || null); setRobotsIndex(seo.robotsIndex); setRobotsFollow(seo.robotsFollow) }} />
             <div>
               <label className="block text-xs font-medium text-[color:var(--muted)] mb-1.5">
                 Thứ tự hiển thị
