@@ -1,12 +1,12 @@
 import prisma from './prisma'
 import * as homeData from '@/data/home'
+import { Prisma, StockStatus } from '@prisma/client'
 import { logPublicDataFallback } from './public-db-safe'
 import { toVietnameseSlug } from './slug'
 import { defaultSettings } from '@/data/default-settings'
 import { getSettingsByGroup } from './settings'
 import { getFooterMenu, getHeaderMenu, getMobileMenu } from './menu'
 import {
-  mapSettingRowsToSiteConfig,
   mapCategoryToPublicCategory,
   mapBrandToPublicBrand,
   mapProductToPublicCard,
@@ -17,13 +17,13 @@ import {
   mapPostToPostDetail,
   mapTestimonialToPublicTestimonial,
   mapBannerToPublicBanner,
-  mapMenuToNavigation,
 } from './public-mappers'
 import {
   PublicSiteConfig,
   PublicCategory,
   PublicBrand,
   PublicProductCard,
+  PublicProductCategorySection,
   PublicProductDetail,
   PublicService,
   PublicServiceDetail,
@@ -37,6 +37,31 @@ import {
   PostListParams,
   PostListResult,
 } from '@/types/public'
+
+type StaticHomeProduct = (typeof homeData.featuredProducts)[number] & { slug?: string }
+type ResolvedSearchParams = Record<string, string | string[] | undefined>
+type HomeConfigRuntime = {
+  featuredProductsEnabled?: boolean
+  featuredProductsLimit?: unknown
+  categoryProductSectionsEnabled?: boolean
+  categoryProductLimit?: unknown
+}
+
+const HOME_PRODUCT_MAX_LIMIT = 8
+
+function clampHomeProductLimit(value: unknown, fallback = HOME_PRODUCT_MAX_LIMIT) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return fallback
+  return Math.min(HOME_PRODUCT_MAX_LIMIT, Math.max(1, Math.floor(parsed)))
+}
+
+function getStaticProductSlug(product: StaticHomeProduct) {
+  return toVietnameseSlug(product.slug || product.id || product.name)
+}
+
+function mapStaticHomeProduct(product: StaticHomeProduct) {
+  return mapProductToPublicCard({ ...product, slug: getStaticProductSlug(product) })
+}
 
 const fallbackProductDetails: PublicProductDetail[] = [
   {
@@ -114,12 +139,12 @@ function getStaticProductFallback(slug: string): PublicProductDetail | null {
   if (detailedMatch) return detailedMatch
 
   const homeMatch = homeData.featuredProducts.find(
-    (p) => toVietnameseSlug((p as any).slug || p.id || p.name) === slug
+    (p) => getStaticProductSlug(p) === slug
   )
   if (homeMatch) {
     return {
       id: homeMatch.id,
-      slug: toVietnameseSlug((homeMatch as any).slug || homeMatch.id || homeMatch.name),
+      slug: getStaticProductSlug(homeMatch),
       sku: `KN-${homeMatch.id.toUpperCase()}`,
       name: homeMatch.name,
       model: homeMatch.name,
@@ -285,11 +310,13 @@ export async function getVisibleCategories(): Promise<PublicCategory[]> {
 }
 
 // 6. Featured Products
-export async function getFeaturedProducts(): Promise<PublicProductCard[]> {
+export async function getFeaturedProducts(limit = HOME_PRODUCT_MAX_LIMIT): Promise<PublicProductCard[]> {
+  const take = clampHomeProductLimit(limit)
   try {
     const dbProducts = await prisma.product.findMany({
       where: {
         isFeatured: true,
+        showOnHome: true,
         status: 'PUBLISHED',
         deletedAt: null,
       },
@@ -300,15 +327,80 @@ export async function getFeaturedProducts(): Promise<PublicProductCard[]> {
         specs: { orderBy: { sortOrder: 'asc' }, take: 12 },
         reviews: { where: { status: 'APPROVED', deletedAt: null }, select: { name: true, rating: true, content: true, status: true } },
       },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { updatedAt: 'desc' }],
+      take,
     })
-    if (!dbProducts || dbProducts.length === 0) {
-      return homeData.featuredProducts.map((p) => mapProductToPublicCard({ ...p, slug: toVietnameseSlug((p as any).slug || p.id || p.name) }))
-    }
     return dbProducts.map(mapProductToPublicCard)
   } catch (error) {
     logPublicDataFallback('getFeaturedProducts', error)
-    return homeData.featuredProducts.map((p) => mapProductToPublicCard({ ...p, slug: toVietnameseSlug((p as any).slug || p.id || p.name) }))
+    return homeData.featuredProducts.slice(0, take).map(mapStaticHomeProduct)
+  }
+}
+
+export async function getHomeProductCategorySections(limit = HOME_PRODUCT_MAX_LIMIT): Promise<PublicProductCategorySection[]> {
+  const perSectionLimit = clampHomeProductLimit(limit)
+
+  try {
+    const [categories, products] = await Promise.all([
+      prisma.category.findMany({
+        where: { isVisible: true, deletedAt: null },
+        include: { bannerImage: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
+      prisma.product.findMany({
+        where: {
+          showOnHome: true,
+          status: 'PUBLISHED',
+          deletedAt: null,
+          category: { isVisible: true, deletedAt: null },
+        },
+        include: {
+          category: true,
+          brand: true,
+          thumbnail: true,
+          specs: { orderBy: { sortOrder: 'asc' }, take: 12 },
+        },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      }),
+    ])
+
+    const categoryById = new Map(categories.map((category) => [category.id, category]))
+    const rootCategories = categories.filter((category) => !category.parentId)
+    const grouped = new Map<string, PublicProductCard[]>()
+
+    function resolveRootCategoryId(categoryId: string) {
+      let current = categoryById.get(categoryId)
+      const visited = new Set<string>()
+
+      while (current?.parentId && !visited.has(current.id)) {
+        visited.add(current.id)
+        const parent = categoryById.get(current.parentId)
+        if (!parent) break
+        current = parent
+      }
+
+      return current && !current.parentId ? current.id : null
+    }
+
+    for (const product of products) {
+      const rootCategoryId = resolveRootCategoryId(product.categoryId)
+      if (!rootCategoryId) continue
+
+      const currentProducts = grouped.get(rootCategoryId) || []
+      if (currentProducts.length >= perSectionLimit) continue
+      currentProducts.push(mapProductToPublicCard(product))
+      grouped.set(rootCategoryId, currentProducts)
+    }
+
+    return rootCategories
+      .map((category) => ({
+        category: mapCategoryToPublicCategory(category),
+        products: grouped.get(category.id) || [],
+      }))
+      .filter((section) => section.products.length > 0)
+  } catch (error) {
+    logPublicDataFallback('getHomeProductCategorySections', error)
+    return []
   }
 }
 
@@ -413,12 +505,19 @@ export async function getLatestPosts(): Promise<PublicPostCard[]> {
 
 // 10. Home Data aggregator
 export async function getHomeData() {
+  const homeConfig = await getSettingsByGroup('home.config', defaultSettings.homeConfig) as HomeConfigRuntime
+  const featuredProductsEnabled = homeConfig.featuredProductsEnabled !== false
+  const categoryProductSectionsEnabled = homeConfig.categoryProductSectionsEnabled !== false
+  const featuredProductsLimit = clampHomeProductLimit(homeConfig.featuredProductsLimit)
+  const categoryProductLimit = clampHomeProductLimit(homeConfig.categoryProductLimit)
+
   const [
     siteConfig,
     navigation,
     mobileNavigation,
     categories,
     featuredProducts,
+    productCategorySections,
     services,
     latestPosts,
     testimonials,
@@ -428,7 +527,8 @@ export async function getHomeData() {
     getPublicMenus(),
     getPublicMobileMenus(),
     getVisibleCategories(),
-    getFeaturedProducts(),
+    featuredProductsEnabled ? getFeaturedProducts(featuredProductsLimit) : Promise.resolve([]),
+    categoryProductSectionsEnabled ? getHomeProductCategorySections(categoryProductLimit) : Promise.resolve([]),
     getVisibleServices(),
     getLatestPosts(),
     getTestimonials(),
@@ -445,6 +545,7 @@ export async function getHomeData() {
     })),
     categories,
     featuredProducts,
+    productCategorySections,
     services,
     latestPosts,
     testimonials,
@@ -476,7 +577,7 @@ export async function getProductList(params: ProductListParams): Promise<Product
 
     const skip = (page - 1) * limit
 
-    const where: any = {
+    const where: Prisma.ProductWhereInput = {
       status: 'PUBLISHED',
       deletedAt: null,
     }
@@ -529,7 +630,9 @@ export async function getProductList(params: ProductListParams): Promise<Product
     }
 
     if (stockStatus) {
-      where.stockStatus = stockStatus
+      if (Object.values(StockStatus).includes(stockStatus as StockStatus)) {
+        where.stockStatus = stockStatus as StockStatus
+      }
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -539,7 +642,7 @@ export async function getProductList(params: ProductListParams): Promise<Product
       }
     }
 
-    let orderBy: any = { sortOrder: 'asc' }
+    let orderBy: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[] = { sortOrder: 'asc' }
     if (sort === 'latest') orderBy = { createdAt: 'desc' }
     if (sort === 'featured') orderBy = [{ isFeatured: 'desc' }, { sortOrder: 'asc' }]
     if (sort === 'price-asc') orderBy = { price: 'asc' }
@@ -568,7 +671,7 @@ export async function getProductList(params: ProductListParams): Promise<Product
     logPublicDataFallback('getProductList', error)
 
     // Hotfix: Fallback to static featuredProducts instead of returning empty list
-    const mappedFallback = homeData.featuredProducts.map((p) => mapProductToPublicCard({ ...p, slug: toVietnameseSlug((p as any).slug || p.id || p.name) }))
+    const mappedFallback = homeData.featuredProducts.map(mapStaticHomeProduct)
 
     return {
       items: mappedFallback,
@@ -712,7 +815,7 @@ export async function getPostList(params: PostListParams): Promise<PostListResul
     const { q, category, page = 1, limit = 9 } = params
     const skip = (page - 1) * limit
 
-    const where: any = {
+    const where: Prisma.PostWhereInput = {
       status: 'PUBLISHED',
       deletedAt: null,
     }
@@ -833,10 +936,12 @@ export async function getAllPostCategorySlugs(): Promise<string[]> {
   }
 }
 
-export function parseProductListParams(resolvedParams: any): ProductListParams {
+export function parseProductListParams(resolvedParams: ResolvedSearchParams): ProductListParams {
   const page = typeof resolvedParams.page === 'string' ? parseInt(resolvedParams.page, 10) : 1
   const minPrice = typeof resolvedParams.minPrice === 'string' ? parseFloat(resolvedParams.minPrice) : undefined
   const maxPrice = typeof resolvedParams.maxPrice === 'string' ? parseFloat(resolvedParams.maxPrice) : undefined
+  const sort = typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined
+  const allowedSorts: NonNullable<ProductListParams['sort']>[] = ['latest', 'featured', 'price-asc', 'price-desc', 'best-seller']
 
   return {
     q: typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined,
@@ -849,7 +954,9 @@ export function parseProductListParams(resolvedParams: any): ProductListParams {
     origin: typeof resolvedParams.origin === 'string' ? resolvedParams.origin : undefined,
     manufactureYear: typeof resolvedParams.manufactureYear === 'string' ? resolvedParams.manufactureYear : undefined,
     stockStatus: typeof resolvedParams.stockStatus === 'string' ? resolvedParams.stockStatus : undefined,
-    sort: typeof resolvedParams.sort === 'string' ? (resolvedParams.sort as any) : undefined,
+    sort: sort && allowedSorts.includes(sort as NonNullable<ProductListParams['sort']>)
+      ? (sort as NonNullable<ProductListParams['sort']>)
+      : undefined,
     page,
     minPrice,
     maxPrice,
@@ -858,7 +965,7 @@ export function parseProductListParams(resolvedParams: any): ProductListParams {
 
 export async function getProductFilterOptions(categorySlug?: string) {
   try {
-    const where: any = {
+    const where: Prisma.ProductWhereInput = {
       status: 'PUBLISHED',
       deletedAt: null,
     }

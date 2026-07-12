@@ -56,6 +56,7 @@ export default function ProductEditorPanel({
   const [priceLabel, setPriceLabel] = useState('Liên hệ')
   const [badge, setBadge] = useState('')
   const [isFeatured, setIsFeatured] = useState(false)
+  const [showOnHome, setShowOnHome] = useState(true)
   const [isVisible, setIsVisible] = useState(true)
   const [shortDescription, setShortDescription] = useState('')
   const [description, setDescription] = useState('')
@@ -98,6 +99,7 @@ export default function ProductEditorPanel({
             setPriceLabel(data.priceLabel || 'Liên hệ')
             setBadge(data.badge || '')
             setIsFeatured(data.isFeatured || false)
+            setShowOnHome(data.showOnHome ?? true)
             setIsVisible(data.status === 'PUBLISHED')
             setShortDescription(data.shortDescription || '')
             setDescription(data.description || '')
@@ -175,6 +177,7 @@ export default function ProductEditorPanel({
         setPriceLabel('Liên hệ')
         setBadge('')
         setIsFeatured(false)
+        setShowOnHome(true)
         setIsVisible(true)
         setShortDescription('')
         setDescription('')
@@ -250,7 +253,7 @@ export default function ProductEditorPanel({
         status: isVisible ? 'PUBLISHED' : 'HIDDEN',
         stockStatus: 'IN_STOCK',
         isFeatured,
-        showOnHome: true,
+        showOnHome,
         shortDescription,
         description,
         warrantyPolicy: warrantyPolicy || null,
@@ -496,33 +499,63 @@ export default function ProductEditorPanel({
                   </div>
 
                   {/* Toggles */}
-                  <div className="flex items-center gap-8 bg-white/[0.02] border border-white/5 p-3 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-[color:var(--silver)]">Sản phẩm nổi bật</span>
+                  <div className="space-y-3 rounded-xl border border-white/5 bg-white/[0.02] p-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-[color:var(--silver)]">Hiển thị trên Trang chủ</p>
+                        <p className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                          Cho phép sản phẩm xuất hiện trong section danh mục trên Trang chủ.
+                        </p>
+                      </div>
                       <button
                         type="button"
+                        aria-pressed={showOnHome}
+                        onClick={() => setShowOnHome(!showOnHome)}
+                        className={`relative mt-1 h-5 w-9 shrink-0 rounded-full transition-colors cursor-pointer ${
+                          showOnHome ? 'bg-[color:var(--gold)]' : 'bg-[color:var(--surface-3)] border border-white/10'
+                        }`}
+                      >
+                        <div
+                          className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
+                          style={{ transform: showOnHome ? 'translateX(18px)' : 'translateX(2px)' }}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4 border-t border-white/5 pt-3">
+                      <div>
+                        <p className="text-sm font-semibold text-[color:var(--silver)]">Sản phẩm nổi bật</p>
+                        <p className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                          Sản phẩm sẽ xuất hiện trong slider Sản phẩm nổi bật khi đồng thời được bật Hiển thị trên Trang chủ.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-pressed={isFeatured}
                         onClick={() => setIsFeatured(!isFeatured)}
-                        className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
+                        className={`relative mt-1 h-5 w-9 shrink-0 rounded-full transition-colors cursor-pointer ${
                           isFeatured ? 'bg-[color:var(--gold)]' : 'bg-[color:var(--surface-3)] border border-white/10'
                         }`}
                       >
                         <div
-                          className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200"
+                          className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
                           style={{ transform: isFeatured ? 'translateX(18px)' : 'translateX(2px)' }}
                         />
                       </button>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-[color:var(--silver)]">Hiển thị</span>
+
+                    <div className="flex items-center justify-between gap-4 border-t border-white/5 pt-3">
+                      <span className="text-sm font-semibold text-[color:var(--silver)]">Hiển thị sản phẩm</span>
                       <button
                         type="button"
+                        aria-pressed={isVisible}
                         onClick={() => setIsVisible(!isVisible)}
-                        className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
+                        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors cursor-pointer ${
                           isVisible ? 'bg-[color:var(--gold)]' : 'bg-[color:var(--surface-3)] border border-white/10'
                         }`}
                       >
                         <div
-                          className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200"
+                          className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
                           style={{ transform: isVisible ? 'translateX(18px)' : 'translateX(2px)' }}
                         />
                       </button>

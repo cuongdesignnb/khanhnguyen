@@ -50,6 +50,7 @@ export const defaultSettings = {
     heroPrimaryCtaLabel: 'Xem sản phẩm', heroPrimaryCtaUrl: '/san-pham',
     heroSecondaryCtaLabel: 'Nhận tư vấn', heroSecondaryCtaUrl: '/lien-he', heroImageId: null,
     featuredProductsEnabled: true, featuredProductsTitle: 'Sản phẩm nổi bật', featuredProductsSubtitle: '', featuredProductsLimit: 8,
+    categoryProductSectionsEnabled: true, categoryProductLimit: 8,
     categoriesEnabled: true, brandsEnabled: true, servicesEnabled: true, testimonialsEnabled: true, statsEnabled: true,
     newsEnabled: true, newsLimit: 3, promoBannerEnabled: true, promoBannerTitle: '', promoBannerDescription: '',
     promoBannerImageId: null, promoBannerCtaLabel: 'Xem chi tiết', promoBannerCtaUrl: '/san-pham',

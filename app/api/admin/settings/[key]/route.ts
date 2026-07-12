@@ -16,9 +16,11 @@ function validate(group: string, value: Record<string, any>) {
     if (/color/i.test(key) && field && !/^(#[0-9a-f]{3}|#[0-9a-f]{6}|#[0-9a-f]{8}|rgba?\([^)]+\))$/i.test(String(field))) errors.push(`${key}: mã màu không hợp lệ`)
     if ((/url$/i.test(key) || /facebook|youtube|linkedin|messenger/i.test(key)) && field && !String(field).startsWith('/') && !/^https?:\/\//i.test(String(field)) && !/^tel:|^mailto:/i.test(String(field))) errors.push(`${key}: URL không hợp lệ`)
   }
-  for (const key of ['productsPerPage', 'postsPerPage', 'newsLimit', 'featuredProductsLimit', 'relatedProductsLimit']) {
+  for (const key of ['productsPerPage', 'postsPerPage', 'newsLimit', 'featuredProductsLimit', 'categoryProductLimit', 'relatedProductsLimit']) {
     if (key in value && (!Number.isFinite(Number(value[key])) || Number(value[key]) <= 0)) errors.push(`${key}: phải là số dương`)
   }
+  if ('featuredProductsLimit' in value && Number(value.featuredProductsLimit) > 8) errors.push('featuredProductsLimit: tối đa 8 sản phẩm')
+  if ('categoryProductLimit' in value && Number(value.categoryProductLimit) > 8) errors.push('categoryProductLimit: tối đa 8 sản phẩm')
   if ('cardVisibleSpecsLimit' in value && (!Number.isInteger(value.cardVisibleSpecsLimit) || value.cardVisibleSpecsLimit < 0 || value.cardVisibleSpecsLimit > 3)) errors.push('cardVisibleSpecsLimit: chỉ nhận giá trị từ 0 đến 3')
   if ('cardHoverSpecsLimit' in value && (!Number.isInteger(value.cardHoverSpecsLimit) || value.cardHoverSpecsLimit < 3 || value.cardHoverSpecsLimit > 6)) errors.push('cardHoverSpecsLimit: chỉ nhận giá trị từ 3 đến 6')
   if ('cardPrioritySpecs' in value && (!Array.isArray(value.cardPrioritySpecs) || value.cardPrioritySpecs.length > 3)) errors.push('cardPrioritySpecs: chỉ được chọn tối đa 3 thông số')

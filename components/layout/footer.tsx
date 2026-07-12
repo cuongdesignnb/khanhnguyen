@@ -87,7 +87,7 @@ export default function Footer({ siteConfig, footerGroups }: FooterProps) {
               Nhận thông tin ưu đãi và sản phẩm mới nhất từ Khanh Nguyen.
             </p>
             <form
-              className="flex"
+              className="flex w-full"
               aria-label="Đăng ký nhận bản tin"
             >
               <label htmlFor="footer-email" className="sr-only">
@@ -97,11 +97,11 @@ export default function Footer({ siteConfig, footerGroups }: FooterProps) {
                 id="footer-email"
                 type="email"
                 placeholder="Nhập email của bạn"
-                className="flex-1 bg-[color:var(--surface-2)] border border-white/10 rounded-l-lg px-4 py-2.5 text-sm text-white placeholder:text-[color:var(--muted)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
+                className="min-w-0 flex-1 bg-[color:var(--surface-2)] border border-white/10 rounded-l-lg px-4 py-2.5 text-sm text-white placeholder:text-[color:var(--muted)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
               />
               <button
                 type="submit"
-                className="bg-[color:var(--gold)] hover:bg-[color:var(--gold-strong)] px-5 py-2.5 rounded-r-lg font-bold text-black text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
+                className="shrink-0 bg-[color:var(--gold)] hover:bg-[color:var(--gold-strong)] px-4 py-2.5 rounded-r-lg font-bold text-black text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
               >
                 ĐĂNG KÝ
               </button>

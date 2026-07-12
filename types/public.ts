@@ -203,6 +203,11 @@ export interface PublicBanner {
   position: 'HOME_HERO' | 'HOME_PROMO' | 'CATEGORY' | 'POPUP' | 'FOOTER'
 }
 
+export interface PublicProductCategorySection {
+  category: PublicCategory
+  products: PublicProductCard[]
+}
+
 export interface PublicHomeData {
   siteConfig: PublicSiteConfig
   navigation: PublicNavigationItem[]
@@ -210,6 +215,7 @@ export interface PublicHomeData {
   footerGroups: { title: string; links: { label: string; href: string }[] }[]
   categories: PublicCategory[]
   featuredProducts: PublicProductCard[]
+  productCategorySections: PublicProductCategorySection[]
   services: PublicService[]
   latestPosts: PublicPostCard[]
   testimonials: PublicTestimonial[]

@@ -8,6 +8,7 @@ import Hero from '@/components/home/hero'
 import CategoryGrid from '@/components/home/category-grid'
 import FeaturedProducts from '@/components/home/featured-products'
 import PromoBanner from '@/components/home/promo-banner'
+import CategoryProductSections from '@/components/home/category-product-sections'
 import BrandStrip from '@/components/home/brand-strip'
 import WhyUs from '@/components/home/why-us'
 import StatsStrip from '@/components/home/stats-strip'
@@ -49,6 +50,7 @@ export default function HomePageClient({ data, headerConfig, contactConfig, prod
           <CategoryGrid categories={data.categories} />
           <FeaturedProducts products={data.featuredProducts} />
           <PromoBanner />
+          <CategoryProductSections sections={data.productCategorySections} />
           <BrandStrip brands={data.brands} />
           <WhyUs />
           <StatsStrip stats={data.stats} />
