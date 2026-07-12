@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import clsx from 'clsx'
@@ -106,6 +107,15 @@ interface SiteNavigationProps {
 
 export default function SiteNavigation({ navigation }: SiteNavigationProps) {
   const displayNavigation = navigation || staticNavigation
+  const pathname = usePathname()
+
+  const isItemActive = (item: PublicNavigationItem) => {
+    if (item.href === '/') return pathname === '/'
+    if (pathname === item.href || pathname.startsWith(`${item.href}/`)) return true
+    return item.children?.some(
+      (child) => pathname === child.href || pathname.startsWith(`${child.href}/`)
+    ) ?? false
+  }
 
   return (
     <nav
@@ -114,11 +124,11 @@ export default function SiteNavigation({ navigation }: SiteNavigationProps) {
     >
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-1">
-          {displayNavigation.map((item, index) => (
+          {displayNavigation.map((item) => (
             <NavItemWithDropdown
               key={item.href}
               item={item}
-              isActive={index === 0} // Active if home page/first item
+              isActive={isItemActive(item)}
             />
           ))}
         </div>

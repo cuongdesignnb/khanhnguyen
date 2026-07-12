@@ -1,24 +1,27 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T | ((val: T) => T)) => void] {
+  const defaultValueRef = useRef(defaultValue)
+
   // Read value
   const readValue = useCallback((): T => {
     if (typeof window === 'undefined') {
-      return defaultValue
+      return defaultValueRef.current
     }
 
     try {
       const item = window.localStorage.getItem(key)
-      return item ? (JSON.parse(item) as T) : defaultValue
+      return item ? (JSON.parse(item) as T) : defaultValueRef.current
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error)
-      return defaultValue
+      return defaultValueRef.current
     }
-  }, [key, defaultValue])
+  }, [key])
 
-  const [storedValue, setStoredValue] = useState<T>(readValue)
+  const [storedValue, setStoredValue] = useState<T>(defaultValue)
+  const storedValueRef = useRef(storedValue)
 
   // Return a memoized version of useState's setter function that
   // persists the new value to localStorage.
@@ -26,9 +29,10 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
     (value: T | ((val: T) => T)) => {
       try {
         // Allow value to be a function so we have same API as useState
-        const valueToStore = value instanceof Function ? value(storedValue) : value
+        const valueToStore = value instanceof Function ? value(storedValueRef.current) : value
 
         // Save state
+        storedValueRef.current = valueToStore
         setStoredValue(valueToStore)
 
         // Save to local storage
@@ -41,17 +45,22 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
         console.warn(`Error setting localStorage key "${key}":`, error)
       }
     },
-    [key, storedValue]
+    [key]
   )
 
   useEffect(() => {
-    setStoredValue(readValue())
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    const value = readValue()
+    storedValueRef.current = value
+    // Đồng bộ dữ liệu trình duyệt sau khi hydration; giá trị SSR vẫn ổn định.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStoredValue(value)
+  }, [readValue])
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setStoredValue(readValue())
+      const value = readValue()
+      storedValueRef.current = value
+      setStoredValue(value)
     }
 
     if (typeof window !== 'undefined') {

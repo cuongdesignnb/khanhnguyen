@@ -4,7 +4,12 @@ import JsonLd from '@/components/seo/json-ld'
 import { buildOrganizationSchema, buildLocalBusinessSchema, buildWebSiteSchema, buildWebPageSchema } from '@/lib/seo/schemas'
 import { buildPageMetadata } from '@/lib/seo/metadata'
 import { getSeoConfig } from '@/lib/seo/config'
+import { getSettingGroup } from '@/lib/site-config/settings'
+import type { HeaderConfig } from '@/types/header-settings'
+import type { HeaderContact } from '@/lib/header/resolve-header-utility-item'
 import type { Metadata } from 'next'
+
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings()
@@ -12,8 +17,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const data = await getHomeData()
-  const seoConfig = await getSeoConfig()
+  const [data, seoConfig, headerConfig, contactConfig] = await Promise.all([
+    getHomeData(),
+    getSeoConfig(),
+    getSettingGroup('header.config'),
+    getSettingGroup('contact.info'),
+  ])
 
   return (
     <>
@@ -23,7 +32,11 @@ export default async function HomePage() {
         buildWebSiteSchema(seoConfig),
         buildWebPageSchema({ name: seoConfig.seo.defaultTitle, description: seoConfig.seo.defaultDescription, url: seoConfig.siteUrl, siteUrl: seoConfig.siteUrl }),
       ]} />
-      <HomePageClient data={data} />
+      <HomePageClient
+        data={data}
+        headerConfig={headerConfig as unknown as HeaderConfig}
+        contactConfig={contactConfig as HeaderContact}
+      />
     </>
   )
 }

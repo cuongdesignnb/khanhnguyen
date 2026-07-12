@@ -17,17 +17,27 @@ import { LatestNews } from '@/components/home/latest-news'
 import { ContactSection } from '@/components/home/contact-section'
 import Footer from '@/components/layout/footer'
 import { PublicHomeData } from '@/types/public'
+import type { HeaderConfig } from '@/types/header-settings'
+import type { HeaderContact } from '@/lib/header/resolve-header-utility-item'
 
 interface HomePageClientProps {
   data: PublicHomeData
+  headerConfig: HeaderConfig
+  contactConfig: HeaderContact
 }
 
-export default function HomePageClient({ data }: HomePageClientProps) {
+export default function HomePageClient({ data, headerConfig, contactConfig }: HomePageClientProps) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <>
-      <DesktopHeader siteConfig={data.siteConfig} navigation={data.navigation} onMenuOpen={() => setMenuOpen(true)} />
+      <DesktopHeader
+        siteConfig={data.siteConfig}
+        navigation={data.navigation}
+        headerConfig={headerConfig}
+        contactConfig={contactConfig}
+        onMenuOpen={() => setMenuOpen(true)}
+      />
       <MobileMenuDrawer siteConfig={data.siteConfig} navigation={data.navigation} open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <main className="pb-24 lg:pb-0">
