@@ -19,14 +19,17 @@ import Footer from '@/components/layout/footer'
 import { PublicHomeData } from '@/types/public'
 import type { HeaderConfig } from '@/types/header-settings'
 import type { HeaderContact } from '@/lib/header/resolve-header-utility-item'
+import { ProductCardConfigProvider } from '@/components/products/product-card-config-provider'
+import type { ProductCardSettings } from '@/types/product-card-settings'
 
 interface HomePageClientProps {
   data: PublicHomeData
   headerConfig: HeaderConfig
   contactConfig: HeaderContact
+  productCardConfig: ProductCardSettings
 }
 
-export default function HomePageClient({ data, headerConfig, contactConfig }: HomePageClientProps) {
+export default function HomePageClient({ data, headerConfig, contactConfig, productCardConfig }: HomePageClientProps) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -40,19 +43,21 @@ export default function HomePageClient({ data, headerConfig, contactConfig }: Ho
       />
       <MobileMenuDrawer siteConfig={data.siteConfig} navigation={data.navigation} open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      <main className="pb-24 lg:pb-0">
-        <Hero />
-        <CategoryGrid categories={data.categories} />
-        <FeaturedProducts products={data.featuredProducts} />
-        <PromoBanner />
-        <BrandStrip brands={data.brands} />
-        <WhyUs />
-        <StatsStrip stats={data.stats} />
-        <ServicesSection services={data.services} />
-        <Testimonials testimonials={data.testimonials} />
-        <LatestNews posts={data.latestPosts} />
-        <ContactSection siteConfig={data.siteConfig} />
-      </main>
+      <ProductCardConfigProvider settings={productCardConfig}>
+        <main className="pb-24 lg:pb-0">
+          <Hero />
+          <CategoryGrid categories={data.categories} />
+          <FeaturedProducts products={data.featuredProducts} />
+          <PromoBanner />
+          <BrandStrip brands={data.brands} />
+          <WhyUs />
+          <StatsStrip stats={data.stats} />
+          <ServicesSection services={data.services} />
+          <Testimonials testimonials={data.testimonials} />
+          <LatestNews posts={data.latestPosts} />
+          <ContactSection siteConfig={data.siteConfig} />
+        </main>
+      </ProductCardConfigProvider>
 
       <Footer siteConfig={data.siteConfig} footerGroups={data.footerGroups} />
       <MobileDock onMenuOpen={() => setMenuOpen(true)} />

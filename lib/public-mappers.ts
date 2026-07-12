@@ -13,6 +13,7 @@ import {
   PublicBanner,
   PublicNavigationItem,
 } from '@/types/public'
+import { normalizeProductSpecs } from '@/lib/products/normalize-product-specs'
 
 // Helper to format Decimal to string or null
 const formatPrice = (price: any): string | null => {
@@ -61,27 +62,31 @@ export function mapBrandToPublicBrand(brand: any): PublicBrand {
 }
 
 export function mapProductToPublicCard(p: any): PublicProductCard {
-  const specs = Array.isArray(p.specs)
-    ? p.specs.map((s: any) => ({ label: s.label, value: s.value }))
-    : []
-
-  // If DB specs are empty, try to populate from base fields
-  const finalSpecs = specs.length > 0 ? specs : [
-    ...(p.capacity ? [{ label: 'Tải trọng', value: p.capacity }] : []),
-    ...(p.liftHeight ? [{ label: 'Nâng cao', value: p.liftHeight }] : []),
-    ...(p.manufactureYear ? [{ label: 'Năm SX', value: p.manufactureYear.toString() }] : []),
-  ]
+  const specs = normalizeProductSpecs(p.specs, {
+    model: p.model,
+    brand: p.brand?.name || p.brand,
+    capacity: p.capacity,
+    liftHeight: p.liftHeight,
+    fuelType: p.fuelType,
+    manufactureYear: p.manufactureYear,
+    condition: p.condition,
+    origin: p.origin,
+    forkLength: p.forkLength,
+  })
+  const categoryName = typeof p.category === 'string' ? p.category : p.category?.name
+  const categorySlug = typeof p.category === 'string' ? '' : p.category?.slug
+  const image = p.thumbnail?.url || p.image
 
   return {
     id: p.id,
     slug: p.slug,
     badge: p.badge || undefined,
-    category: p.category?.name || 'Sản phẩm',
-    categorySlug: p.category?.slug || '',
+    category: categoryName || 'Sản phẩm',
+    categorySlug: categorySlug || '',
     name: p.name,
     model: p.model || p.name,
-    image: p.thumbnail?.url || '/images/placeholder.jpg',
-    specs: finalSpecs,
+    image: typeof image === 'string' && image.trim() ? image : '/images/product-placeholder.svg',
+    specs,
     price: formatPrice(p.price),
     priceLabel: p.priceLabel || 'Liên hệ',
   }
@@ -92,9 +97,17 @@ export function mapProductToProductDetail(p: any): PublicProductDetail {
     ? p.images.map((img: any) => img.media?.url).filter(Boolean)
     : []
 
-  const specs = Array.isArray(p.specs)
-    ? p.specs.map((s: any) => ({ label: s.label, value: s.value }))
-    : []
+  const specs = normalizeProductSpecs(p.specs, {
+    model: p.model,
+    brand: p.brand?.name,
+    capacity: p.capacity,
+    liftHeight: p.liftHeight,
+    fuelType: p.fuelType,
+    manufactureYear: p.manufactureYear,
+    condition: p.condition,
+    origin: p.origin,
+    forkLength: p.forkLength,
+  })
 
   const advantages = Array.isArray(p.advantages)
     ? p.advantages
@@ -114,8 +127,8 @@ export function mapProductToProductDetail(p: any): PublicProductDetail {
     brandId: p.brandId || null,
     brandName: p.brand?.name || null,
     brandSlug: p.brand?.slug || null,
-    thumbnail: p.thumbnail?.url || '/images/placeholder.jpg',
-    images: images.length > 0 ? images : [p.thumbnail?.url || '/images/placeholder.jpg'],
+    thumbnail: p.thumbnail?.url || '/images/product-placeholder.svg',
+    images: images.length > 0 ? images : [p.thumbnail?.url || '/images/product-placeholder.svg'],
     specs,
     price: formatPrice(p.price),
     priceLabel: p.priceLabel || 'Liên hệ',

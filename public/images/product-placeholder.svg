@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="title description">
+  <title id="title">Ảnh sản phẩm đang cập nhật</title>
+  <desc id="description">Hình minh họa thiết bị nâng hạ trên nền tối.</desc>
+  <rect width="800" height="600" fill="#151515"/>
+  <path d="M220 390h310v34H220zm60-155h170v145H280zm32 32v80h106v-80zm168-72h28v185h-28zm28 24h78v22h-78zm62 22h22v139h-22z" fill="#3a3a3a"/>
+  <circle cx="300" cy="430" r="44" fill="#0b0b0b" stroke="#f5b51b" stroke-width="12"/>
+  <circle cx="490" cy="430" r="44" fill="#0b0b0b" stroke="#f5b51b" stroke-width="12"/>
+  <text x="400" y="515" fill="#d0d0d0" font-family="Arial, sans-serif" font-size="28" text-anchor="middle">ẢNH SẢN PHẨM ĐANG CẬP NHẬT</text>
+</svg>

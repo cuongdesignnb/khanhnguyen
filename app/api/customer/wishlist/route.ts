@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { requireCustomerSession } from '@/lib/customer-auth'
+import { mapProductToPublicCard } from '@/lib/public-mappers'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,36 +44,7 @@ export async function GET(request: NextRequest) {
         id: item.id,
         productId: item.productId,
         createdAt: item.createdAt,
-        product: {
-          id: item.product.id,
-          slug: item.product.slug,
-          badge: item.product.badge || undefined,
-          category: item.product.category?.name || 'Sản phẩm',
-          categorySlug: item.product.category?.slug || '',
-          brand: item.product.brand?.name || null,
-          name: item.product.name,
-          model: item.product.model || item.product.name,
-          image: item.product.thumbnail?.url || '/images/placeholder.jpg',
-          specs:
-            item.product.specs?.length > 0
-              ? item.product.specs.slice(0, 3).map((spec) => ({
-                  label: spec.label,
-                  value: spec.value,
-                }))
-              : [
-                  ...(item.product.capacity
-                    ? [{ label: 'Tải trọng', value: item.product.capacity }]
-                    : []),
-                  ...(item.product.liftHeight
-                    ? [{ label: 'Chiều cao nâng', value: item.product.liftHeight }]
-                    : []),
-                  ...(item.product.manufactureYear
-                    ? [{ label: 'Năm SX', value: String(item.product.manufactureYear) }]
-                    : []),
-                ],
-          price: item.product.price ? String(item.product.price) : null,
-          priceLabel: item.product.priceLabel || 'Liên hệ',
-        },
+        product: mapProductToPublicCard(item.product),
       })),
     })
   } catch (error) {

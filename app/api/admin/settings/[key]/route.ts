@@ -19,6 +19,10 @@ function validate(group: string, value: Record<string, any>) {
   for (const key of ['productsPerPage', 'postsPerPage', 'newsLimit', 'featuredProductsLimit', 'relatedProductsLimit']) {
     if (key in value && (!Number.isFinite(Number(value[key])) || Number(value[key]) <= 0)) errors.push(`${key}: phải là số dương`)
   }
+  if ('cardVisibleSpecsLimit' in value && (!Number.isInteger(value.cardVisibleSpecsLimit) || value.cardVisibleSpecsLimit < 0 || value.cardVisibleSpecsLimit > 3)) errors.push('cardVisibleSpecsLimit: chỉ nhận giá trị từ 0 đến 3')
+  if ('cardHoverSpecsLimit' in value && (!Number.isInteger(value.cardHoverSpecsLimit) || value.cardHoverSpecsLimit < 3 || value.cardHoverSpecsLimit > 6)) errors.push('cardHoverSpecsLimit: chỉ nhận giá trị từ 3 đến 6')
+  if ('cardPrioritySpecs' in value && (!Array.isArray(value.cardPrioritySpecs) || value.cardPrioritySpecs.length > 3)) errors.push('cardPrioritySpecs: chỉ được chọn tối đa 3 thông số')
+  if ('cardImageRatio' in value && !['4:3', '1:1', '16:9'].includes(value.cardImageRatio)) errors.push('cardImageRatio: tỷ lệ ảnh không hợp lệ')
   if (!(group in settingGroupMap)) errors.push('Nhóm cài đặt không hợp lệ')
   return errors
 }
@@ -28,7 +32,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (auth.response) return auth.response
   const group = decodeURIComponent((await params).key)
   if (!(group in settingGroupMap)) return Response.json({ success: false, error: 'Nhóm cài đặt không hợp lệ' }, { status: 404 })
-  const data = await getSettingsByGroup(group, getDefaultSetting(group))
+  const fallback = getDefaultSetting(group)
+  const stored = await getSettingsByGroup(group, fallback)
+  const data = stored && fallback && typeof stored === 'object' && typeof fallback === 'object' && !Array.isArray(stored) && !Array.isArray(fallback)
+    ? { ...fallback, ...stored }
+    : stored
   return Response.json({ success: true, data })
 }
 

@@ -297,42 +297,18 @@ export async function getFeaturedProducts(): Promise<PublicProductCard[]> {
         category: true,
         brand: true,
         thumbnail: true,
-        specs: { orderBy: { sortOrder: 'asc' } },
+        specs: { orderBy: { sortOrder: 'asc' }, take: 12 },
         reviews: { where: { status: 'APPROVED', deletedAt: null }, select: { name: true, rating: true, content: true, status: true } },
       },
       orderBy: { sortOrder: 'asc' },
     })
     if (!dbProducts || dbProducts.length === 0) {
-      return homeData.featuredProducts.map((p) => ({
-        id: p.id,
-        slug: toVietnameseSlug((p as any).slug || p.id || p.name),
-        badge: p.badge,
-        category: p.category,
-        categorySlug: toVietnameseSlug(p.category),
-        name: p.name,
-        model: p.name,
-        image: p.image,
-        specs: p.specs,
-        price: null,
-        priceLabel: p.priceLabel,
-      }))
+      return homeData.featuredProducts.map((p) => mapProductToPublicCard({ ...p, slug: toVietnameseSlug((p as any).slug || p.id || p.name) }))
     }
     return dbProducts.map(mapProductToPublicCard)
   } catch (error) {
     logPublicDataFallback('getFeaturedProducts', error)
-    return homeData.featuredProducts.map((p) => ({
-      id: p.id,
-      slug: toVietnameseSlug((p as any).slug || p.id || p.name),
-      badge: p.badge,
-      category: p.category,
-      categorySlug: toVietnameseSlug(p.category),
-      name: p.name,
-      model: p.name,
-      image: p.image,
-      specs: p.specs,
-      price: null,
-      priceLabel: p.priceLabel,
-    }))
+    return homeData.featuredProducts.map((p) => mapProductToPublicCard({ ...p, slug: toVietnameseSlug((p as any).slug || p.id || p.name) }))
   }
 }
 
@@ -573,7 +549,7 @@ export async function getProductList(params: ProductListParams): Promise<Product
     const [items, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: { category: true, brand: true, thumbnail: true },
+        include: { category: true, brand: true, thumbnail: true, specs: { orderBy: { sortOrder: 'asc' }, take: 12 } },
         orderBy,
         skip,
         take: limit,
@@ -592,19 +568,7 @@ export async function getProductList(params: ProductListParams): Promise<Product
     logPublicDataFallback('getProductList', error)
 
     // Hotfix: Fallback to static featuredProducts instead of returning empty list
-    const mappedFallback = homeData.featuredProducts.map((p) => ({
-      id: p.id,
-      slug: toVietnameseSlug((p as any).slug || p.id || p.name),
-      badge: p.badge || undefined,
-      category: p.category,
-      categorySlug: toVietnameseSlug(p.category),
-      name: p.name,
-      model: p.name,
-      image: p.image,
-      specs: p.specs,
-      price: null,
-      priceLabel: p.priceLabel,
-    }))
+    const mappedFallback = homeData.featuredProducts.map((p) => mapProductToPublicCard({ ...p, slug: toVietnameseSlug((p as any).slug || p.id || p.name) }))
 
     return {
       items: mappedFallback,
@@ -651,7 +615,7 @@ export async function getRelatedProducts(productId: string, categoryId: string, 
         status: 'PUBLISHED',
         deletedAt: null,
       },
-      include: { category: true, brand: true, thumbnail: true },
+      include: { category: true, brand: true, thumbnail: true, specs: { orderBy: { sortOrder: 'asc' }, take: 12 } },
       take: limit,
       orderBy: { sortOrder: 'asc' },
     })

@@ -6,6 +6,7 @@ import { toVietnameseSlug } from '../lib/slug'
 import { defaultSettings, settingGroupMap } from '../data/default-settings'
 import { defaultFooterMenu, defaultHeaderMenu, defaultMobileMenu, type DefaultMenuItem } from '../data/default-menus'
 import { defaultPages } from '../data/default-pages'
+import { normalizeProductSpecs } from '../lib/products/normalize-product-specs'
 
 const prisma = new PrismaClient() as any
 
@@ -311,27 +312,27 @@ async function main() {
     })
     productIdMap.set(prod.name, dbProduct.id)
 
-    // Seed Specs for this product (idempotent: delete existing first)
-    await prisma.productSpec.deleteMany({ where: { productId: dbProduct.id } })
-    if (prod.specs) {
-      const specLabels = Object.keys(prod.specs)
-      for (let sIdx = 0; sIdx < specLabels.length; sIdx++) {
-        const label = specLabels[sIdx]
-        const value = (prod.specs as any)[label]
+    // Chỉ bổ sung specs khi sản phẩm chưa có dữ liệu; không ghi đè dữ liệu Admin.
+    const existingSpecCount = await prisma.productSpec.count({ where: { productId: dbProduct.id } })
+    if (prod.specs && existingSpecCount === 0) {
+      const normalizedSpecs = normalizeProductSpecs(prod.specs)
+      for (let sIdx = 0; sIdx < normalizedSpecs.length; sIdx++) {
+        const spec = normalizedSpecs[sIdx]
         await prisma.productSpec.create({
           data: {
             productId: dbProduct.id,
-            label,
-            value: value.toString(),
+            key: spec.key,
+            label: spec.label,
+            value: spec.value,
             sortOrder: sIdx
           }
         })
       }
     }
 
-    // Seed Album Images (idempotent: delete existing first)
-    await prisma.productImage.deleteMany({ where: { productId: dbProduct.id } })
-    if (prod.images && Array.isArray(prod.images)) {
+    // Không ghi đè album đã được quản trị viên cập nhật.
+    const existingImageCount = await prisma.productImage.count({ where: { productId: dbProduct.id } })
+    if (prod.images && Array.isArray(prod.images) && existingImageCount === 0) {
       for (let imgIdx = 0; imgIdx < prod.images.length; imgIdx++) {
         const imgUrl = prod.images[imgIdx]
         const imgMedia = await upsertMedia(imgUrl)

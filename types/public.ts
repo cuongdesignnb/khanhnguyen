@@ -40,8 +40,10 @@ export interface PublicBrand {
 }
 
 export interface PublicProductSpec {
+  key?: string
   label: string
   value: string
+  sortOrder?: number
 }
 
 export interface PublicProductCard {

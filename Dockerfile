@@ -33,7 +33,7 @@ COPY --from=all-deps /app/node_modules ./node_modules
 COPY . .
 
 RUN npx prisma generate
-RUN npm run build
+RUN npm run build -- --webpack
 
 # Stage 4: Run the application
 FROM base AS runner

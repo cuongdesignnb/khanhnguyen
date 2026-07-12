@@ -2,6 +2,7 @@ import { featuredProducts as staticProducts } from '@/data/home'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { ProductCard } from '@/components/ui/product-card'
 import { PublicProductCard } from '@/types/public'
+import { normalizeProductSpecs } from '@/lib/products/normalize-product-specs'
 
 interface FeaturedProductsProps {
   products?: PublicProductCard[]
@@ -14,13 +15,13 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
     : staticProducts.map((p) => ({
         id: p.id,
         slug: p.id,
-        badge: p.badge || undefined,
+        badge: p.badge,
         category: p.category,
-        categorySlug: p.category.toLowerCase().replace(/\s+/g, '-'),
+        categorySlug: '',
         name: p.name,
         model: p.name,
         image: p.image,
-        specs: p.specs,
+        specs: normalizeProductSpecs(p.specs, { model: p.name }),
         price: null,
         priceLabel: p.priceLabel,
       }))
@@ -35,7 +36,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
         />
 
         {/* Desktop: responsive grid */}
-        <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
+        <div className="hidden items-stretch gap-5 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {displayProducts.map((p) => (
             <ProductCard product={p} key={p.id} />
           ))}
@@ -44,7 +45,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
         {/* Mobile: horizontal scroll */}
         <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto scrollbar-hidden sm:hidden">
           {displayProducts.map((p) => (
-            <div key={p.id} className="min-w-[260px] snap-start">
+            <div key={p.id} className="min-w-[270px] snap-start">
               <ProductCard product={p} />
             </div>
           ))}

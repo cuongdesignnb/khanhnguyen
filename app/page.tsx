@@ -7,6 +7,7 @@ import { getSeoConfig } from '@/lib/seo/config'
 import { getSettingGroup } from '@/lib/site-config/settings'
 import type { HeaderConfig } from '@/types/header-settings'
 import type { HeaderContact } from '@/lib/header/resolve-header-utility-item'
+import type { ProductCardSettings } from '@/types/product-card-settings'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -17,11 +18,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [data, seoConfig, headerConfig, contactConfig] = await Promise.all([
+  const [data, seoConfig, headerConfig, contactConfig, productCardConfig] = await Promise.all([
     getHomeData(),
     getSeoConfig(),
     getSettingGroup('header.config'),
     getSettingGroup('contact.info'),
+    getSettingGroup('products.config'),
   ])
 
   return (
@@ -36,6 +38,7 @@ export default async function HomePage() {
         data={data}
         headerConfig={headerConfig as unknown as HeaderConfig}
         contactConfig={contactConfig as HeaderContact}
+        productCardConfig={productCardConfig as unknown as ProductCardSettings}
       />
     </>
   )

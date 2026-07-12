@@ -1,5 +1,6 @@
 import { normalizeCompareValue, normalizeSpecKey } from './normalize-spec-key'
 import type { CompareGroup, CompareProduct, CompareResponse, CompareRow } from './types'
+import { normalizeProductSpecs } from '@/lib/products/normalize-product-specs'
 
 type InputProduct = any
 const fields = [
@@ -24,7 +25,7 @@ const valueFor = (p: InputProduct, key: string): string | null => {
 }
 export function buildComparisonMatrix(products: InputProduct[], missingProductIds: string[] = []): CompareResponse {
   const outputProducts: CompareProduct[] = products.map((p) => ({ id:p.id, slug:p.slug, name:p.name,
-    thumbnail:p.thumbnail?.url || '/images/placeholder.jpg', price:p.price && Number(p.price)>0 ? String(p.price):null,
+    thumbnail:p.thumbnail?.url || '/images/product-placeholder.svg', price:p.price && Number(p.price)>0 ? String(p.price):null,
     priceLabel:p.price && Number(p.price)>0 ? (p.priceLabel || String(p.price)) : 'Liên hệ', model:p.model, sku:p.sku,
     categoryName:p.category.name, categorySlug:p.category.slug, brandName:p.brand?.name || null,
     stockStatus:p.stockStatus, badge:p.badge }))
@@ -40,10 +41,10 @@ export function buildComparisonMatrix(products: InputProduct[], missingProductId
   for (const [g,gl,k,l] of fields) add(g,gl,k,l,null,Object.fromEntries(products.map((p)=>[p.id,valueFor(p,String(k))])))
   const baseKeys = new Set<string>(fields.map((f)=>f[2]))
   const dynamic = new Map<string,{label:string;group:string;unit:string|null;values:Record<string,string|null>;sort:number}>()
-  products.forEach((p) => p.specs?.filter((s:any)=>s.isComparable!==false).forEach((s:any) => {
+  products.forEach((p) => normalizeProductSpecs(p.specs).forEach((s) => {
     const key=normalizeSpecKey(s.key||s.label); if(baseKeys.has(key)) return
-    const item=dynamic.get(key)||{label:s.label,group:s.group||'Thông số khác',unit:s.unit||null,values:{} as Record<string,string|null>,sort:s.sortOrder||0}
-    item.values[p.id]=s.value||null; dynamic.set(key,item)
+    const item=dynamic.get(key)||{label:s.label,group:'Thông số khác',unit:null,values:{} as Record<string,string|null>,sort:s.sortOrder||0}
+    item.values[p.id]=s.value; dynamic.set(key,item)
   }))
   for(const [key,s] of dynamic) add(normalizeSpecKey(s.group),s.group,key,s.label,s.unit,Object.fromEntries(products.map((p)=>[p.id,s.values[p.id]||null])))
   const result: CompareGroup[]=[...groups].map(([key,g])=>({key,label:g.label,sortOrder:groupOrder[key]??8,rows:[...g.rows.values()]})).sort((a,b)=>a.sortOrder-b.sortOrder)
