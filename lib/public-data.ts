@@ -48,6 +48,7 @@ type HomeConfigRuntime = {
   heroTitle?: unknown
   heroSubtitle?: unknown
   heroDescription?: unknown
+  heroImageId?: unknown
   heroPrimaryCtaLabel?: unknown
   heroPrimaryCtaUrl?: unknown
   heroSecondaryCtaLabel?: unknown
@@ -343,7 +344,7 @@ const FALLBACK_HERO_BANNER: PublicBanner = {
   image: '/images/seed/hero/industrial-yard.jpg', href: '/san-pham', buttonText: 'Xem sản phẩm', position: 'HOME_HERO',
 }
 
-export async function getHomeHeroBanners(limit = 8): Promise<PublicBanner[]> {
+export async function getHomeHeroBanners(limit = 8, legacyImageId?: string | null): Promise<PublicBanner[]> {
   try {
     const dbBanners = await prisma.banner.findMany({
       where: { position: 'HOME_HERO', isVisible: true, deletedAt: null, imageId: { not: null }, image: { deletedAt: null } },
@@ -352,7 +353,12 @@ export async function getHomeHeroBanners(limit = 8): Promise<PublicBanner[]> {
       take: Math.min(8, Math.max(1, limit)),
     })
     const banners = dbBanners.filter((banner) => Boolean(banner.image?.url)).map(mapBannerToPublicBanner)
-    return banners.length ? banners : [FALLBACK_HERO_BANNER]
+    if (banners.length) return banners
+    if (legacyImageId) {
+      const legacyImage = await prisma.mediaFile.findFirst({ where: { id: legacyImageId, deletedAt: null }, select: { url: true } })
+      if (legacyImage?.url) return [{ ...FALLBACK_HERO_BANNER, id: 'hero-legacy-image', image: legacyImage.url }]
+    }
+    return [FALLBACK_HERO_BANNER]
   } catch (error) {
     logPublicDataFallback('getHomeHeroBanners', error)
     return [FALLBACK_HERO_BANNER]
@@ -656,7 +662,7 @@ export async function getHomeData() {
     getTestimonials(),
     getVisibleBrands(),
     getHomeVideoSection(homeConfig),
-    getHomeHeroBanners(heroSettings.maxItems),
+    getHomeHeroBanners(heroSettings.maxItems, typeof homeConfig.heroImageId === 'string' ? homeConfig.heroImageId : null),
   ])
 
   const footerMenu = await getFooterMenu()

@@ -44,7 +44,7 @@ export default function HomeVideosEditor({ value, onChange }: { value: HomeVideo
         <button type="button" disabled={validItems.length >= 12} onClick={() => onChange([...validItems, newItem(validItems.length)])} className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--gold)] px-4 py-2.5 text-sm font-bold text-black disabled:cursor-not-allowed disabled:opacity-40"><Plus aria-hidden size={16} />Thêm video</button>
       </div>
 
-      {validItems.length === 0 && <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-white/15 text-center text-sm text-[color:var(--muted)]"><div><Video className="mx-auto mb-2" aria-hidden />Chưa có video nào. Section sẽ tự ẩn ngoài Trang chủ.</div></div>}
+      {validItems.length === 0 && <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-white/15 text-center text-sm text-[color:var(--muted)]"><div><Video className="mx-auto mb-2" aria-hidden />Chưa có video nào. Section Video ngoài Trang chủ sẽ được ẩn.</div></div>}
 
       {validItems.map((item, index) => {
         const normalized = normalizeVideoUrl(item.url)
