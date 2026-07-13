@@ -6,6 +6,8 @@ import { toVietnameseSlug } from './slug'
 import { defaultSettings } from '@/data/default-settings'
 import { getSettingsByGroup } from './settings'
 import { getFooterMenu, getHeaderMenu, getMobileMenu } from './menu'
+import { normalizeVideoUrl } from './videos/normalize-video-url'
+import type { HomeVideoSettingItem, PublicHomeVideoSection } from '@/types/home-video'
 import {
   mapCategoryToPublicCategory,
   mapBrandToPublicBrand,
@@ -45,6 +47,14 @@ type HomeConfigRuntime = {
   featuredProductsLimit?: unknown
   categoryProductSectionsEnabled?: boolean
   categoryProductLimit?: unknown
+  videoSectionEnabled?: unknown
+  videoSectionEyebrow?: unknown
+  videoSectionTitle?: unknown
+  videoSectionDescription?: unknown
+  videoSectionLimit?: unknown
+  videoSectionCtaLabel?: unknown
+  videoSectionCtaUrl?: unknown
+  videoItems?: unknown
 }
 
 const HOME_PRODUCT_MAX_LIMIT = 8
@@ -61,6 +71,77 @@ function getStaticProductSlug(product: StaticHomeProduct) {
 
 function mapStaticHomeProduct(product: StaticHomeProduct) {
   return mapProductToPublicCard({ ...product, slug: getStaticProductSlug(product) })
+}
+
+const EMPTY_HOME_VIDEO_SECTION: PublicHomeVideoSection = {
+  enabled: false,
+  eyebrow: '',
+  title: '',
+  description: '',
+  ctaLabel: '',
+  ctaUrl: '',
+  items: [],
+}
+
+function textValue(value: unknown, fallback = '') {
+  return typeof value === 'string' ? value.trim() : fallback
+}
+
+function clampVideoLimit(value: unknown) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.min(12, Math.max(1, Math.floor(parsed))) : 8
+}
+
+function isHomeVideoSettingItem(value: unknown): value is HomeVideoSettingItem {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const item = value as Record<string, unknown>
+  return typeof item.id === 'string'
+    && typeof item.title === 'string'
+    && (item.source === 'youtube' || item.source === 'facebook')
+    && typeof item.url === 'string'
+    && (typeof item.thumbnailId === 'string' || item.thumbnailId === null)
+    && typeof item.isEnabled === 'boolean'
+    && typeof item.sortOrder === 'number'
+}
+
+async function getHomeVideoSection(homeConfig: HomeConfigRuntime): Promise<PublicHomeVideoSection> {
+  if (homeConfig.videoSectionEnabled === false) return EMPTY_HOME_VIDEO_SECTION
+  try {
+    const normalizedItems = (Array.isArray(homeConfig.videoItems) ? homeConfig.videoItems : [])
+      .filter(isHomeVideoSettingItem)
+      .filter((item) => item.isEnabled && item.title.trim())
+      .map((item) => ({ item, normalized: normalizeVideoUrl(item.url) }))
+      .filter((entry): entry is typeof entry & { normalized: NonNullable<typeof entry.normalized> } => Boolean(entry.normalized))
+      .filter((entry) => entry.item.source === entry.normalized.source)
+      .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
+      .slice(0, clampVideoLimit(homeConfig.videoSectionLimit))
+
+    const thumbnailIds = [...new Set(normalizedItems.map(({ item }) => item.thumbnailId).filter((id): id is string => Boolean(id)))]
+    const media = thumbnailIds.length
+      ? await prisma.mediaFile.findMany({ where: { id: { in: thumbnailIds }, deletedAt: null }, select: { id: true, url: true } })
+      : []
+    const mediaById = new Map(media.map((item) => [item.id, item.url]))
+
+    return {
+      enabled: true,
+      eyebrow: textValue(homeConfig.videoSectionEyebrow, 'VIDEO THỰC TẾ'),
+      title: textValue(homeConfig.videoSectionTitle, 'VIDEO XE NÂNG KHÁNH NGUYÊN'),
+      description: textValue(homeConfig.videoSectionDescription),
+      ctaLabel: textValue(homeConfig.videoSectionCtaLabel, 'Xem thêm video'),
+      ctaUrl: textValue(homeConfig.videoSectionCtaUrl),
+      items: normalizedItems.map(({ item, normalized }) => ({
+        id: item.id,
+        title: item.title.trim(),
+        source: normalized.source,
+        originalUrl: normalized.originalUrl,
+        embedUrl: normalized.embedUrl,
+        thumbnailUrl: (item.thumbnailId && mediaById.get(item.thumbnailId)) || normalized.autoThumbnailUrl || '/images/video-placeholder.svg',
+      })),
+    }
+  } catch (error) {
+    logPublicDataFallback('getHomeVideoSection', error)
+    return EMPTY_HOME_VIDEO_SECTION
+  }
 }
 
 const fallbackProductDetails: PublicProductDetail[] = [
@@ -522,6 +603,7 @@ export async function getHomeData() {
     latestPosts,
     testimonials,
     brands,
+    videoSection,
   ] = await Promise.all([
     getSiteSettings(),
     getPublicMenus(),
@@ -533,6 +615,7 @@ export async function getHomeData() {
     getLatestPosts(),
     getTestimonials(),
     getVisibleBrands(),
+    getHomeVideoSection(homeConfig),
   ])
 
   const footerMenu = await getFooterMenu()
@@ -551,6 +634,7 @@ export async function getHomeData() {
     testimonials,
     stats: homeData.stats,
     brands,
+    videoSection,
   }
 }
 

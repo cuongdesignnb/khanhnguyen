@@ -16,6 +16,7 @@ import ServicesSection from '@/components/home/services-section'
 import { Testimonials } from '@/components/home/testimonials'
 import { LatestNews } from '@/components/home/latest-news'
 import { ContactSection } from '@/components/home/contact-section'
+import HomeVideoSection from '@/components/home/home-video-section'
 import Footer from '@/components/layout/footer'
 import { PublicHomeData } from '@/types/public'
 import type { HeaderConfig } from '@/types/header-settings'
@@ -57,6 +58,7 @@ export default function HomePageClient({ data, headerConfig, contactConfig, prod
           <ServicesSection services={data.services} />
           <Testimonials testimonials={data.testimonials} />
           <LatestNews posts={data.latestPosts} />
+          <HomeVideoSection section={data.videoSection} />
           <ContactSection siteConfig={data.siteConfig} />
         </main>
       </ProductCardConfigProvider>

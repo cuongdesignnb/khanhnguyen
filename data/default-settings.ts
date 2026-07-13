@@ -54,6 +54,9 @@ export const defaultSettings = {
     categoriesEnabled: true, brandsEnabled: true, servicesEnabled: true, testimonialsEnabled: true, statsEnabled: true,
     newsEnabled: true, newsLimit: 3, promoBannerEnabled: true, promoBannerTitle: '', promoBannerDescription: '',
     promoBannerImageId: null, promoBannerCtaLabel: 'Xem chi tiết', promoBannerCtaUrl: '/san-pham',
+    videoSectionEnabled: true, videoSectionEyebrow: 'VIDEO THỰC TẾ', videoSectionTitle: 'VIDEO XE NÂNG KHÁNH NGUYÊN',
+    videoSectionDescription: 'Theo dõi những hình ảnh bàn giao, vận hành và đánh giá xe nâng thực tế.',
+    videoSectionLimit: 8, videoSectionCtaLabel: 'Xem thêm video', videoSectionCtaUrl: '', videoItems: [],
   },
   productsConfig: {
     listingTitle: 'Sản phẩm xe nâng', listingDescription: '', defaultSort: 'latest', productsPerPage: 12,

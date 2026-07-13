@@ -208,6 +208,9 @@ export interface PublicProductCategorySection {
   products: PublicProductCard[]
 }
 
+export type { PublicHomeVideoSection } from './home-video'
+import type { PublicHomeVideoSection } from './home-video'
+
 export interface PublicHomeData {
   siteConfig: PublicSiteConfig
   navigation: PublicNavigationItem[]
@@ -216,6 +219,7 @@ export interface PublicHomeData {
   categories: PublicCategory[]
   featuredProducts: PublicProductCard[]
   productCategorySections: PublicProductCategorySection[]
+  videoSection: PublicHomeVideoSection
   services: PublicService[]
   latestPosts: PublicPostCard[]
   testimonials: PublicTestimonial[]

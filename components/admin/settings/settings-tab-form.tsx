@@ -11,6 +11,8 @@ import SeoSocialPreview from '@/components/admin/seo/seo-social-preview'
 import SettingsColorPicker from './settings-color-picker'
 import HeaderUtilityItemsEditor from './header-utility-items-editor'
 import ProductSpecPriorityEditor from './product-spec-priority-editor'
+import HomeVideosEditor from './home-videos-editor'
+import type { HomeVideoSettingItem } from '@/types/home-video'
 
 const input = 'w-full rounded-xl border border-white/10 bg-[color:var(--surface-2)] px-4 py-2.5 text-sm text-white outline-none focus:border-[color:var(--gold)]/60'
 
@@ -106,6 +108,7 @@ function Field({ field, value, update }: { field: any; value: any; update: (valu
   if (field.type === 'color') return <SettingsColorPicker label={field.label} description={field.description} value={value || '#F5B51B'} onChange={update} />
   if (field.type === 'media') return <div className="md:col-span-2"><MediaPreviewPicker value={value} label={field.label} description={field.description} aspectRatio={/logo/i.test(field.key) ? 'logo' : /favicon/i.test(field.key) ? 'favicon' : /og/i.test(field.key) ? 'video' : 'wide'} onChange={update} /></div>
   if (field.type === 'product-spec-priority') return <ProductSpecPriorityEditor value={Array.isArray(value) ? value : []} onChange={update} />
+  if (field.type === 'home-videos') return <HomeVideosEditor value={Array.isArray(value) ? value as HomeVideoSettingItem[] : []} onChange={update} />
 
   return (
     <div className={field.type === 'textarea' || field.type === 'repeater' ? 'md:col-span-2' : ''}>
