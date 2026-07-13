@@ -39,6 +39,22 @@ export interface PublicBrand {
   description?: string
 }
 
+export interface PublicBrandSliderSettings {
+  enabled: boolean
+  eyebrow: string
+  title: string
+  sliderEnabled: boolean
+  autoplay: boolean
+  intervalMs: number
+  pauseOnHover: boolean
+  showArrows: boolean
+  loop: boolean
+  desktopItems: number
+  tabletItems: number
+  mobileItems: number
+  maxItems: number
+}
+
 export interface PublicProductSpec {
   key?: string
   label: string
@@ -250,6 +266,7 @@ export interface PublicHomeData {
   testimonials: PublicTestimonial[]
   stats: { value: number; suffix: string; label: string; icon: string }[]
   brands: PublicBrand[]
+  brandSliderSettings: PublicBrandSliderSettings
 }
 
 export interface ProductListParams {

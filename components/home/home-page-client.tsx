@@ -9,7 +9,7 @@ import CategoryGrid from '@/components/home/category-grid'
 import FeaturedProducts from '@/components/home/featured-products'
 import PromoBanner from '@/components/home/promo-banner'
 import CategoryProductSections from '@/components/home/category-product-sections'
-import BrandStrip from '@/components/home/brand-strip'
+import BrandSlider from '@/components/home/brand-slider'
 import WhyUs from '@/components/home/why-us'
 import StatsStrip from '@/components/home/stats-strip'
 import ServicesSection from '@/components/home/services-section'
@@ -52,7 +52,7 @@ export default function HomePageClient({ data, headerConfig, contactConfig, prod
           <FeaturedProducts products={data.featuredProducts} />
           <PromoBanner />
           <CategoryProductSections sections={data.productCategorySections} />
-          <BrandStrip brands={data.brands} />
+          <BrandSlider brands={data.brands} settings={data.brandSliderSettings} />
           <WhyUs />
           <StatsStrip stats={data.stats} />
           <ServicesSection services={data.services} />

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   CheckCircle,
   ChevronLeft,
@@ -15,6 +15,8 @@ import type {
   PublicHeroSettings,
   PublicSiteConfig,
 } from "@/types/public";
+import { clampHeroOverlayOpacity } from "@/lib/hero/hero-overlay";
+import { useHydratedReducedMotion } from "@/hooks/use-hydrated-reduced-motion";
 
 const TRUST_CHIPS = [
   "Xe nâng chất lượng",
@@ -32,7 +34,7 @@ export default function Hero({
   settings: PublicHeroSettings;
   siteConfig: PublicSiteConfig;
 }) {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useHydratedReducedMotion();
   const displaySlides = settings.sliderEnabled
     ? slides.slice(0, settings.maxItems)
     : slides.slice(0, 1);
@@ -86,6 +88,8 @@ export default function Hero({
       settings.secondaryCtaUrl &&
       settings.secondaryCtaUrl !== "#",
     );
+  const overlayOpacity = clampHeroOverlayOpacity(settings.overlayOpacity);
+  const hasOverlay = overlayOpacity > 0;
   const imageInitial =
     settings.transition === "slide"
       ? { opacity: 0, x: 60 }
@@ -156,22 +160,13 @@ export default function Hero({
           />
         </motion.div>
       </AnimatePresence>
-      {showOverlayContent ? (
-        <>
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-black/10"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20"
-            style={{
-              backgroundColor: `rgb(0 0 0 / ${settings.overlayOpacity / 100})`,
-            }}
-          />
-        </>
-      ) : (
-        <div aria-hidden className="absolute inset-0 bg-black/[0.06]" />
+      {hasOverlay && (
+        <div
+          aria-hidden
+          data-hero-overlay
+          className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent"
+          style={{ opacity: overlayOpacity / 100 }}
+        />
       )}
 
       {(showText || showCta) && (

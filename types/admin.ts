@@ -239,8 +239,22 @@ export type BrandItem = {
   id: string
   name: string
   slug: string
-  logo: string
+  logoId: string | null
+  logo: {
+    id: string
+    url: string
+    filename: string
+    originalName: string
+    mimeType: string
+    extension: string
+    width: number | null
+    height: number | null
+    alt: string | null
+    title: string | null
+    size: number
+  } | null
   description: string
+  sortOrder: number
   productCount: number
   isVisible: boolean
 }

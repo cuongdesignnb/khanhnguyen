@@ -600,15 +600,17 @@ export const adminCategories: CategoryItem[] = [
 
 // ─── Brands ──────────────────────────────────────────────────────────────────
 
+const fallbackBrandLogo = (url: string) => ({ id: '', url, filename: '', originalName: '', mimeType: 'image/jpeg', extension: 'jpg', width: null, height: null, alt: null, title: null, size: 0 })
+
 export const adminBrands: BrandItem[] = [
-  { id: 'b-1', name: 'TOYOTA', slug: 'toyota', logo: '/images/seed/products/toyota-8fb25.jpg', description: 'Thương hiệu xe nâng hàng đầu Nhật Bản', productCount: 28, isVisible: true },
-  { id: 'b-2', name: 'KOMATSU', slug: 'komatsu', logo: '/images/seed/products/komatsu-fd25t.jpg', description: 'Xe nâng Komatsu chất lượng cao', productCount: 22, isVisible: true },
-  { id: 'b-3', name: 'MITSUBISHI', slug: 'mitsubishi', logo: '/images/seed/products/mitsubishi-rb14.jpg', description: 'Xe nâng điện Mitsubishi', productCount: 18, isVisible: true },
-  { id: 'b-4', name: 'TCM', slug: 'tcm', logo: '/images/seed/products/tcm-fd30.jpg', description: 'TCM - Xe nâng công nghiệp', productCount: 15, isVisible: true },
-  { id: 'b-5', name: 'NIULI', slug: 'niuli', logo: '/images/seed/products/niuli-ac25.jpg', description: 'Xe nâng tay & xe nâng điện mini', productCount: 12, isVisible: true },
-  { id: 'b-6', name: 'NISSAN', slug: 'nissan', logo: '/images/seed/products/toyota-8fb25.jpg', description: 'Nissan Forklift', productCount: 10, isVisible: true },
-  { id: 'b-7', name: 'HELI', slug: 'heli', logo: '/images/seed/products/komatsu-fd25t.jpg', description: 'Xe nâng Heli giá tốt', productCount: 8, isVisible: true },
-  { id: 'b-8', name: 'UNICARRIERS', slug: 'unicarriers', logo: '/images/seed/products/mitsubishi-rb14.jpg', description: 'UniCarriers (Nissan/Mitsubishi)', productCount: 5, isVisible: true },
+  { id: 'b-1', name: 'TOYOTA', slug: 'toyota', logoId: null, logo: fallbackBrandLogo('/images/seed/products/toyota-8fb25.jpg'), description: 'Thương hiệu xe nâng hàng đầu Nhật Bản', sortOrder: 0, productCount: 28, isVisible: true },
+  { id: 'b-2', name: 'KOMATSU', slug: 'komatsu', logoId: null, logo: fallbackBrandLogo('/images/seed/products/komatsu-fd25t.jpg'), description: 'Xe nâng Komatsu chất lượng cao', sortOrder: 1, productCount: 22, isVisible: true },
+  { id: 'b-3', name: 'MITSUBISHI', slug: 'mitsubishi', logoId: null, logo: fallbackBrandLogo('/images/seed/products/mitsubishi-rb14.jpg'), description: 'Xe nâng điện Mitsubishi', sortOrder: 2, productCount: 18, isVisible: true },
+  { id: 'b-4', name: 'TCM', slug: 'tcm', logoId: null, logo: fallbackBrandLogo('/images/seed/products/tcm-fd30.jpg'), description: 'TCM - Xe nâng công nghiệp', sortOrder: 3, productCount: 15, isVisible: true },
+  { id: 'b-5', name: 'NIULI', slug: 'niuli', logoId: null, logo: fallbackBrandLogo('/images/seed/products/niuli-ac25.jpg'), description: 'Xe nâng tay & xe nâng điện mini', sortOrder: 4, productCount: 12, isVisible: true },
+  { id: 'b-6', name: 'NISSAN', slug: 'nissan', logoId: null, logo: fallbackBrandLogo('/images/seed/products/toyota-8fb25.jpg'), description: 'Nissan Forklift', sortOrder: 5, productCount: 10, isVisible: true },
+  { id: 'b-7', name: 'HELI', slug: 'heli', logoId: null, logo: fallbackBrandLogo('/images/seed/products/komatsu-fd25t.jpg'), description: 'Xe nâng Heli giá tốt', sortOrder: 6, productCount: 8, isVisible: true },
+  { id: 'b-8', name: 'UNICARRIERS', slug: 'unicarriers', logoId: null, logo: fallbackBrandLogo('/images/seed/products/mitsubishi-rb14.jpg'), description: 'UniCarriers (Nissan/Mitsubishi)', sortOrder: 7, productCount: 5, isVisible: true },
 ]
 
 // ─── Services ────────────────────────────────────────────────────────────────

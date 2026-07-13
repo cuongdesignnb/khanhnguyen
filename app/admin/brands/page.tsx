@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import AdminPageHeader from '@/components/admin/admin-page-header'
 import AdminButton from '@/components/admin/admin-button'
@@ -15,11 +15,65 @@ import MediaPicker from '@/components/admin/media-picker'
 import AdminModal from '@/components/admin/admin-modal'
 import AdminLoading from '@/components/admin/admin-loading'
 import AdminErrorState from '@/components/admin/admin-error-state'
-import { toast } from '@/lib/toast'
 import RichTextEditor from '@/components/admin/editor/rich-text-editor'
 import SeoFormSection from '@/components/admin/seo/seo-form-section'
 import { Plus, Pencil, Trash2, X, Image as ImageIcon, Save, RefreshCw } from 'lucide-react'
 import type { BrandItem, MediaItem } from '@/types/admin'
+
+type BrandDetail = BrandItem & {
+  seoTitle?: string | null
+  seoDescription?: string | null
+  canonicalUrl?: string | null
+  ogTitle?: string | null
+  ogDescription?: string | null
+  ogImageId?: string | null
+  ogImage?: { url?: string | null } | null
+  robotsIndex?: boolean
+  robotsFollow?: boolean
+}
+
+function brandLogoToMedia(brand: BrandItem): MediaItem | null {
+  if (!brand.logo || !brand.logoId || !brand.logo.url) return null
+  return {
+    id: brand.logoId,
+    src: brand.logo.url,
+    alt: brand.logo.alt || brand.name,
+    type: 'IMAGE',
+    format: brand.logo.extension,
+    size: brand.logo.size,
+    uploadedAt: '',
+    url: brand.logo.url,
+    filename: brand.logo.filename,
+    originalName: brand.logo.originalName,
+    mimeType: brand.logo.mimeType,
+    extension: brand.logo.extension,
+    width: brand.logo.width,
+    height: brand.logo.height,
+    title: brand.logo.title || undefined,
+  }
+}
+
+function BrandCardLogo({ brand }: { brand: BrandItem }) {
+  const [missing, setMissing] = useState(false)
+  if (!brand.logo?.url || missing) {
+    return (
+      <div className="text-center">
+        <span className="text-sm font-black uppercase text-white/60">{brand.name}</span>
+        {brand.logoId && <p className="mt-1 text-[10px] font-semibold text-amber-300">Logo đang thiếu file</p>}
+      </div>
+    )
+  }
+  return (
+    <Image
+      src={brand.logo.url}
+      alt={brand.logo.alt || `Logo ${brand.name}`}
+      fill
+      className="object-contain p-4 opacity-70 transition-opacity duration-300 group-hover:opacity-100"
+      sizes="300px"
+      onError={() => setMissing(true)}
+    />
+  )
+}
 
 export default function BrandsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -34,6 +88,8 @@ export default function BrandsPage() {
   const [sortOrder, setSortOrder] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
   const [logoMedia, setLogoMedia] = useState<MediaItem | null>(null)
+  const [logoChanged, setLogoChanged] = useState(false)
+  const [logoMissing, setLogoMissing] = useState(false)
   const [seoTitle, setSeoTitle] = useState('')
   const [seoDescription, setSeoDescription] = useState('')
   const [canonicalUrl, setCanonicalUrl] = useState('')
@@ -50,41 +106,11 @@ export default function BrandsPage() {
     error,
     reload,
     usingFallback,
-  } = useAdminList<any, BrandItem>({
+  } = useAdminList<unknown, BrandItem>({
     fetcher: adminApi.getBrands,
     fallbackData: adminBrands,
     mapItem: mapBrandToItem,
   })
-
-  useEffect(() => {
-    if (editingId) {
-      const brand = brands.find((b) => b.id === editingId)
-      if (brand) {
-        setName(brand.name)
-        setSlug(brand.slug)
-        setDescription(brand.description || '')
-        setIsVisible(brand.isVisible ?? true)
-        setSortOrder(0)
-        setLogoMedia(
-          brand.logo
-            ? {
-                id: '',
-                src: brand.logo,
-                alt: '',
-                type: 'other',
-                format: 'jpg',
-                size: '',
-                uploadedAt: '',
-              }
-            : null
-        )
-        setIsFormOpen(true)
-        adminApi.getBrandById(editingId).then((data: any) => { setSeoTitle(data.seoTitle || ''); setSeoDescription(data.seoDescription || ''); setCanonicalUrl(data.canonicalUrl || ''); setOgTitle(data.ogTitle || ''); setOgDescription(data.ogDescription || ''); setOgImageId(data.ogImageId || null); setOgImageUrl(data.ogImage?.url || null); setRobotsIndex(data.robotsIndex ?? true); setRobotsFollow(data.robotsFollow ?? true) }).catch(() => undefined)
-      }
-    } else {
-      resetForm()
-    }
-  }, [editingId, brands])
 
   const resetForm = () => {
     setName('')
@@ -93,21 +119,47 @@ export default function BrandsPage() {
     setSortOrder(0)
     setIsVisible(true)
     setLogoMedia(null)
+    setLogoChanged(false)
+    setLogoMissing(false)
     setSeoTitle(''); setSeoDescription(''); setCanonicalUrl(''); setOgTitle(''); setOgDescription(''); setOgImageId(null); setOgImageUrl(null); setRobotsIndex(true); setRobotsFollow(true)
+  }
+
+  const openEditForm = async (brand: BrandItem) => {
+    setEditingId(brand.id)
+    setName(brand.name)
+    setSlug(brand.slug)
+    setDescription(brand.description)
+    setIsVisible(brand.isVisible)
+    setSortOrder(brand.sortOrder)
+    setLogoMedia(brandLogoToMedia(brand))
+    setLogoChanged(false)
+    setLogoMissing(Boolean(brand.logoId && !brand.logo?.url))
+    setIsFormOpen(true)
+
+    try {
+      const data = await adminApi.getBrandById(brand.id) as BrandDetail
+      setSeoTitle(data.seoTitle || ''); setSeoDescription(data.seoDescription || ''); setCanonicalUrl(data.canonicalUrl || ''); setOgTitle(data.ogTitle || ''); setOgDescription(data.ogDescription || ''); setOgImageId(data.ogImageId || null); setOgImageUrl(data.ogImage?.url || null); setRobotsIndex(data.robotsIndex ?? true); setRobotsFollow(data.robotsFollow ?? true)
+      setSortOrder(data.sortOrder)
+      setLogoMedia(brandLogoToMedia(data))
+      setLogoMissing(Boolean(data.logoId && !data.logo?.url))
+      setLogoChanged(false)
+    } catch {
+      // Dữ liệu từ danh sách vẫn đủ để chỉnh sửa các trường chính.
+    }
   }
 
   const { mutate: saveBrand, loading: saving } = useAdminMutation(
     async () => {
-      const payload = {
+      const payload: Record<string, unknown> = {
         name,
         slug: slug || undefined,
-        logoId: logoMedia?.id || null,
         description,
         sortOrder: Number(sortOrder),
         isVisible,
         seoTitle: seoTitle || null, seoDescription: seoDescription || null, canonicalUrl: canonicalUrl || null,
         ogTitle: ogTitle || null, ogDescription: ogDescription || null, ogImageId, robotsIndex, robotsFollow,
       }
+      if (!editingId || logoChanged) payload.logoId = logoMedia?.id || null
 
       if (editingId) {
         return adminApi.updateBrand(editingId, payload)
@@ -140,6 +192,8 @@ export default function BrandsPage() {
   const handleLogoSelect = (items: MediaItem[]) => {
     if (items.length > 0) {
       setLogoMedia(items[0])
+      setLogoChanged(true)
+      setLogoMissing(false)
     }
   }
 
@@ -187,13 +241,7 @@ export default function BrandsPage() {
             >
               {/* Logo/Image */}
               <div className="relative h-32 bg-black/30 border-b border-white/5 flex items-center justify-center p-6">
-                <Image
-                  src={brand.logo}
-                  alt={brand.name}
-                  fill
-                  className="object-contain p-4 opacity-70 group-hover:opacity-100 transition-opacity duration-300"
-                  sizes="300px"
-                />
+                <BrandCardLogo brand={brand} />
                 <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--surface)]/90 via-transparent to-transparent" />
                 <div className="absolute bottom-3 left-4">
                   <div className="text-base font-bold text-white leading-tight">{brand.name}</div>
@@ -222,7 +270,7 @@ export default function BrandsPage() {
                       variant="secondary"
                       size="sm"
                       className="flex-1"
-                      onClick={() => setEditingId(brand.id)}
+                      onClick={() => void openEditForm(brand)}
                     >
                       <Pencil className="w-3.5 h-3.5" /> Sửa
                     </AdminButton>
@@ -284,9 +332,11 @@ export default function BrandsPage() {
             <div className="flex gap-3 items-center">
               {logoMedia ? (
                 <div className="relative w-16 h-10 rounded-lg overflow-hidden border border-white/10 flex-shrink-0 bg-black/20">
-                  <Image src={logoMedia.src} alt="" fill className="object-contain p-1" />
+                  {!logoMissing ? <Image src={logoMedia.src} alt={logoMedia.alt || `Logo ${name}`} fill className="object-contain p-1" onError={() => setLogoMissing(true)} /> : <span className="grid h-full place-items-center px-1 text-center text-[9px] font-bold">Logo đang thiếu file</span>}
                   <button
-                    onClick={() => setLogoMedia(null)}
+                    type="button"
+                    aria-label="Xóa logo thương hiệu"
+                    onClick={() => { setLogoMedia(null); setLogoChanged(true); setLogoMissing(false) }}
                     className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-rose-500"
                   >
                     <X className="w-2.5 h-2.5" />
@@ -303,6 +353,15 @@ export default function BrandsPage() {
               <AdminButton variant="secondary" size="sm" onClick={() => setMediaPickerOpen(true)}>
                 Chọn logo
               </AdminButton>
+            </div>
+            {logoMissing && <p className="mt-2 text-xs font-semibold text-amber-300">Logo đang thiếu file. Hãy chọn lại logo từ Media Library.</p>}
+            <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-xs leading-5 text-[color:var(--muted)]">
+              <p className="font-bold text-white">Logo thương hiệu khuyến nghị:</p>
+              <p>• Kích thước: 600 × 300 px</p>
+              <p>• Tỷ lệ: 2:1 hoặc 3:1</p>
+              <p>• Định dạng: PNG/WebP nền trong suốt</p>
+              <p>• Dung lượng nên dưới 200 KB</p>
+              <p>• Không để khoảng trắng thừa quá lớn quanh logo</p>
             </div>
           </div>
           <div>

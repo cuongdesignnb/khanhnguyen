@@ -7,6 +7,7 @@ import { defaultSettings } from '@/data/default-settings'
 import { getSettingsByGroup } from './settings'
 import { getFooterMenu, getHeaderMenu, getMobileMenu } from './menu'
 import { normalizeVideoUrl } from './videos/normalize-video-url'
+import { clampHeroOverlayOpacity } from './hero/hero-overlay'
 import type { HomeVideoSettingItem, PublicHomeVideoSection } from '@/types/home-video'
 import {
   mapCategoryToPublicCategory,
@@ -65,6 +66,19 @@ type HomeConfigRuntime = {
   heroSliderShowDots?: unknown
   heroSliderMaxItems?: unknown
   heroSliderOverlayOpacity?: unknown
+  brandsEnabled?: unknown
+  brandSectionEyebrow?: unknown
+  brandSectionTitle?: unknown
+  brandSliderEnabled?: unknown
+  brandSliderAutoplay?: unknown
+  brandSliderIntervalMs?: unknown
+  brandSliderPauseOnHover?: unknown
+  brandSliderShowArrows?: unknown
+  brandSliderLoop?: unknown
+  brandSliderDesktopItems?: unknown
+  brandSliderTabletItems?: unknown
+  brandSliderMobileItems?: unknown
+  brandSliderMaxItems?: unknown
   featuredProductsEnabled?: boolean
   featuredProductsLimit?: unknown
   categoryProductSectionsEnabled?: boolean
@@ -371,20 +385,14 @@ export async function getHomeHeroBanners(limit = 8, legacyImageId?: string | nul
 export const getHomeBanners = getHomeHeroBanners
 
 // 4. Brands
-export async function getVisibleBrands(): Promise<PublicBrand[]> {
+export async function getVisibleBrands(limit = 20): Promise<PublicBrand[]> {
   try {
     const dbBrands = await prisma.brand.findMany({
       where: { isVisible: true, deletedAt: null },
       include: { logo: true },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      take: limit,
     })
-    if (!dbBrands || dbBrands.length === 0) {
-      return homeData.brandNames.map((name) => ({
-        id: name.toLowerCase().replace(/\s+/g, '-'),
-        name,
-        slug: name.toLowerCase().replace(/\s+/g, '-'),
-      }))
-    }
     return dbBrands.map(mapBrandToPublicBrand)
   } catch (error) {
     logPublicDataFallback('getVisibleBrands', error)
@@ -640,7 +648,27 @@ export async function getHomeData() {
     autoplay: homeConfig.heroSliderAutoplay !== false, intervalMs: Math.min(15000, Math.max(3000, Number(homeConfig.heroSliderIntervalMs) || 5500)),
     transition, pauseOnHover: homeConfig.heroSliderPauseOnHover !== false, showArrows: homeConfig.heroSliderShowArrows !== false,
     showDots: homeConfig.heroSliderShowDots !== false, maxItems: Math.min(8, Math.max(1, Number(homeConfig.heroSliderMaxItems) || 8)),
-    overlayOpacity: Math.min(90, Math.max(0, Number(homeConfig.heroSliderOverlayOpacity) || 70)),
+    overlayOpacity: clampHeroOverlayOpacity(homeConfig.heroSliderOverlayOpacity),
+  }
+
+  const integerSetting = (value: unknown, fallback: number, min: number, max: number) => {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? Math.min(max, Math.max(min, Math.floor(parsed))) : fallback
+  }
+  const brandSliderSettings = {
+    enabled: homeConfig.brandsEnabled !== false,
+    eyebrow: textValue(homeConfig.brandSectionEyebrow, 'THƯƠNG HIỆU'),
+    title: textValue(homeConfig.brandSectionTitle, 'THƯƠNG HIỆU NỔI BẬT'),
+    sliderEnabled: homeConfig.brandSliderEnabled !== false,
+    autoplay: homeConfig.brandSliderAutoplay !== false,
+    intervalMs: integerSetting(homeConfig.brandSliderIntervalMs, 3000, 2000, 15000),
+    pauseOnHover: homeConfig.brandSliderPauseOnHover !== false,
+    showArrows: homeConfig.brandSliderShowArrows !== false,
+    loop: homeConfig.brandSliderLoop !== false,
+    desktopItems: integerSetting(homeConfig.brandSliderDesktopItems, 6, 3, 8),
+    tabletItems: integerSetting(homeConfig.brandSliderTabletItems, 4, 2, 6),
+    mobileItems: integerSetting(homeConfig.brandSliderMobileItems, 2, 1, 3),
+    maxItems: integerSetting(homeConfig.brandSliderMaxItems, 20, 1, 50),
   }
 
   const [
@@ -666,7 +694,7 @@ export async function getHomeData() {
     getVisibleServices(),
     getLatestPosts(),
     getTestimonials(),
-    getVisibleBrands(),
+    brandSliderSettings.enabled ? getVisibleBrands(brandSliderSettings.maxItems) : Promise.resolve([]),
     getHomeVideoSection(homeConfig),
     getHomeHeroBanners(heroSettings.maxItems, typeof homeConfig.heroImageId === 'string' ? homeConfig.heroImageId : null),
   ])
@@ -687,6 +715,7 @@ export async function getHomeData() {
     testimonials,
     stats: homeData.stats,
     brands,
+    brandSliderSettings,
     videoSection,
     heroBanners,
     heroSettings,

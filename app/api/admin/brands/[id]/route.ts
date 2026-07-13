@@ -3,6 +3,9 @@ import prisma from '@/lib/prisma'
 import * as api from '@/lib/api-response'
 import { brandSchema } from '@/lib/validators/brand'
 import { generateUniqueSlug } from '@/lib/slug'
+import { revalidatePath } from 'next/cache'
+import { mapBrandToAdminDto } from '@/lib/admin-mappers'
+import { validateBrandLogo } from '@/lib/brands/validate-brand-logo'
 
 export async function GET(
   request: NextRequest,
@@ -14,6 +17,8 @@ export async function GET(
       where: { id, deletedAt: null },
       include: {
         logo: true,
+        ogImage: true,
+        _count: { select: { products: true } },
       },
     })
 
@@ -21,8 +26,8 @@ export async function GET(
       return api.notFound('Không tìm thấy thương hiệu')
     }
 
-    return api.ok(brand)
-  } catch (error: any) {
+    return api.ok(mapBrandToAdminDto(brand))
+  } catch (error: unknown) {
     console.error('Brand Get API Error:', error)
     return api.serverError('Lỗi lấy thông tin thương hiệu')
   }
@@ -50,6 +55,10 @@ export async function PATCH(
     const parsed = brandSchema.partial().safeParse(body)
     if (!parsed.success) {
       return api.badRequest('Dữ liệu không hợp lệ', parsed.error.format())
+    }
+    if (parsed.data.logoId !== undefined) {
+      const logoValidation = await validateBrandLogo(parsed.data.logoId)
+      if (!logoValidation.valid) return api.badRequest(logoValidation.error)
     }
 
     let slug = existingBrand.slug
@@ -82,11 +91,13 @@ export async function PATCH(
       },
       include: {
         logo: true,
+        _count: { select: { products: true } },
       },
     })
 
-    return api.ok(updatedBrand, 'Cập nhật thương hiệu thành công')
-  } catch (error: any) {
+    revalidatePath('/')
+    return api.ok(mapBrandToAdminDto(updatedBrand), 'Cập nhật thương hiệu thành công')
+  } catch (error: unknown) {
     console.error('Brand Update API Error:', error)
     return api.serverError('Lỗi cập nhật thương hiệu')
   }
@@ -119,8 +130,9 @@ export async function DELETE(
       data: { deletedAt: new Date() },
     })
 
+    revalidatePath('/')
     return api.ok(null, 'Xóa thương hiệu thành công (soft delete)')
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Brand Delete API Error:', error)
     return api.serverError('Lỗi xóa thương hiệu')
   }

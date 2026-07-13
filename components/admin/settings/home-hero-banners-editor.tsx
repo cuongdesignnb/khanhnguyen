@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import MediaPreviewPicker from "@/components/admin/media/media-preview-picker";
 import { toast } from "@/lib/toast";
+import { clampHeroOverlayOpacity } from "@/lib/hero/hero-overlay";
 
 type BannerImage = { id: string; url: string; alt?: string | null };
 type HeroBanner = {
@@ -711,14 +712,16 @@ export default function HomeHeroBannersEditor({
                       className="object-cover"
                     />
                   )}
-                  <div
-                    className="absolute inset-0 bg-black"
-                    style={{
-                      opacity: overlayContentEnabled
-                        ? Math.min(90, Math.max(0, overlayOpacity)) / 100
-                        : 0.08,
-                    }}
-                  />
+                  {clampHeroOverlayOpacity(overlayOpacity) > 0 && (
+                    <div
+                      data-hero-overlay
+                      className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent"
+                      style={{
+                        opacity:
+                          clampHeroOverlayOpacity(overlayOpacity) / 100,
+                      }}
+                    />
+                  )}
                   {!overlayContentEnabled && (
                     <span className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[color:var(--gold)]">
                       Chế độ chỉ hiển thị ảnh

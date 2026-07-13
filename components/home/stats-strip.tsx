@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { useInView, useReducedMotion } from 'motion/react';
+import { useInView } from 'motion/react';
 import { stats as staticStats } from '@/data/home';
 import {
   Forklift,
@@ -10,6 +10,7 @@ import {
   MapPin,
   type LucideIcon,
 } from 'lucide-react';
+import { useHydratedReducedMotion } from '@/hooks/use-hydrated-reduced-motion';
 
 const iconMap: Record<string, LucideIcon> = {
   Forklift,
@@ -107,8 +108,7 @@ interface StatsStripProps {
 export default function StatsStrip({ stats }: StatsStripProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.3 });
-  const shouldReduceMotion = useReducedMotion();
-  const skip = !!shouldReduceMotion;
+  const skip = useHydratedReducedMotion();
   const displayStats = stats && stats.length > 0 ? stats : staticStats
 
   return (

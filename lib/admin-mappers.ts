@@ -46,14 +46,47 @@ export function mapCategoryToItem(c: any): CategoryItem {
 }
 
 export function mapBrandToItem(b: any): BrandItem {
+  const logo = b.logo && typeof b.logo === 'object'
+    ? {
+        id: String(b.logo.id || b.logoId || ''),
+        url: String(b.logo.url || ''),
+        filename: String(b.logo.filename || ''),
+        originalName: String(b.logo.originalName || b.logo.filename || ''),
+        mimeType: String(b.logo.mimeType || ''),
+        extension: String(b.logo.extension || ''),
+        width: typeof b.logo.width === 'number' ? b.logo.width : null,
+        height: typeof b.logo.height === 'number' ? b.logo.height : null,
+        alt: typeof b.logo.alt === 'string' ? b.logo.alt : null,
+        title: typeof b.logo.title === 'string' ? b.logo.title : null,
+        size: Number(b.logo.size) || 0,
+      }
+    : typeof b.logo === 'string' && b.logo
+      ? {
+          id: String(b.logoId || ''), url: b.logo, filename: '', originalName: '', mimeType: '', extension: '',
+          width: null, height: null, alt: null, title: null, size: 0,
+        }
+      : null
   return {
     id: b.id,
     name: b.name,
     slug: b.slug,
-    logo: b.logo?.url || '/images/placeholder.jpg',
+    logoId: b.logoId || logo?.id || null,
+    logo,
     description: b.description || '',
-    productCount: b._count?.products || 0,
+    sortOrder: b.sortOrder ?? 0,
+    productCount: b.productCount ?? b._count?.products ?? 0,
     isVisible: b.isVisible ?? true,
+  }
+}
+
+export function mapBrandToAdminDto(b: any) {
+  const item = mapBrandToItem(b)
+  return {
+    ...b,
+    logoId: item.logoId,
+    logo: item.logo,
+    productCount: item.productCount,
+    _count: undefined,
   }
 }
 

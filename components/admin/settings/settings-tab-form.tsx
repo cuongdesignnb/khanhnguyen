@@ -19,6 +19,7 @@ import HomeHeroBannersEditor from "./home-hero-banners-editor";
 import HomeHeroSettings from "./home-hero-settings";
 import type { HomeVideoSettingItem } from "@/types/home-video";
 import type { HeaderUtilityItem } from "@/types/header-settings";
+import { clampHeroOverlayOpacity } from "@/lib/hero/hero-overlay";
 
 const input =
   "w-full rounded-xl border border-white/10 bg-[color:var(--surface-2)] px-4 py-2.5 text-sm text-white outline-none focus:border-[color:var(--gold)]/60";
@@ -291,6 +292,21 @@ const videoKeys = [
   "videoSectionCtaUrl",
   "videoItems",
 ];
+const brandSliderKeys = [
+  "brandsEnabled",
+  "brandSectionEyebrow",
+  "brandSectionTitle",
+  "brandSliderEnabled",
+  "brandSliderAutoplay",
+  "brandSliderIntervalMs",
+  "brandSliderPauseOnHover",
+  "brandSliderShowArrows",
+  "brandSliderLoop",
+  "brandSliderDesktopItems",
+  "brandSliderTabletItems",
+  "brandSliderMobileItems",
+  "brandSliderMaxItems",
+];
 
 function HomeSettingsGroups({
   fields,
@@ -306,6 +322,7 @@ function HomeSettingsGroups({
     ...heroSliderKeys,
     ...productKeys,
     ...videoKeys,
+    ...brandSliderKeys,
     "heroImageId",
   ]);
   const remainingKeys = fields
@@ -351,9 +368,8 @@ function HomeSettingsGroups({
             8,
             Math.max(1, Number(value.heroSliderMaxItems) || 8),
           )}
-          overlayOpacity={Math.min(
-            90,
-            Math.max(0, Number(value.heroSliderOverlayOpacity) || 70),
+          overlayOpacity={clampHeroOverlayOpacity(
+            value.heroSliderOverlayOpacity,
           )}
           transition={String(value.heroSliderTransition || "fade-zoom")}
           overlayContentEnabled={value.heroOverlayContentEnabled !== false}
@@ -384,6 +400,18 @@ function HomeSettingsGroups({
         description="Cấu hình sản phẩm nổi bật và các section sản phẩm theo danh mục."
       >
         {renderFields(productKeys)}
+      </SettingsGroup>
+      <SettingsGroup
+        title="Slider thương hiệu"
+        description="Nội dung và logo được lấy từ Quản lý thương hiệu. Chỉ thương hiệu đang bật hiển thị mới xuất hiện ngoài Trang chủ."
+      >
+        {renderFields(brandSliderKeys)}
+        <Link
+          href="/admin/brands"
+          className="mt-5 inline-flex rounded-xl border border-[color:var(--gold)]/35 px-4 py-2 text-sm font-bold text-[color:var(--gold)]"
+        >
+          Quản lý thương hiệu
+        </Link>
       </SettingsGroup>
       <SettingsGroup
         title="Video Trang chủ"

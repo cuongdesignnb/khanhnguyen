@@ -141,7 +141,7 @@ async function main() {
     const adminBrand = adminData.adminBrands.find(b => b.name === name)
     let logoMediaId: string | undefined
     if (adminBrand?.logo) {
-      const media = await upsertMedia(adminBrand.logo)
+      const media = await upsertMedia(adminBrand.logo.url)
       logoMediaId = media.id
     }
 

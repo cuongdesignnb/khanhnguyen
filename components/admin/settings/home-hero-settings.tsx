@@ -1,7 +1,8 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { ImageIcon, MousePointerClick, Type } from "lucide-react";
+import { useHydratedReducedMotion } from "@/hooks/use-hydrated-reduced-motion";
 
 const input =
   "w-full rounded-xl border border-white/10 bg-[color:var(--surface-2)] px-4 py-2.5 text-sm text-white outline-none focus:border-[color:var(--gold)]/60";
@@ -60,7 +61,7 @@ export default function HomeHeroSettings({
   value: HeroSettingsValue;
   update: (key: string, value: unknown) => void;
 }) {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useHydratedReducedMotion();
   const overlayEnabled = value.heroOverlayContentEnabled !== false;
   const textEnabled = value.heroTextEnabled !== false;
   const ctaEnabled = value.heroCtaEnabled !== false;
@@ -319,6 +320,12 @@ export default function HomeHeroSettings({
                     }
                   />
                 </label>
+                {Number(value.heroSliderOverlayOpacity) === 0 && (
+                  <p className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-sm text-amber-100">
+                    Độ phủ 0% giữ nguyên độ sáng ảnh. Hãy bảo đảm ảnh đủ tương
+                    phản nếu đang bật Text và CTA.
+                  </p>
+                )}
               </div>
             </div>
           </motion.div>

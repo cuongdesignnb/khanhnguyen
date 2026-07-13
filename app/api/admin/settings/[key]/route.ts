@@ -32,7 +32,15 @@ function validate(group: string, value: Record<string, unknown>) {
   if ('heroSliderMaxItems' in value && !isIntegerInRange(value.heroSliderMaxItems, 1, 8)) errors.push('Hero Slider chỉ hiển thị từ 1 đến 8 banner.')
   if ('heroSliderOverlayOpacity' in value && !isIntegerInRange(value.heroSliderOverlayOpacity, 0, 90)) errors.push('Độ tối Hero phải từ 0 đến 90%.')
   if ('heroSliderTransition' in value && (typeof value.heroSliderTransition !== 'string' || !['fade', 'slide', 'fade-zoom'].includes(value.heroSliderTransition))) errors.push('Kiểu chuyển Hero Slider không hợp lệ.')
+  if ('brandSliderIntervalMs' in value && !isIntegerInRange(value.brandSliderIntervalMs, 2000, 15000)) errors.push('Chu kỳ Slider thương hiệu phải từ 2000 đến 15000 ms.')
+  if ('brandSliderDesktopItems' in value && !isIntegerInRange(value.brandSliderDesktopItems, 3, 8)) errors.push('Số logo desktop phải từ 3 đến 8.')
+  if ('brandSliderTabletItems' in value && !isIntegerInRange(value.brandSliderTabletItems, 2, 6)) errors.push('Số logo tablet phải từ 2 đến 6.')
+  if ('brandSliderMobileItems' in value && !isIntegerInRange(value.brandSliderMobileItems, 1, 3)) errors.push('Số logo mobile phải từ 1 đến 3.')
+  if ('brandSliderMaxItems' in value && !isIntegerInRange(value.brandSliderMaxItems, 1, 50)) errors.push('Số thương hiệu tối đa phải từ 1 đến 50.')
   for (const key of ['heroOverlayContentEnabled', 'heroTextEnabled', 'heroCtaEnabled']) {
+    if (key in value && typeof value[key] !== 'boolean') errors.push(`${key}: trạng thái phải là true hoặc false.`)
+  }
+  for (const key of ['brandsEnabled', 'brandSliderEnabled', 'brandSliderAutoplay', 'brandSliderPauseOnHover', 'brandSliderShowArrows', 'brandSliderLoop']) {
     if (key in value && typeof value[key] !== 'boolean') errors.push(`${key}: trạng thái phải là true hoặc false.`)
   }
   if (group === 'home.config') errors.push(...validateHomeVideos(value.videoItems))
