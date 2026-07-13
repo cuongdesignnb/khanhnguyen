@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import AdminPageHeader from "@/components/admin/admin-page-header";
 import MediaPreviewPicker from "@/components/admin/media/media-preview-picker";
@@ -40,7 +41,11 @@ const positionLabels: Record<Position, string> = {
   FOOTER: "Chân trang",
 };
 
-export default function BannerAdminPage({ initialPosition = "" }: { initialPosition?: Position | "" }) {
+export default function BannerAdminPage({
+  initialPosition = "",
+}: {
+  initialPosition?: Position | "";
+}) {
   const [items, setItems] = useState<BannerItem[]>([]);
   const [filter, setFilter] = useState<Position | "">(initialPosition);
   const [editing, setEditing] = useState<BannerItem | null | "new">(null);
@@ -163,11 +168,11 @@ export default function BannerAdminPage({ initialPosition = "" }: { initialPosit
           className={input}
         >
           <option value="">Tất cả vị trí</option>
-          {(Object.keys(positionLabels) as Position[]).map(
-            (position) => (
-              <option key={position} value={position}>{positionLabels[position]}</option>
-            ),
-          )}
+          {(Object.keys(positionLabels) as Position[]).map((position) => (
+            <option key={position} value={position}>
+              {positionLabels[position]}
+            </option>
+          ))}
         </select>
       </div>
       <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[color:var(--surface)] p-4">
@@ -254,6 +259,16 @@ export default function BannerAdminPage({ initialPosition = "" }: { initialPosit
                 <X />
               </button>
             </div>
+            <div className="mb-5 rounded-xl border border-[color:var(--gold)]/25 bg-[color:var(--gold)]/5 p-4 text-sm leading-6 text-[color:var(--muted)]">
+              Việc hiển thị Text và CTA ngoài Trang chủ phụ thuộc vào cấu hình
+              Hero tại Cài đặt Website → Trang chủ.{" "}
+              <Link
+                href="/admin/cai-dat/trang-chu"
+                className="font-bold text-[color:var(--gold)]"
+              >
+                Mở cài đặt Hero
+              </Link>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="sm:col-span-2">
                 <span className="mb-2 block text-sm">Tiêu đề</span>
@@ -296,9 +311,13 @@ export default function BannerAdminPage({ initialPosition = "" }: { initialPosit
                     })
                   }
                 >
-                  {(Object.keys(positionLabels) as Position[]).map((position) => (
-                    <option key={position} value={position}>{positionLabels[position]}</option>
-                  ))}
+                  {(Object.keys(positionLabels) as Position[]).map(
+                    (position) => (
+                      <option key={position} value={position}>
+                        {positionLabels[position]}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
               <label>

@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ExternalLink, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { toast } from "@/lib/toast";
-import type { SettingFieldDefinition, SettingsTabDefinition } from "@/types/settings";
+import type {
+  SettingFieldDefinition,
+  SettingsTabDefinition,
+} from "@/types/settings";
 import MediaPreviewPicker from "@/components/admin/media/media-preview-picker";
 import GoogleSearchPreview from "@/components/admin/seo/google-search-preview";
 import SeoSocialPreview from "@/components/admin/seo/seo-social-preview";
@@ -13,6 +16,7 @@ import HeaderUtilityItemsEditor from "./header-utility-items-editor";
 import ProductSpecPriorityEditor from "./product-spec-priority-editor";
 import HomeVideosEditor from "./home-videos-editor";
 import HomeHeroBannersEditor from "./home-hero-banners-editor";
+import HomeHeroSettings from "./home-hero-settings";
 import type { HomeVideoSettingItem } from "@/types/home-video";
 import type { HeaderUtilityItem } from "@/types/header-settings";
 
@@ -36,15 +40,19 @@ export default function SettingsTabForm({
     setValue((old) => ({ ...old, [key]: nextValue }));
 
   useEffect(() => {
-    const timer = window.setTimeout(() => fetch(`/api/admin/settings/${encodeURIComponent(tab.group)}`)
-      .then((response) => response.json())
-      .then((result) => {
-        if (!result.success) throw Error(result.error);
-        setValue(result.data);
-        setOriginal(result.data);
-      })
-      .catch((error) => toast.error(error.message))
-      .finally(() => setLoading(false)), 0);
+    const timer = window.setTimeout(
+      () =>
+        fetch(`/api/admin/settings/${encodeURIComponent(tab.group)}`)
+          .then((response) => response.json())
+          .then((result) => {
+            if (!result.success) throw Error(result.error);
+            setValue(result.data);
+            setOriginal(result.data);
+          })
+          .catch((error) => toast.error(error.message))
+          .finally(() => setLoading(false)),
+      0,
+    );
     return () => window.clearTimeout(timer);
   }, [tab.group]);
 
@@ -143,12 +151,20 @@ export default function SettingsTabForm({
               <div className="mt-6 space-y-4">
                 <HeaderUtilityItemsEditor
                   label="Top Header bên trái"
-                  value={Array.isArray(value.utilityLeft) ? value.utilityLeft as HeaderUtilityItem[] : []}
+                  value={
+                    Array.isArray(value.utilityLeft)
+                      ? (value.utilityLeft as HeaderUtilityItem[])
+                      : []
+                  }
                   onChange={(nextValue) => update("utilityLeft", nextValue)}
                 />
                 <HeaderUtilityItemsEditor
                   label="Top Header bên phải"
-                  value={Array.isArray(value.utilityRight) ? value.utilityRight as HeaderUtilityItem[] : []}
+                  value={
+                    Array.isArray(value.utilityRight)
+                      ? (value.utilityRight as HeaderUtilityItem[])
+                      : []
+                  }
                   onChange={(nextValue) => update("utilityRight", nextValue)}
                 />
               </div>
@@ -158,10 +174,26 @@ export default function SettingsTabForm({
                 <div>
                   <h2 className="mb-3 font-bold">Xem trước trên Google</h2>
                   <GoogleSearchPreview
-                    siteName={typeof value.siteName === "string" ? value.siteName : "Khanh Nguyên"}
-                    url={typeof value.siteUrl === "string" ? value.siteUrl : "https://khanhnguyen.vn"}
-                    title={typeof value.defaultTitle === "string" ? value.defaultTitle : ""}
-                    description={typeof value.defaultDescription === "string" ? value.defaultDescription : ""}
+                    siteName={
+                      typeof value.siteName === "string"
+                        ? value.siteName
+                        : "Khanh Nguyên"
+                    }
+                    url={
+                      typeof value.siteUrl === "string"
+                        ? value.siteUrl
+                        : "https://khanhnguyen.vn"
+                    }
+                    title={
+                      typeof value.defaultTitle === "string"
+                        ? value.defaultTitle
+                        : ""
+                    }
+                    description={
+                      typeof value.defaultDescription === "string"
+                        ? value.defaultDescription
+                        : ""
+                    }
                   />
                 </div>
                 <div>
@@ -169,8 +201,16 @@ export default function SettingsTabForm({
                     Xem trước chia sẻ mạng xã hội
                   </h2>
                   <SeoSocialPreview
-                    title={typeof value.defaultTitle === "string" ? value.defaultTitle : ""}
-                    description={typeof value.defaultDescription === "string" ? value.defaultDescription : ""}
+                    title={
+                      typeof value.defaultTitle === "string"
+                        ? value.defaultTitle
+                        : ""
+                    }
+                    description={
+                      typeof value.defaultDescription === "string"
+                        ? value.defaultDescription
+                        : ""
+                    }
                   />
                 </div>
               </div>
@@ -212,6 +252,9 @@ export default function SettingsTabForm({
 
 const heroContentKeys = [
   "heroEnabled",
+  "heroOverlayContentEnabled",
+  "heroTextEnabled",
+  "heroCtaEnabled",
   "heroTitle",
   "heroSubtitle",
   "heroDescription",
@@ -219,6 +262,7 @@ const heroContentKeys = [
   "heroPrimaryCtaUrl",
   "heroSecondaryCtaLabel",
   "heroSecondaryCtaUrl",
+  "heroSliderOverlayOpacity",
 ];
 const heroSliderKeys = [
   "heroSliderEnabled",
@@ -229,7 +273,6 @@ const heroSliderKeys = [
   "heroSliderShowArrows",
   "heroSliderShowDots",
   "heroSliderMaxItems",
-  "heroSliderOverlayOpacity",
 ];
 const productKeys = [
   "featuredProductsEnabled",
@@ -287,10 +330,10 @@ function HomeSettingsGroups({
   return (
     <div className="space-y-5">
       <SettingsGroup
-        title="Nội dung Hero mặc định"
-        description="Nội dung dự phòng khi một Banner không nhập tiêu đề, phụ đề hoặc CTA riêng."
+        title="Nội dung trên ảnh Hero"
+        description="Chọn chế độ chỉ ảnh, ảnh kèm Text, CTA hoặc hiển thị đầy đủ. Dữ liệu đã nhập không bị xóa khi tắt."
       >
-        {renderFields(heroContentKeys)}
+        <HomeHeroSettings value={value} update={update} />
       </SettingsGroup>
       <SettingsGroup
         title="Hiệu ứng Hero Slider"
@@ -313,10 +356,27 @@ function HomeSettingsGroups({
             Math.max(0, Number(value.heroSliderOverlayOpacity) || 70),
           )}
           transition={String(value.heroSliderTransition || "fade-zoom")}
-        defaultTitle={typeof value.heroTitle === "string" ? value.heroTitle : undefined}
-        defaultSubtitle={typeof value.heroSubtitle === "string" ? value.heroSubtitle : undefined}
-        defaultCtaLabel={typeof value.heroPrimaryCtaLabel === "string" ? value.heroPrimaryCtaLabel : undefined}
-        defaultCtaUrl={typeof value.heroPrimaryCtaUrl === "string" ? value.heroPrimaryCtaUrl : undefined}
+          overlayContentEnabled={value.heroOverlayContentEnabled !== false}
+          textEnabled={value.heroTextEnabled !== false}
+          ctaEnabled={value.heroCtaEnabled !== false}
+          defaultTitle={
+            typeof value.heroTitle === "string" ? value.heroTitle : undefined
+          }
+          defaultSubtitle={
+            typeof value.heroSubtitle === "string"
+              ? value.heroSubtitle
+              : undefined
+          }
+          defaultCtaLabel={
+            typeof value.heroPrimaryCtaLabel === "string"
+              ? value.heroPrimaryCtaLabel
+              : undefined
+          }
+          defaultCtaUrl={
+            typeof value.heroPrimaryCtaUrl === "string"
+              ? value.heroPrimaryCtaUrl
+              : undefined
+          }
         />
       </SettingsGroup>
       <SettingsGroup
@@ -339,7 +399,7 @@ function HomeSettingsGroups({
           {renderFields(remainingKeys)}
         </SettingsGroup>
       )}
-    {typeof value.heroImageId === "string" && value.heroImageId && (
+      {typeof value.heroImageId === "string" && value.heroImageId && (
         <p className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-[color:var(--muted)]">
           Ảnh Hero cũ vẫn được giữ để tương thích và chỉ dùng làm dự phòng khi
           chưa có Hero Banner. Hãy quản lý slide trong “Danh sách Hero Banner”.
@@ -499,7 +559,12 @@ function Field({
   );
 }
 
-type RepeaterItem = { label?: string; title?: string; url?: string; isEnabled?: boolean }
+type RepeaterItem = {
+  label?: string;
+  title?: string;
+  url?: string;
+  isEnabled?: boolean;
+};
 
 function Repeater({
   value,

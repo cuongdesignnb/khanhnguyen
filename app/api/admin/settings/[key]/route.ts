@@ -6,11 +6,15 @@ import { revalidatePath } from 'next/cache'
 import { normalizeVideoUrl } from '@/lib/videos/normalize-video-url'
 import type { HomeVideoSettingItem } from '@/types/home-video'
 
-function isAdmin(session: any) {
-  return session?.user?.role === 'ADMIN'
+function isAdmin(session: unknown) {
+  return (session as { user?: { role?: string } })?.user?.role === 'ADMIN'
 }
 
-function validate(group: string, value: Record<string, any>) {
+function isIntegerInRange(value: unknown, min: number, max: number) {
+  return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
+}
+
+function validate(group: string, value: Record<string, unknown>) {
   const errors: string[] = []
   for (const [key, field] of Object.entries(value)) {
     if (/email/i.test(key) && field && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(field))) errors.push(`${key}: email không hợp lệ`)
@@ -23,16 +27,19 @@ function validate(group: string, value: Record<string, any>) {
   }
   if ('featuredProductsLimit' in value && Number(value.featuredProductsLimit) > 8) errors.push('featuredProductsLimit: tối đa 8 sản phẩm')
   if ('categoryProductLimit' in value && Number(value.categoryProductLimit) > 8) errors.push('categoryProductLimit: tối đa 8 sản phẩm')
-  if ('videoSectionLimit' in value && (!Number.isInteger(value.videoSectionLimit) || value.videoSectionLimit < 1 || value.videoSectionLimit > 12)) errors.push('Số video hiển thị phải là số nguyên từ 1 đến 12.')
-  if ('heroSliderIntervalMs' in value && (!Number.isInteger(value.heroSliderIntervalMs) || value.heroSliderIntervalMs < 3000 || value.heroSliderIntervalMs > 15000)) errors.push('Chu kỳ Hero Slider phải từ 3000 đến 15000 ms.')
-  if ('heroSliderMaxItems' in value && (!Number.isInteger(value.heroSliderMaxItems) || value.heroSliderMaxItems < 1 || value.heroSliderMaxItems > 8)) errors.push('Hero Slider chỉ hiển thị từ 1 đến 8 banner.')
-  if ('heroSliderOverlayOpacity' in value && (!Number.isInteger(value.heroSliderOverlayOpacity) || value.heroSliderOverlayOpacity < 0 || value.heroSliderOverlayOpacity > 90)) errors.push('Độ tối Hero phải từ 0 đến 90%.')
-  if ('heroSliderTransition' in value && !['fade', 'slide', 'fade-zoom'].includes(value.heroSliderTransition)) errors.push('Kiểu chuyển Hero Slider không hợp lệ.')
+  if ('videoSectionLimit' in value && !isIntegerInRange(value.videoSectionLimit, 1, 12)) errors.push('Số video hiển thị phải là số nguyên từ 1 đến 12.')
+  if ('heroSliderIntervalMs' in value && !isIntegerInRange(value.heroSliderIntervalMs, 3000, 15000)) errors.push('Chu kỳ Hero Slider phải từ 3000 đến 15000 ms.')
+  if ('heroSliderMaxItems' in value && !isIntegerInRange(value.heroSliderMaxItems, 1, 8)) errors.push('Hero Slider chỉ hiển thị từ 1 đến 8 banner.')
+  if ('heroSliderOverlayOpacity' in value && !isIntegerInRange(value.heroSliderOverlayOpacity, 0, 90)) errors.push('Độ tối Hero phải từ 0 đến 90%.')
+  if ('heroSliderTransition' in value && (typeof value.heroSliderTransition !== 'string' || !['fade', 'slide', 'fade-zoom'].includes(value.heroSliderTransition))) errors.push('Kiểu chuyển Hero Slider không hợp lệ.')
+  for (const key of ['heroOverlayContentEnabled', 'heroTextEnabled', 'heroCtaEnabled']) {
+    if (key in value && typeof value[key] !== 'boolean') errors.push(`${key}: trạng thái phải là true hoặc false.`)
+  }
   if (group === 'home.config') errors.push(...validateHomeVideos(value.videoItems))
-  if ('cardVisibleSpecsLimit' in value && (!Number.isInteger(value.cardVisibleSpecsLimit) || value.cardVisibleSpecsLimit < 0 || value.cardVisibleSpecsLimit > 3)) errors.push('cardVisibleSpecsLimit: chỉ nhận giá trị từ 0 đến 3')
-  if ('cardHoverSpecsLimit' in value && (!Number.isInteger(value.cardHoverSpecsLimit) || value.cardHoverSpecsLimit < 3 || value.cardHoverSpecsLimit > 6)) errors.push('cardHoverSpecsLimit: chỉ nhận giá trị từ 3 đến 6')
+  if ('cardVisibleSpecsLimit' in value && !isIntegerInRange(value.cardVisibleSpecsLimit, 0, 3)) errors.push('cardVisibleSpecsLimit: chỉ nhận giá trị từ 0 đến 3')
+  if ('cardHoverSpecsLimit' in value && !isIntegerInRange(value.cardHoverSpecsLimit, 3, 6)) errors.push('cardHoverSpecsLimit: chỉ nhận giá trị từ 3 đến 6')
   if ('cardPrioritySpecs' in value && (!Array.isArray(value.cardPrioritySpecs) || value.cardPrioritySpecs.length > 3)) errors.push('cardPrioritySpecs: chỉ được chọn tối đa 3 thông số')
-  if ('cardImageRatio' in value && !['4:3', '1:1', '16:9'].includes(value.cardImageRatio)) errors.push('cardImageRatio: tỷ lệ ảnh không hợp lệ')
+  if ('cardImageRatio' in value && (typeof value.cardImageRatio !== 'string' || !['4:3', '1:1', '16:9'].includes(value.cardImageRatio))) errors.push('cardImageRatio: tỷ lệ ảnh không hợp lệ')
   if (!(group in settingGroupMap)) errors.push('Nhóm cài đặt không hợp lệ')
   return errors
 }
@@ -65,7 +72,7 @@ function validateHomeVideos(value: unknown) {
   return errors
 }
 
-function sanitizeHomeConfig(value: Record<string, any>) {
+function sanitizeHomeConfig(value: Record<string, unknown>) {
   if (!Array.isArray(value.videoItems)) return value
   const videoItems: HomeVideoSettingItem[] = value.videoItems.map((rawItem: Record<string, unknown>) => ({
     id: String(rawItem.id),

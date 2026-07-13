@@ -45,6 +45,9 @@ type StaticHomeProduct = (typeof homeData.featuredProducts)[number] & { slug?: s
 type ResolvedSearchParams = Record<string, string | string[] | undefined>
 type HomeConfigRuntime = {
   heroEnabled?: unknown
+  heroOverlayContentEnabled?: unknown
+  heroTextEnabled?: unknown
+  heroCtaEnabled?: unknown
   heroTitle?: unknown
   heroSubtitle?: unknown
   heroDescription?: unknown
@@ -627,6 +630,9 @@ export async function getHomeData() {
   const transition = ['fade', 'slide', 'fade-zoom'].includes(String(homeConfig.heroSliderTransition)) ? String(homeConfig.heroSliderTransition) as PublicHeroSettings['transition'] : 'fade-zoom'
   const heroSettings: PublicHeroSettings = {
     enabled: homeConfig.heroEnabled !== false,
+    overlayContentEnabled: homeConfig.heroOverlayContentEnabled !== false,
+    textEnabled: homeConfig.heroTextEnabled !== false,
+    ctaEnabled: homeConfig.heroCtaEnabled !== false,
     title: textValue(homeConfig.heroTitle, 'GIẢI PHÁP XE NÂNG TOÀN DIỆN'), subtitle: textValue(homeConfig.heroSubtitle, 'KHANH NGUYÊN FORKLIFT'),
     description: textValue(homeConfig.heroDescription), primaryCtaLabel: textValue(homeConfig.heroPrimaryCtaLabel, 'Xem sản phẩm'),
     primaryCtaUrl: textValue(homeConfig.heroPrimaryCtaUrl, '/san-pham'), secondaryCtaLabel: textValue(homeConfig.heroSecondaryCtaLabel, 'Nhận tư vấn'),

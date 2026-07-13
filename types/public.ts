@@ -205,6 +205,9 @@ export interface PublicBanner {
 
 export interface PublicHeroSettings {
   enabled: boolean
+  overlayContentEnabled: boolean
+  textEnabled: boolean
+  ctaEnabled: boolean
   title: string
   subtitle: string
   description: string

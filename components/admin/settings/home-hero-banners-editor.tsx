@@ -8,6 +8,7 @@ import {
   ArrowUp,
   Copy,
   ExternalLink,
+  ImageIcon,
   Pencil,
   Plus,
   RefreshCw,
@@ -55,6 +56,9 @@ export default function HomeHeroBannersEditor({
   defaultSubtitle,
   defaultCtaLabel,
   defaultCtaUrl,
+  overlayContentEnabled,
+  textEnabled,
+  ctaEnabled,
 }: {
   sliderEnabled: boolean;
   maxItems: number;
@@ -64,6 +68,9 @@ export default function HomeHeroBannersEditor({
   defaultSubtitle?: string;
   defaultCtaLabel?: string;
   defaultCtaUrl?: string;
+  overlayContentEnabled: boolean;
+  textEnabled: boolean;
+  ctaEnabled: boolean;
 }) {
   const [items, setItems] = useState<HeroBanner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +78,7 @@ export default function HomeHeroBannersEditor({
   const [initializing, setInitializing] = useState(false);
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
   const [form, setForm] = useState<HeroForm>(emptyForm);
+  const [showSavedContent, setShowSavedContent] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,6 +104,7 @@ export default function HomeHeroBannersEditor({
   }, [load]);
 
   function open(item?: HeroBanner) {
+    setShowSavedContent(overlayContentEnabled);
     setEditingId(item?.id || "new");
     setForm(
       item
@@ -196,19 +205,26 @@ export default function HomeHeroBannersEditor({
     const target = index + direction;
     if (target < 0 || target >= items.length) return;
     const reordered = [...items];
-    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    [reordered[index], reordered[target]] = [
+      reordered[target],
+      reordered[index],
+    ];
     setSaving(true);
     try {
-      await Promise.all(reordered.map((item, sortOrder) => requestSave(`/api/admin/banners/${item.id}`, "PATCH", {
-        title: item.title,
-        subtitle: item.subtitle || "",
-        imageId: item.imageId,
-        image: item.image,
-        href: item.href || "",
-        buttonText: item.buttonText || "",
-        isVisible: item.isVisible,
-        sortOrder,
-      })));
+      await Promise.all(
+        reordered.map((item, sortOrder) =>
+          requestSave(`/api/admin/banners/${item.id}`, "PATCH", {
+            title: item.title,
+            subtitle: item.subtitle || "",
+            imageId: item.imageId,
+            image: item.image,
+            href: item.href || "",
+            buttonText: item.buttonText || "",
+            isVisible: item.isVisible,
+            sortOrder,
+          }),
+        ),
+      );
       toast.success("Đã thay đổi thứ tự Hero Banner.");
       await load();
     } catch (error) {
@@ -315,6 +331,34 @@ export default function HomeHeroBannersEditor({
             <Plus aria-hidden size={16} />
             Thêm Hero Banner
           </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-4 sm:p-5">
+        <div className="flex gap-3">
+          <ImageIcon
+            aria-hidden
+            className="mt-0.5 size-5 shrink-0 text-[color:var(--gold)]"
+          />
+          <div>
+            <h4 className="font-black text-white">
+              Kích thước ảnh Hero khuyến nghị
+            </h4>
+            <ul className="mt-2 grid gap-x-8 gap-y-1 text-sm leading-6 text-[color:var(--muted)] sm:grid-cols-2">
+              <li>• Tốt nhất: 1920 × 800 px, tỷ lệ 12:5</li>
+              <li>• Tối thiểu: 1600 × 667 px</li>
+              <li>• Định dạng: WebP, AVIF hoặc JPG</li>
+              <li>• Nên dưới 500 KB, tối đa 1 MB</li>
+              <li className="sm:col-span-2">
+                • Đặt nội dung quan trọng gần trung tâm vì hai bên có thể bị cắt
+                trên mobile.
+              </li>
+              <li className="sm:col-span-2">
+                • Không nên chèn chữ trực tiếp vào ảnh khi website đang bật Text
+                trên Banner.
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -506,8 +550,8 @@ export default function HomeHeroBannersEditor({
                 <MediaPreviewPicker
                   value={form.imageId}
                   media={form.image}
-                  label="Ảnh Banner"
-                  description="Chọn một ảnh ngang chất lượng cao. Không lưu URL ảnh trực tiếp."
+                  label="Ảnh Hero Banner"
+                  description="Khuyến nghị: 1920 × 800 px · Tỷ lệ 12:5 · WebP/JPG dưới 500 KB. Không lưu URL ảnh trực tiếp."
                   aspectRatio="wide"
                   recommendedSize="1920 × 800 px"
                   onChange={(imageId, media) =>
@@ -518,64 +562,102 @@ export default function HomeHeroBannersEditor({
                     }))
                   }
                 />
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold">
-                    Tiêu đề
-                  </span>
-                  <input
-                    maxLength={180}
-                    className={input}
-                    value={form.title}
-                    placeholder={defaultTitle}
-                    onChange={(event) =>
-                      setForm({ ...form, title: event.target.value })
-                    }
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold">
-                    Phụ đề
-                  </span>
-                  <textarea
-                    maxLength={240}
-                    className={`${input} min-h-24`}
-                    value={form.subtitle || ""}
-                    placeholder={defaultSubtitle}
-                    onChange={(event) =>
-                      setForm({ ...form, subtitle: event.target.value })
-                    }
-                  />
-                </label>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label>
-                    <span className="mb-2 block text-sm font-semibold">
-                      Nhãn CTA
-                    </span>
-                    <input
-                      maxLength={80}
-                      className={input}
-                      value={form.buttonText || ""}
-                      placeholder={defaultCtaLabel}
-                      onChange={(event) =>
-                        setForm({ ...form, buttonText: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span className="mb-2 block text-sm font-semibold">
-                      URL CTA
-                    </span>
-                    <input
-                      maxLength={500}
-                      className={input}
-                      value={form.href || ""}
-                      placeholder={defaultCtaUrl}
-                      onChange={(event) =>
-                        setForm({ ...form, href: event.target.value })
-                      }
-                    />
-                  </label>
-                </div>
+                {!overlayContentEnabled && (
+                  <div className="rounded-xl border border-[color:var(--gold)]/25 bg-[color:var(--gold)]/5 p-4">
+                    <p className="text-sm font-semibold text-[color:var(--gold)]">
+                      Chế độ chỉ hiển thị ảnh đang bật.
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                      Text và CTA không xuất hiện ngoài Trang chủ nhưng dữ liệu
+                      vẫn được giữ.
+                    </p>
+                    <button
+                      type="button"
+                      aria-expanded={showSavedContent}
+                      aria-controls="hero-banner-saved-content"
+                      onClick={() => setShowSavedContent((current) => !current)}
+                      className="mt-3 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white"
+                    >
+                      {showSavedContent
+                        ? "Thu gọn nội dung đã lưu"
+                        : "Mở nội dung đã lưu"}
+                    </button>
+                  </div>
+                )}
+                {(overlayContentEnabled || showSavedContent) && (
+                  <div id="hero-banner-saved-content" className="space-y-4">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold">
+                        Tiêu đề
+                      </span>
+                      <input
+                        maxLength={180}
+                        className={input}
+                        value={form.title}
+                        placeholder={defaultTitle}
+                        onChange={(event) =>
+                          setForm({ ...form, title: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold">
+                        Phụ đề
+                      </span>
+                      <textarea
+                        maxLength={240}
+                        className={`${input} min-h-24`}
+                        value={form.subtitle || ""}
+                        placeholder={defaultSubtitle}
+                        onChange={(event) =>
+                          setForm({ ...form, subtitle: event.target.value })
+                        }
+                      />
+                    </label>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label>
+                        <span className="mb-2 block text-sm font-semibold">
+                          Nhãn CTA
+                        </span>
+                        <input
+                          maxLength={80}
+                          className={input}
+                          value={form.buttonText || ""}
+                          placeholder={defaultCtaLabel}
+                          onChange={(event) =>
+                            setForm({ ...form, buttonText: event.target.value })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span className="mb-2 block text-sm font-semibold">
+                          URL CTA
+                        </span>
+                        <input
+                          maxLength={500}
+                          className={input}
+                          value={form.href || ""}
+                          placeholder={defaultCtaUrl}
+                          onChange={(event) =>
+                            setForm({ ...form, href: event.target.value })
+                          }
+                        />
+                      </label>
+                    </div>
+                    {overlayContentEnabled && !textEnabled && (
+                      <p className="text-xs text-[color:var(--muted)]">
+                        Text đang tắt toàn cục; nội dung này được lưu để sử dụng
+                        khi bật lại.
+                      </p>
+                    )}
+                    {overlayContentEnabled && !ctaEnabled && (
+                      <p className="text-xs text-[color:var(--muted)]">
+                        CTA đang tắt toàn cục; nội dung này được lưu để sử dụng
+                        khi bật lại.
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center gap-6">
                   <label>
                     <span className="mb-2 block text-sm font-semibold">
@@ -632,26 +714,41 @@ export default function HomeHeroBannersEditor({
                   <div
                     className="absolute inset-0 bg-black"
                     style={{
-                      opacity: Math.min(90, Math.max(0, overlayOpacity)) / 100,
+                      opacity: overlayContentEnabled
+                        ? Math.min(90, Math.max(0, overlayOpacity)) / 100
+                        : 0.08,
                     }}
                   />
-                  <div className="absolute inset-0 flex items-center p-5 sm:p-8">
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-[color:var(--gold)]">
-                        {form.subtitle ||
-                          defaultSubtitle ||
-                          "Nhãn nhỏ mặc định"}
-                      </p>
-                      <p className="mt-2 text-xl font-black uppercase leading-tight text-white sm:text-3xl">
-                        {form.title || defaultTitle || "Tiêu đề Hero mặc định"}
-                      </p>
-                      {(form.buttonText || defaultCtaLabel) && (
-                        <span className="mt-4 inline-block rounded-lg bg-[color:var(--gold)] px-4 py-2 text-xs font-black text-black">
-                          {form.buttonText || defaultCtaLabel}
-                        </span>
-                      )}
+                  {!overlayContentEnabled && (
+                    <span className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[color:var(--gold)]">
+                      Chế độ chỉ hiển thị ảnh
+                    </span>
+                  )}
+                  {overlayContentEnabled && (textEnabled || ctaEnabled) && (
+                    <div className="absolute inset-0 flex items-center p-5 sm:p-8">
+                      <div>
+                        {textEnabled && (
+                          <>
+                            <p className="text-xs font-black uppercase tracking-widest text-[color:var(--gold)]">
+                              {form.subtitle ||
+                                defaultSubtitle ||
+                                "Nhãn nhỏ mặc định"}
+                            </p>
+                            <p className="mt-2 text-xl font-black uppercase leading-tight text-white sm:text-3xl">
+                              {form.title ||
+                                defaultTitle ||
+                                "Tiêu đề Hero mặc định"}
+                            </p>
+                          </>
+                        )}
+                        {ctaEnabled && (form.buttonText || defaultCtaLabel) && (
+                          <span className="mt-4 inline-block rounded-lg bg-[color:var(--gold)] px-4 py-2 text-xs font-black text-black">
+                            {form.buttonText || defaultCtaLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
                 <p className="mt-3 text-xs leading-5 text-[color:var(--muted)]">
                   Để trống tiêu đề, phụ đề hoặc CTA để sử dụng nội dung mặc định
