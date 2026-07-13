@@ -1,20 +1,13 @@
 #!/bin/sh
 set -eu
 
-echo "Starting Khanh Nguyen production container..."
+: "${DATABASE_URL:?Thiếu DATABASE_URL}"
+: "${BETTER_AUTH_SECRET:?Thiếu BETTER_AUTH_SECRET}"
 
-echo "Generating Prisma client..."
-npx prisma generate
-
-if [ "${RUN_DB_PUSH:-true}" = "true" ]; then
-  echo "Synchronizing Prisma schema..."
-  npx prisma db push --skip-generate
+if [ "${RUN_DB_PUSH:-false}" = "true" ] || [ "${RUN_DB_SEED:-false}" = "true" ]; then
+  echo "RUN_DB_PUSH và RUN_DB_SEED không được chạy tự động trong production." >&2
+  exit 1
 fi
 
-if [ "${RUN_DB_SEED:-false}" = "true" ]; then
-  echo "Running the optional database seed..."
-  npm run db:seed
-fi
-
-echo "Starting Next.js on 0.0.0.0:${PORT:-3000}..."
-exec npm run start -- -H 0.0.0.0 -p "${PORT:-3000}"
+echo "Starting Next.js standalone on 0.0.0.0:${PORT:-3000}..."
+exec node server.js

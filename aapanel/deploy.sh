@@ -1,37 +1,36 @@
 #!/bin/sh
 set -eu
-
 cd "$(dirname "$0")"
 
-if [ ! -f .env.production ]; then
-  echo "Missing aapanel/.env.production"
-  echo "Run: cp env.production.example .env.production"
+ENV_FILE=.env.production
+COMPOSE_FILE=docker-compose.production.yml
+[ -f "$ENV_FILE" ] || { echo "Thiếu $ENV_FILE" >&2; exit 1; }
+set -a; . "./$ENV_FILE"; set +a
+: "${DATABASE_URL:?Thiếu DATABASE_URL}"
+: "${BETTER_AUTH_SECRET:?Thiếu BETTER_AUTH_SECRET}"
+TAG="${1:-${APP_IMAGE_TAG:-master}}"
+IMAGE="${APP_IMAGE:-ghcr.io/cuongdesignnb/khanhnguyen}:$TAG"
+START=$(date +%s)
+
+wait_healthy() {
+  i=0
+  while [ "$i" -lt 60 ]; do
+    id=$(APP_IMAGE_TAG="$1" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps -q app)
+    status=$([ -n "$id" ] && docker inspect --format='{{.State.Health.Status}}' "$id" 2>/dev/null || true)
+    [ "$status" = healthy ] && return 0
+    i=$((i+1)); sleep 2
+  done
+  return 1
+}
+
+echo "Pulling immutable app image: $IMAGE"
+APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull app
+APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --no-deps --force-recreate app
+if ! wait_healthy "$TAG"; then
+  echo "Image mới không healthy; bắt đầu rollback." >&2
+  if [ -f .last-successful-image ]; then ./rollback.sh "$(cat .last-successful-image)"; fi
   exit 1
 fi
-
-if grep -v '^[[:space:]]*#' .env.production | grep -q 'CHANGE_ME'; then
-  echo "Replace every CHANGE_ME value in .env.production before deploying."
-  exit 1
-fi
-
-set -a
-. ./.env.production
-set +a
-
-docker compose --env-file .env.production -f docker-compose.production.yml config >/dev/null
-docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
-
-echo "Waiting for application health check..."
-i=0
-until [ "$(container_id="$(docker compose --env-file .env.production -f docker-compose.production.yml ps -q app)"; [ -n "$container_id" ] && docker inspect --format='{{.State.Health.Status}}' "$container_id" 2>/dev/null || true)" = "healthy" ]; do
-  i=$((i + 1))
-  if [ "$i" -ge 60 ]; then
-    echo "Application did not become healthy. Recent logs:"
-    docker compose --env-file .env.production -f docker-compose.production.yml logs --tail=100 app
-    exit 1
-  fi
-  sleep 3
-done
-
-echo "Deployment is healthy at http://127.0.0.1:${APP_PORT:-4317}"
-docker compose --env-file .env.production -f docker-compose.production.yml ps
+[ -f .last-successful-image ] && cp .last-successful-image .previous-successful-image
+printf '%s\n' "$TAG" > .last-successful-image
+echo "Deploy thành công trong $(( $(date +%s) - START )) giây: $IMAGE"

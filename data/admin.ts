@@ -28,6 +28,7 @@ export const adminMenuItems: AdminMenuItem[] = [
   { label: 'Sinh bài hàng loạt', href: '/admin/tin-tuc/ai/hang-loat', icon: 'Sparkles' },
   { label: 'Lịch sử AI', href: '/admin/tin-tuc/ai/lich-su', icon: 'History' },
   { label: 'Media Library', href: '/admin/media', icon: 'Image' },
+  { label: 'Banner', href: '/admin/banners', icon: 'Image' },
   { label: 'Liên hệ', href: '/admin/contacts', icon: 'Phone' },
   { label: 'Báo giá', href: '/admin/quote-requests', icon: 'ClipboardList' },
   { label: 'Đơn hàng', href: '/admin/orders', icon: 'ShoppingCart' },

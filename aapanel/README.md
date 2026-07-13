@@ -1,5 +1,27 @@
 # Deploy Khanh Nguyên lên aaPanel
 
+## Quy trình image production mới
+
+Deploy thông thường không build source trên aaPanel. GitHub Actions tạo image `linux/amd64`, đẩy tag `master` và commit SHA lên `ghcr.io/cuongdesignnb/khanhnguyen`.
+
+Nếu package private, đăng nhập một lần bằng token chỉ có quyền `read:packages` (nhập token tại prompt, không lưu token trong repo):
+
+```bash
+docker login ghcr.io -u cuongdesignnb
+```
+
+Deploy immutable SHA và kiểm tra:
+
+```bash
+cd /www/wwwroot/xenangkhanhnguyen.com/aapanel
+git pull --ff-only
+./deploy.sh <commit-sha>
+curl -fsS http://127.0.0.1:4317/api/health
+docker compose --env-file .env.production -f docker-compose.production.yml logs --tail=100 app
+```
+
+Rollback chỉ app: `./rollback.sh`. Build khẩn cấp tại server: `./build-local.sh`. Hai thao tác đều giữ nguyên PostgreSQL và volume uploads. `RUN_DB_PUSH`/`RUN_DB_SEED` phải để `false`; migration production là bước release chủ động bằng `prisma migrate deploy` khi đã có migration hợp lệ.
+
 Bộ cấu hình này chạy Next.js và PostgreSQL bằng Docker. aaPanel Nginx chịu trách nhiệm domain, SSL và reverse proxy. PostgreSQL không mở cổng ra Internet; ứng dụng chỉ bind vào `127.0.0.1:4317`.
 
 ## 1. Chuẩn bị DNS
@@ -42,13 +64,13 @@ Phân quyền file:
 
 ```bash
 chmod 600 .env.production
-chmod +x deploy.sh backup.sh restore-database.sh entrypoint.production.sh
+chmod +x deploy.sh rollback.sh build-local.sh backup.sh restore-database.sh entrypoint.production.sh
 ```
 
-## 4. Build và chạy
+## 4. Pull image và chạy
 
 ```bash
-./deploy.sh
+./deploy.sh <commit-sha>
 ```
 
 Kiểm tra:
@@ -93,7 +115,7 @@ curl https://xenangkhanhnguyen.com/sitemap.xml
 Mặc định `RUN_DB_SEED=false` để tránh tự chèn dữ liệu mẫu lên production.
 
 - Nếu chuyển từ hệ thống hiện tại: backup database và uploads ở máy cũ, sau đó restore lên server.
-- Nếu là website hoàn toàn mới và muốn dùng dữ liệu seed của repo: tạm đặt `RUN_DB_SEED=true`, chạy `./deploy.sh` một lần, rồi đổi lại `false` và chạy lại.
+- Nếu là website hoàn toàn mới và muốn dùng dữ liệu seed, chạy seed như một bước khởi tạo có giám sát từ môi trường quản trị. Không bật `RUN_DB_SEED` trong container production.
 
 Đăng nhập Admin tại `https://xenangkhanhnguyen.com/dang-nhap`, sau đó vào **Cài đặt → SEO toàn website** và xác nhận URL chính thức là `https://xenangkhanhnguyen.com`.
 
@@ -117,20 +139,18 @@ Script giữ backup 14 ngày. Nên đồng bộ thêm thư mục `aapanel/backup
 
 ```bash
 cd /www/wwwroot/xenangkhanhnguyen.com
-git pull
+git pull --ff-only
 cd aapanel
 ./backup.sh
-./deploy.sh
+./deploy.sh <commit-sha>
 ```
 
 Không chạy `docker compose down -v`, vì tùy chọn `-v` sẽ xóa database và uploads.
 
 ## 10. Rollback nhanh
 
-Trước khi cập nhật, đánh tag image hiện tại:
-
 ```bash
-docker tag khanhnguyen-production-app:latest khanhnguyen-production-app:rollback
+./rollback.sh
 ```
 
-Nếu bản mới lỗi, có thể đổi `image` tạm thời trong Compose sang `khanhnguyen-production-app:rollback`, rồi chạy lại Compose. Database cần restore riêng nếu schema/dữ liệu đã thay đổi.
+Script đọc tag thành công trước đó, chỉ pull/recreate service app và chờ health. Database cùng uploads không bị thay đổi; rollback database luôn là thao tác độc lập có kế hoạch.

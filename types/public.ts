@@ -203,6 +203,26 @@ export interface PublicBanner {
   position: 'HOME_HERO' | 'HOME_PROMO' | 'CATEGORY' | 'POPUP' | 'FOOTER'
 }
 
+export interface PublicHeroSettings {
+  enabled: boolean
+  title: string
+  subtitle: string
+  description: string
+  primaryCtaLabel: string
+  primaryCtaUrl: string
+  secondaryCtaLabel: string
+  secondaryCtaUrl: string
+  sliderEnabled: boolean
+  autoplay: boolean
+  intervalMs: number
+  transition: 'fade' | 'slide' | 'fade-zoom'
+  pauseOnHover: boolean
+  showArrows: boolean
+  showDots: boolean
+  maxItems: number
+  overlayOpacity: number
+}
+
 export interface PublicProductCategorySection {
   category: PublicCategory
   products: PublicProductCard[]
@@ -219,6 +239,8 @@ export interface PublicHomeData {
   categories: PublicCategory[]
   featuredProducts: PublicProductCard[]
   productCategorySections: PublicProductCategorySection[]
+  heroBanners: PublicBanner[]
+  heroSettings: PublicHeroSettings
   videoSection: PublicHomeVideoSection
   services: PublicService[]
   latestPosts: PublicPostCard[]

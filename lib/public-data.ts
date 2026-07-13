@@ -33,6 +33,7 @@ import {
   PublicPostDetail,
   PublicTestimonial,
   PublicBanner,
+  PublicHeroSettings,
   PublicNavigationItem,
   ProductListParams,
   ProductListResult,
@@ -43,6 +44,23 @@ import {
 type StaticHomeProduct = (typeof homeData.featuredProducts)[number] & { slug?: string }
 type ResolvedSearchParams = Record<string, string | string[] | undefined>
 type HomeConfigRuntime = {
+  heroEnabled?: unknown
+  heroTitle?: unknown
+  heroSubtitle?: unknown
+  heroDescription?: unknown
+  heroPrimaryCtaLabel?: unknown
+  heroPrimaryCtaUrl?: unknown
+  heroSecondaryCtaLabel?: unknown
+  heroSecondaryCtaUrl?: unknown
+  heroSliderEnabled?: unknown
+  heroSliderAutoplay?: unknown
+  heroSliderIntervalMs?: unknown
+  heroSliderTransition?: unknown
+  heroSliderPauseOnHover?: unknown
+  heroSliderShowArrows?: unknown
+  heroSliderShowDots?: unknown
+  heroSliderMaxItems?: unknown
+  heroSliderOverlayOpacity?: unknown
   featuredProductsEnabled?: boolean
   featuredProductsLimit?: unknown
   categoryProductSectionsEnabled?: boolean
@@ -320,19 +338,28 @@ export async function getPublicMobileMenus(): Promise<PublicNavigationItem[]> {
 }
 
 // 3. Banners
-export async function getHomeBanners(): Promise<PublicBanner[]> {
+const FALLBACK_HERO_BANNER: PublicBanner = {
+  id: 'hero-fallback', title: 'GIẢI PHÁP XE NÂNG TOÀN DIỆN', subtitle: 'KHANH NGUYÊN FORKLIFT',
+  image: '/images/seed/hero/industrial-yard.jpg', href: '/san-pham', buttonText: 'Xem sản phẩm', position: 'HOME_HERO',
+}
+
+export async function getHomeHeroBanners(limit = 8): Promise<PublicBanner[]> {
   try {
     const dbBanners = await prisma.banner.findMany({
-      where: { isVisible: true, deletedAt: null },
+      where: { position: 'HOME_HERO', isVisible: true, deletedAt: null, imageId: { not: null }, image: { deletedAt: null } },
       include: { image: true },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      take: Math.min(8, Math.max(1, limit)),
     })
-    return dbBanners.map(mapBannerToPublicBanner)
+    const banners = dbBanners.filter((banner) => Boolean(banner.image?.url)).map(mapBannerToPublicBanner)
+    return banners.length ? banners : [FALLBACK_HERO_BANNER]
   } catch (error) {
-    logPublicDataFallback('getHomeBanners', error)
-    return []
+    logPublicDataFallback('getHomeHeroBanners', error)
+    return [FALLBACK_HERO_BANNER]
   }
 }
+
+export const getHomeBanners = getHomeHeroBanners
 
 // 4. Brands
 export async function getVisibleBrands(): Promise<PublicBrand[]> {
@@ -591,6 +618,18 @@ export async function getHomeData() {
   const categoryProductSectionsEnabled = homeConfig.categoryProductSectionsEnabled !== false
   const featuredProductsLimit = clampHomeProductLimit(homeConfig.featuredProductsLimit)
   const categoryProductLimit = clampHomeProductLimit(homeConfig.categoryProductLimit)
+  const transition = ['fade', 'slide', 'fade-zoom'].includes(String(homeConfig.heroSliderTransition)) ? String(homeConfig.heroSliderTransition) as PublicHeroSettings['transition'] : 'fade-zoom'
+  const heroSettings: PublicHeroSettings = {
+    enabled: homeConfig.heroEnabled !== false,
+    title: textValue(homeConfig.heroTitle, 'GIẢI PHÁP XE NÂNG TOÀN DIỆN'), subtitle: textValue(homeConfig.heroSubtitle, 'KHANH NGUYÊN FORKLIFT'),
+    description: textValue(homeConfig.heroDescription), primaryCtaLabel: textValue(homeConfig.heroPrimaryCtaLabel, 'Xem sản phẩm'),
+    primaryCtaUrl: textValue(homeConfig.heroPrimaryCtaUrl, '/san-pham'), secondaryCtaLabel: textValue(homeConfig.heroSecondaryCtaLabel, 'Nhận tư vấn'),
+    secondaryCtaUrl: textValue(homeConfig.heroSecondaryCtaUrl, '/lien-he'), sliderEnabled: homeConfig.heroSliderEnabled !== false,
+    autoplay: homeConfig.heroSliderAutoplay !== false, intervalMs: Math.min(15000, Math.max(3000, Number(homeConfig.heroSliderIntervalMs) || 5500)),
+    transition, pauseOnHover: homeConfig.heroSliderPauseOnHover !== false, showArrows: homeConfig.heroSliderShowArrows !== false,
+    showDots: homeConfig.heroSliderShowDots !== false, maxItems: Math.min(8, Math.max(1, Number(homeConfig.heroSliderMaxItems) || 8)),
+    overlayOpacity: Math.min(90, Math.max(0, Number(homeConfig.heroSliderOverlayOpacity) || 70)),
+  }
 
   const [
     siteConfig,
@@ -604,6 +643,7 @@ export async function getHomeData() {
     testimonials,
     brands,
     videoSection,
+    heroBanners,
   ] = await Promise.all([
     getSiteSettings(),
     getPublicMenus(),
@@ -616,6 +656,7 @@ export async function getHomeData() {
     getTestimonials(),
     getVisibleBrands(),
     getHomeVideoSection(homeConfig),
+    getHomeHeroBanners(heroSettings.maxItems),
   ])
 
   const footerMenu = await getFooterMenu()
@@ -635,6 +676,8 @@ export async function getHomeData() {
     stats: homeData.stats,
     brands,
     videoSection,
+    heroBanners,
+    heroSettings,
   }
 }
 

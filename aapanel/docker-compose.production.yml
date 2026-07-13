@@ -1,5 +1,4 @@
 name: khanhnguyen-production
-
 services:
   postgres:
     image: postgres:16-bookworm
@@ -8,29 +7,16 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    volumes: [postgres_data:/var/lib/postgresql/data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 10
-    networks:
-      - backend
-    security_opt:
-      - no-new-privileges:true
-    logging:
-      driver: json-file
-      options:
-        max-size: 10m
-        max-file: "3"
-
+    networks: [backend]
+    security_opt: [no-new-privileges:true]
   app:
-    build:
-      context: ..
-      dockerfile: aapanel/Dockerfile.production
-      args:
-        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+    image: ${APP_IMAGE:-ghcr.io/cuongdesignnb/khanhnguyen}:${APP_IMAGE_TAG:-master}
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-.env.production}
@@ -38,29 +24,16 @@ services:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
       PORT: "3000"
-    ports:
-      - "127.0.0.1:${APP_PORT:-4317}:3000"
-    volumes:
-      - uploads_data:/app/public/uploads
+      RUN_DB_PUSH: "false"
+      RUN_DB_SEED: "false"
+    ports: ["127.0.0.1:${APP_PORT:-4317}:3000"]
+    volumes: [uploads_data:/app/public/uploads]
     depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - backend
-    security_opt:
-      - no-new-privileges:true
-    logging:
-      driver: json-file
-      options:
-        max-size: 10m
-        max-file: "3"
-
+      postgres: { condition: service_healthy }
+    networks: [backend]
+    security_opt: [no-new-privileges:true]
 networks:
-  backend:
-    driver: bridge
-
+  backend: { driver: bridge }
 volumes:
-  postgres_data:
-    name: khanhnguyen_prod_postgres
-  uploads_data:
-    name: khanhnguyen_prod_uploads
+  postgres_data: { name: khanhnguyen_prod_postgres }
+  uploads_data: { name: khanhnguyen_prod_uploads }

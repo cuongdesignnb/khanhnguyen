@@ -1,0 +1,8 @@
+services:
+  app:
+    image: ${APP_IMAGE_LOCAL:-khanhnguyen-production-local}:${APP_IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: aapanel/Dockerfile.production
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}

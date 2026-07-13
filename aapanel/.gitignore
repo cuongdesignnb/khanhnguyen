@@ -1,4 +1,6 @@
 .env.production
+.last-successful-image
+.previous-successful-image
 backups/
 *.sql
 *.sql.gz

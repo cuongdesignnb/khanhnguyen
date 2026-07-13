@@ -49,6 +49,8 @@ export const defaultSettings = {
     heroDescription: 'Xe nâng Nhật bãi tuyển chọn, dịch vụ kỹ thuật tận tâm.',
     heroPrimaryCtaLabel: 'Xem sản phẩm', heroPrimaryCtaUrl: '/san-pham',
     heroSecondaryCtaLabel: 'Nhận tư vấn', heroSecondaryCtaUrl: '/lien-he', heroImageId: null,
+    heroSliderEnabled: true, heroSliderAutoplay: true, heroSliderIntervalMs: 5500, heroSliderTransition: 'fade-zoom',
+    heroSliderPauseOnHover: true, heroSliderShowArrows: true, heroSliderShowDots: true, heroSliderMaxItems: 8, heroSliderOverlayOpacity: 70,
     featuredProductsEnabled: true, featuredProductsTitle: 'Sản phẩm nổi bật', featuredProductsSubtitle: '', featuredProductsLimit: 8,
     categoryProductSectionsEnabled: true, categoryProductLimit: 8,
     categoriesEnabled: true, brandsEnabled: true, servicesEnabled: true, testimonialsEnabled: true, statsEnabled: true,

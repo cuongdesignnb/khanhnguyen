@@ -47,7 +47,7 @@ export default function HomePageClient({ data, headerConfig, contactConfig, prod
 
       <ProductCardConfigProvider settings={productCardConfig}>
         <main className="pb-24 lg:pb-0">
-          <Hero />
+          <Hero slides={data.heroBanners} settings={data.heroSettings} siteConfig={data.siteConfig} />
           <CategoryGrid categories={data.categories} />
           <FeaturedProducts products={data.featuredProducts} />
           <PromoBanner />
