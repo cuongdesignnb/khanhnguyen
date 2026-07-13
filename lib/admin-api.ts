@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Legacy non-Media API contracts are outside this refactor. */
 import {
   adminGet,
   adminPost,
@@ -5,9 +6,16 @@ import {
   adminDelete,
 } from './admin-fetch'
 import { PaginatedResponse } from '@/types/api'
+import type {
+  MediaFileDto,
+  MediaFolderDto,
+  MediaHealthReport,
+  MediaListQuery,
+  MediaListResponse,
+} from '@/types/media'
 
 // Helper to stringify search query params
-function toQueryString(params?: Record<string, any>): string {
+function toQueryString(params?: Record<string, unknown>): string {
   if (!params) return ''
   const searchParams = new URLSearchParams()
   Object.entries(params).forEach(([key, val]) => {
@@ -26,20 +34,41 @@ export const adminApi = {
   },
 
   // ─── Media Library ─────────────────────────────────────────────────────────
-  getMediaList(params?: any) {
-    return adminGet<PaginatedResponse<any>>(`/api/admin/media${toQueryString(params)}`)
+  getMediaList(params?: Partial<MediaListQuery>) {
+    return adminGet<MediaListResponse>(`/api/admin/media${toQueryString(params as Record<string, unknown>)}`)
   },
   getMediaById(id: string) {
-    return adminGet<any>(`/api/admin/media/${id}`)
+    return adminGet<MediaFileDto>(`/api/admin/media/${id}`)
   },
   uploadMedia(formData: FormData) {
-    return adminPost<any>('/api/upload', formData)
+    return adminPost<MediaFileDto>('/api/admin/media/upload', formData)
   },
-  updateMedia(id: string, payload: any) {
-    return adminPatch<any>(`/api/admin/media/${id}`, payload)
+  replaceMedia(id: string, formData: FormData) {
+    return adminPost<MediaFileDto>(`/api/admin/media/${id}/replace`, formData)
+  },
+  updateMedia(id: string, payload: { alt?: string | null; title?: string | null; folderId?: string | null }) {
+    return adminPatch<MediaFileDto>(`/api/admin/media/${id}`, payload)
   },
   deleteMedia(id: string) {
-    return adminDelete<any>(`/api/admin/media/${id}`)
+    return adminDelete<null>(`/api/admin/media/${id}`)
+  },
+  getMediaFolders() {
+    return adminGet<MediaFolderDto[]>('/api/admin/media/folders')
+  },
+  createMediaFolder(payload: { name: string; parentId?: string | null }) {
+    return adminPost<MediaFolderDto>('/api/admin/media/folders', payload)
+  },
+  updateMediaFolder(id: string, payload: { name: string }) {
+    return adminPatch<MediaFolderDto>(`/api/admin/media/folders/${id}`, payload)
+  },
+  deleteMediaFolder(id: string) {
+    return adminDelete<null>(`/api/admin/media/folders/${id}`)
+  },
+  scanMediaHealth() {
+    return adminPost<MediaHealthReport>('/api/admin/media/health/scan')
+  },
+  repairMediaHealth(payload: { action: 'register-orphan' | 'delete-orphan'; url: string }) {
+    return adminPost<unknown>('/api/admin/media/health/repair', payload)
   },
 
   // ─── Categories ────────────────────────────────────────────────────────────

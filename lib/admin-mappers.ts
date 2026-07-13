@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Legacy non-Media mapper payloads are outside this refactor. */
 import {
   ProductAdminItem,
   CategoryItem,
@@ -8,8 +9,8 @@ import {
   PostAdminItem,
   MediaItem,
   ServiceItem,
-  SettingItem,
 } from '@/types/admin'
+import type { MediaFileDto } from '@/types/media'
 
 export function mapProductToAdminItem(p: any): ProductAdminItem {
   return {
@@ -137,16 +138,8 @@ export function mapPostToAdminItem(p: any): PostAdminItem {
   }
 }
 
-export function mapMediaToItem(m: any): MediaItem {
-  return {
-    id: m.id,
-    src: m.url,
-    alt: m.alt || '',
-    type: (m.type || 'IMAGE').toLowerCase() as any,
-    format: (m.extension || 'webp').replace('.', '').toLowerCase() as any,
-    size: m.size ? `${(Number(m.size) / 1024).toFixed(1)} KB` : '0 KB',
-    uploadedAt: m.createdAt ? new Date(m.createdAt).toLocaleDateString('vi-VN') : '',
-  }
+export function mapMediaToItem(media: MediaFileDto): MediaItem {
+  return media
 }
 
 export function mapServiceToItem(s: any): ServiceItem {

@@ -31,6 +31,13 @@ if ! wait_healthy "$TAG"; then
   if [ -f .last-successful-image ]; then ./rollback.sh "$(cat .last-successful-image)"; fi
   exit 1
 fi
+
+if ! APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T app \
+  sh -lc 'test -d /app/public/uploads && test -w /app/public/uploads && touch /app/public/uploads/.deploy-write-test && rm /app/public/uploads/.deploy-write-test'; then
+  echo "Deploy dừng: /app/public/uploads không ghi được bằng user ứng dụng." >&2
+  echo "Chạy: cd $(pwd) && ./fix-upload-permissions.sh" >&2
+  exit 1
+fi
 [ -f .last-successful-image ] && cp .last-successful-image .previous-successful-image
 printf '%s\n' "$TAG" > .last-successful-image
 echo "Deploy thành công trong $(( $(date +%s) - START )) giây: $IMAGE"

@@ -1,333 +1,112 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import Image from 'next/image'
-import AdminPageHeader from '@/components/admin/admin-page-header'
+import { useCallback, useRef, useState } from 'react'
+import { FolderPlus, RefreshCw, ShieldCheck, Upload } from 'lucide-react'
 import AdminButton from '@/components/admin/admin-button'
-import MediaGrid from './media-grid'
-import { adminMedia } from '@/data/admin'
-import { useAdminList } from '@/hooks/use-admin-list'
-import { useAdminMutation } from '@/hooks/use-admin-mutation'
-import { adminApi } from '@/lib/admin-api'
-import { mapMediaToItem } from '@/lib/admin-mappers'
-import AdminConfirmModal from '@/components/admin/admin-confirm-modal'
-import { toast } from '@/lib/toast'
-import AdminLoading from '@/components/admin/admin-loading'
 import AdminErrorState from '@/components/admin/admin-error-state'
-import {
-  Search,
-  Upload,
-  Eye,
-  Trash2,
-  Copy,
-  X,
-  RefreshCw,
-} from 'lucide-react'
-import type { MediaItem } from '@/types/admin'
+import AdminLoading from '@/components/admin/admin-loading'
+import AdminPageHeader from '@/components/admin/admin-page-header'
+import MediaDetailPanel from './media-detail-panel'
+import MediaFolderTree from './media-folder-tree'
+import MediaGrid from './media-grid'
+import MediaHealthDialog from './media-health-dialog'
+import MediaToolbar from './media-toolbar'
+import MediaUploadQueue from './media-upload-queue'
+import { useMediaLibrary } from '@/hooks/use-media-library'
+import { useMediaUpload } from '@/hooks/use-media-upload'
+import { adminApi } from '@/lib/admin-api'
+import { toast } from '@/lib/toast'
+import type { MediaFileDto, MediaFolderDto, MediaHealthReport } from '@/types/media'
 
 export default function MediaLibraryPage() {
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [savingAlt, setSavingAlt] = useState(false)
-  const [altText, setAltText] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const library = useMediaLibrary({ type: 'IMAGE' })
+  const [selected, setSelected] = useState<MediaFileDto | null>(null)
+  const [healthOpen, setHealthOpen] = useState(false)
+  const [healthLoading, setHealthLoading] = useState(false)
+  const [healthReport, setHealthReport] = useState<MediaHealthReport | null>(null)
+  const fileInput = useRef<HTMLInputElement>(null)
+  const onUploaded = useCallback((media: MediaFileDto) => {
+    library.addUploaded([media])
+    setSelected(media)
+  }, [library])
+  const uploads = useMediaUpload({ folderId: library.query.folderId && library.query.folderId !== 'unfiled' ? library.query.folderId : null, onUploaded })
 
-  const {
-    items: mediaList,
-    loading,
-    error,
-    params,
-    setParams,
-    reload,
-    usingFallback,
-  } = useAdminList<any, MediaItem>({
-    fetcher: adminApi.getMediaList,
-    initialParams: { page: 1, limit: 30, q: '', type: '', format: '' },
-    fallbackData: adminMedia,
-    mapItem: mapMediaToItem,
-  })
-
-  const { mutate: uploadFile, loading: uploading } = useAdminMutation(
-    adminApi.uploadMedia,
-    {
-      successMessage: 'Tải ảnh lên thành công',
-      onSuccess: () => {
-        reload()
-      },
-    }
-  )
-
-  const { mutate: deleteFile, loading: deleting } = useAdminMutation(
-    adminApi.deleteMedia,
-    {
-      successMessage: 'Xóa ảnh thành công',
-      onSuccess: () => {
-        setDeleteModalOpen(false)
-        setSelectedMedia(null)
-        reload()
-      },
-    }
-  )
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const formData = new FormData()
-    formData.append('file', file)
-
+  const createFolder = async (name: string) => {
     try {
-      await uploadFile(formData)
-    } catch (err) {
-      // Error handled by mutation hook
-    } finally {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      await adminApi.createMediaFolder({ name })
+      await library.loadFolders()
+      toast.success('Đã tạo thư mục Media.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể tạo thư mục.')
     }
   }
 
-  const handleSaveAlt = async () => {
-    if (!selectedMedia) return
-    setSavingAlt(true)
+  const renameFolder = async (id: string, name: string) => {
     try {
-      await adminApi.updateMedia(selectedMedia.id, { alt: altText })
-      toast.success('Lưu mô tả ảnh thành công')
-      setSelectedMedia((prev) => prev ? { ...prev, alt: altText } : null)
-      reload()
-    } catch (err: any) {
-      toast.error(err.message || 'Lỗi lưu mô tả')
-    } finally {
-      setSavingAlt(false)
+      await adminApi.updateMediaFolder(id, { name })
+      await library.loadFolders()
+      toast.success('Đã đổi tên thư mục.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể đổi tên thư mục.')
     }
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success('Đã sao chép liên kết vào bộ nhớ tạm')
+  const deleteFolder = async (folder: MediaFolderDto) => {
+    if (!window.confirm(`Xóa thư mục “${folder.name}”? Chỉ thư mục trống mới được xóa.`)) return
+    try {
+      await adminApi.deleteMediaFolder(folder.id)
+      if (library.query.folderId === folder.id) library.setQuery({ folderId: '' })
+      await library.loadFolders()
+      toast.success('Đã xóa thư mục Media.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể xóa thư mục.')
+    }
   }
 
-  const selectMediaItem = (item: MediaItem) => {
-    setSelectedMedia(item)
-    setAltText(item.alt)
+  const scanHealth = async () => {
+    setHealthOpen(true)
+    setHealthLoading(true)
+    try {
+      setHealthReport(await adminApi.scanMediaHealth())
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể kiểm tra Media.')
+    } finally {
+      setHealthLoading(false)
+    }
   }
+
+  const selectedIds = new Set(selected ? [selected.id] : [])
 
   return (
-    <div>
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*"
-        className="hidden"
-      />
-
+    <div onPaste={(event) => { const files = Array.from(event.clipboardData.files); if (files.length) uploads.addFiles(files) }}>
+      <input ref={fileInput} type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif,image/gif,application/pdf" className="hidden" onChange={(event) => { if (event.target.files) uploads.addFiles(event.target.files); event.target.value = '' }} />
       <AdminPageHeader
         title="Media Library"
-        breadcrumbs={[
-          { label: 'Trang chủ', href: '/admin' },
-          { label: 'Media Library' },
-        ]}
-        actions={
-          <div className="flex flex-wrap items-center gap-3">
-            <AdminButton
-              icon={<Upload className="w-4 h-4" />}
-              loading={uploading}
-              onClick={handleUploadClick}
-            >
-              Upload ảnh
-            </AdminButton>
-          </div>
-        }
+        breadcrumbs={[{ label: 'Trang chủ', href: '/admin' }, { label: 'Media Library' }]}
+        actions={<div className="flex flex-wrap gap-2"><AdminButton onClick={() => fileInput.current?.click()}><Upload aria-hidden size={15} /> Tải ảnh</AdminButton><AdminButton variant="secondary" onClick={() => void createFolder('Thư mục mới')}><FolderPlus aria-hidden size={15} /> Tạo thư mục</AdminButton><AdminButton variant="secondary" onClick={scanHealth}><ShieldCheck aria-hidden size={15} /> Kiểm tra ảnh lỗi</AdminButton></div>}
       />
 
-      {usingFallback && (
-        <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs rounded-xl flex items-center justify-between">
-          <span>Đang sử dụng dữ liệu tạm. Vui lòng kiểm tra kết nối database.</span>
-          <button onClick={reload} className="p-1 hover:bg-white/5 rounded-lg text-amber-400">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Main Grid */}
-        <div className="xl:col-span-2">
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3 mb-6">
-            <div className="flex-1 min-w-[200px] flex items-center bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-3 py-2 gap-2">
-              <Search className="w-4 h-4 text-[color:var(--muted)]" />
-              <input
-                type="text"
-                value={params.q || ''}
-                onChange={(e) => setParams({ q: e.target.value })}
-                placeholder="Tìm kiếm ảnh..."
-                className="bg-transparent text-sm text-[color:var(--text)] placeholder:text-[color:var(--muted)]/50 outline-none flex-1"
-              />
-            </div>
-            <select
-              value={params.type || ''}
-              onChange={(e) => setParams({ type: e.target.value })}
-              className="bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-3 py-2 text-xs text-[color:var(--muted)] outline-none appearance-none cursor-pointer"
-            >
-              <option value="">Tất cả loại</option>
-              <option value="product">Sản phẩm</option>
-              <option value="service">Dịch vụ</option>
-              <option value="hero">Hero</option>
-              <option value="post">Tin tức</option>
-            </select>
-            <select
-              value={params.format || ''}
-              onChange={(e) => setParams({ format: e.target.value })}
-              className="bg-[color:var(--surface-2)] border border-white/10 rounded-xl px-3 py-2 text-xs text-[color:var(--muted)] outline-none appearance-none cursor-pointer"
-            >
-              <option value="">Tất cả định dạng</option>
-              <option value="jpg">JPG</option>
-              <option value="png">PNG</option>
-              <option value="webp">WEBP</option>
-              <option value="svg">SVG</option>
-            </select>
-          </div>
-
-          {/* Grid Loading/Error/List */}
-          {loading ? (
-            <AdminLoading type="grid" count={12} />
-          ) : error && !usingFallback ? (
-            <AdminErrorState message={error} onRetry={reload} />
-          ) : (
-            <MediaGrid
-              media={mediaList}
-              selectedId={selectedMedia?.id ?? null}
-              onSelect={selectMediaItem}
-            />
-          )}
-        </div>
-
-        {/* Detail Panel */}
-        <div className="rounded-2xl border border-white/10 bg-[color:var(--surface)]/80 p-5 self-start sticky top-20">
-          {selectedMedia ? (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[color:var(--silver)]">Chi tiết ảnh</h3>
-                <button
-                  onClick={() => setSelectedMedia(null)}
-                  className="text-[color:var(--muted)] hover:text-white cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Preview */}
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-4 border border-white/5 bg-black/20">
-                <Image
-                  src={selectedMedia.src}
-                  alt={selectedMedia.alt}
-                  fill
-                  className="object-contain"
-                  sizes="400px"
-                />
-              </div>
-
-              {/* Info */}
-              <div className="space-y-3 text-sm">
-                <div>
-                  <label className="text-xs text-[color:var(--muted)] mb-1 block">URL</label>
-                  <div className="flex items-center gap-2 bg-[color:var(--surface-2)] border border-white/10 rounded-lg px-3 py-2">
-                    <span className="text-xs text-[color:var(--silver)] truncate flex-1 font-mono">
-                      {selectedMedia.src}
-                    </span>
-                    <button
-                      onClick={() => copyToClipboard(selectedMedia.src)}
-                      className="text-[color:var(--muted)] hover:text-[color:var(--gold)] cursor-pointer shrink-0"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs text-[color:var(--muted)] mb-1 block">Mô tả (Alt text)</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={altText}
-                      onChange={(e) => setAltText(e.target.value)}
-                      className="flex-1 bg-[color:var(--surface-2)] border border-white/10 rounded-lg px-3 py-2 text-xs text-[color:var(--text)] outline-none focus:border-[color:var(--gold)]/50"
-                    />
-                    <AdminButton
-                      size="sm"
-                      onClick={handleSaveAlt}
-                      loading={savingAlt}
-                      disabled={altText === selectedMedia.alt}
-                    >
-                      Lưu
-                    </AdminButton>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                  <div>
-                    <div className="text-[10px] text-[color:var(--muted)] mb-0.5">Loại</div>
-                    <div className="text-xs text-[color:var(--silver)] capitalize">{selectedMedia.type || 'Khác'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-[color:var(--muted)] mb-0.5">Định dạng</div>
-                    <div className="text-xs text-[color:var(--silver)] uppercase">{selectedMedia.format}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-[color:var(--muted)] mb-0.5">Dung lượng</div>
-                    <div className="text-xs text-[color:var(--silver)]">{selectedMedia.size}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-[color:var(--muted)] mb-0.5">Ngày upload</div>
-                    <div className="text-xs text-[color:var(--silver)]">{selectedMedia.uploadedAt}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2 mt-4">
-                <AdminButton
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => copyToClipboard(selectedMedia.src)}
-                >
-                  <Copy className="w-3.5 h-3.5" /> Copy link
-                </AdminButton>
-                <AdminButton
-                  variant="danger"
-                  size="sm"
-                  onClick={() => setDeleteModalOpen(true)}
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Xóa
-                </AdminButton>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Eye className="w-10 h-10 text-[color:var(--muted)] mb-3" />
-              <p className="text-sm text-[color:var(--muted)]">
-                Chọn một ảnh để xem chi tiết
-              </p>
-            </div>
-          )}
-        </div>
+      <div
+        onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' }}
+        onDrop={(event) => { event.preventDefault(); uploads.addFiles(event.dataTransfer.files) }}
+        className="mb-4 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-center text-xs text-[color:var(--muted)]"
+      >
+        Kéo thả tối đa 20 file vào đây, dán ảnh từ clipboard hoặc bấm “Tải ảnh”. Mỗi file tối đa 20 MB và được gửi bằng request riêng, tối đa 3 file đồng thời.
       </div>
 
-      <AdminConfirmModal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => {
-          if (selectedMedia) deleteFile(selectedMedia.id)
-        }}
-        loading={deleting}
-        title="Xóa hình ảnh"
-        description="Bạn có chắc chắn muốn xóa ảnh này khỏi thư viện? Hình ảnh đã liên kết với sản phẩm hoặc tin tức có thể bị ảnh hưởng."
-      />
+      <div className="mb-4"><MediaUploadQueue queue={uploads.queue} successCount={uploads.successCount} errorCount={uploads.errorCount} onRetry={uploads.retry} onCancel={uploads.cancel} onRemove={uploads.remove} onClearCompleted={uploads.clearCompleted} /></div>
+
+      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)_340px]">
+        <div className="hidden xl:block"><MediaFolderTree folders={library.folders} selectedFolderId={library.query.folderId} onSelect={(folderId) => library.setQuery({ folderId })} onCreate={createFolder} onRename={renameFolder} onDelete={deleteFolder} /></div>
+        <main className="min-w-0 space-y-4">
+          <details className="rounded-xl border border-white/10 p-3 xl:hidden"><summary className="cursor-pointer text-sm font-semibold">Thư mục Media</summary><div className="mt-3"><MediaFolderTree folders={library.folders} selectedFolderId={library.query.folderId} onSelect={(folderId) => library.setQuery({ folderId })} onCreate={createFolder} onRename={renameFolder} onDelete={deleteFolder} /></div></details>
+          <MediaToolbar query={library.query} onChange={library.setQuery} />
+          {library.loading ? <AdminLoading type="grid" count={12} /> : library.error ? <AdminErrorState message={library.error} onRetry={library.reload} /> : <MediaGrid media={library.items} selectedIds={selectedIds} onSelect={setSelected} />}
+          {!library.loading && !library.error && <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs text-[color:var(--muted)]"><span>Hiển thị {library.items.length}/{library.meta.total} file</span><div className="flex gap-2"><AdminButton variant="secondary" size="sm" onClick={library.reload}><RefreshCw aria-hidden size={13} /> Làm mới</AdminButton>{library.meta.page < library.meta.totalPages && <AdminButton size="sm" loading={library.loadingMore} onClick={library.loadMore}>Tải thêm</AdminButton>}</div></div>}
+        </main>
+        <div>{selected ? <MediaDetailPanel key={`${selected.id}-${selected.updatedAt}`} media={selected} folders={library.folders} onUpdated={(updated) => { setSelected(updated); library.updateItem(updated) }} onDeleted={(id) => { setSelected(null); library.removeItem(id) }} onCheckHealth={scanHealth} /> : <div className="rounded-xl border border-dashed border-white/10 px-5 py-16 text-center text-sm text-[color:var(--muted)]">Chọn một file để xem chi tiết, sửa Alt/Title, thay thế hoặc xóa an toàn.</div>}</div>
+      </div>
+      <MediaHealthDialog isOpen={healthOpen} onClose={() => setHealthOpen(false)} report={healthReport} loading={healthLoading} onRescan={scanHealth} />
     </div>
   )
 }

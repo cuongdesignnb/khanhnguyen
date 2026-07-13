@@ -1,113 +1,105 @@
-import { NextRequest } from 'next/server'
+import type { MediaType, Prisma } from '@prisma/client'
+import type { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import * as api from '@/lib/api-response'
-import { generateUniqueSlug } from '@/lib/slug'
+import { requireMediaRole } from '@/lib/media/media-auth'
+import { toMediaFileDto } from '@/lib/media/media-dto'
+import {
+  getSettingMediaIds,
+  mediaUsageCountSelect,
+  mediaUsageWhere,
+} from '@/lib/media/media-usage'
+import type { MediaSort, MediaUsage } from '@/types/media'
+
+const mediaTypes = new Set<MediaType>(['IMAGE', 'DOCUMENT', 'VIDEO', 'OTHER'])
+const mediaUsages = new Set<MediaUsage>([
+  'product',
+  'service',
+  'post',
+  'banner',
+  'category',
+  'brand',
+  'testimonial',
+  'page',
+  'setting',
+  'unused',
+])
+const mediaSorts = new Set<MediaSort>(['newest', 'oldest', 'name-asc', 'size-desc', 'size-asc'])
+
+function clampInteger(value: string | null, fallback: number, min: number, max: number) {
+  const parsed = Number.parseInt(value || '', 10)
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback
+}
+
+function sortOrder(sort: MediaSort): Prisma.MediaFileOrderByWithRelationInput {
+  if (sort === 'oldest') return { createdAt: 'asc' }
+  if (sort === 'name-asc') return { originalName: 'asc' }
+  if (sort === 'size-desc') return { size: 'desc' }
+  if (sort === 'size-asc') return { size: 'asc' }
+  return { createdAt: 'desc' }
+}
 
 export async function GET(request: NextRequest) {
+  const auth = await requireMediaRole(request, ['ADMIN', 'EDITOR'])
+  if (auth.response) return auth.response
+
   try {
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1', 10)
-    const limit = parseInt(searchParams.get('limit') || '20', 10)
-    const q = searchParams.get('q') || ''
-    const folderId = searchParams.get('folderId')
-    const type = searchParams.get('type')
-    const format = searchParams.get('format')
-    const ids = searchParams.get('ids')?.split(',').filter(Boolean) || []
+    const searchParams = request.nextUrl.searchParams
+    const page = clampInteger(searchParams.get('page'), 1, 1, 1_000_000)
+    const limit = clampInteger(searchParams.get('limit'), 30, 1, 100)
+    const q = (searchParams.get('q') || '').trim().slice(0, 200)
+    const folderId = searchParams.get('folderId') || ''
+    const rawType = (searchParams.get('type') || '').toUpperCase() as MediaType
+    const type = mediaTypes.has(rawType) ? rawType : null
+    const rawUsage = searchParams.get('usage') as MediaUsage | null
+    const usage = rawUsage && mediaUsages.has(rawUsage) ? rawUsage : null
+    const rawSort = searchParams.get('sort') as MediaSort | null
+    const sort = rawSort && mediaSorts.has(rawSort) ? rawSort : 'newest'
+    const ids = (searchParams.get('ids') || '').split(',').map((id) => id.trim()).filter(Boolean).slice(0, 100)
+    const rawFormat = (searchParams.get('format') || '').trim().toLowerCase()
+    const format = rawFormat ? `.${rawFormat.replace(/^\./, '')}` : ''
+    const settingMediaIds = await getSettingMediaIds()
 
-    const where: any = { deletedAt: null }
-
-    if (ids.length) where.id = { in: ids }
-
+    const filters: Prisma.MediaFileWhereInput[] = [{ deletedAt: null }]
+    if (ids.length) filters.push({ id: { in: ids } })
     if (q) {
-      where.OR = [
-        { filename: { contains: q, mode: 'insensitive' } },
-        { originalName: { contains: q, mode: 'insensitive' } },
-        { title: { contains: q, mode: 'insensitive' } },
-        { alt: { contains: q, mode: 'insensitive' } },
-      ]
+      filters.push({
+        OR: [
+          { filename: { contains: q, mode: 'insensitive' } },
+          { originalName: { contains: q, mode: 'insensitive' } },
+          { title: { contains: q, mode: 'insensitive' } },
+          { alt: { contains: q, mode: 'insensitive' } },
+        ],
+      })
     }
+    if (folderId === 'root' || folderId === 'unfiled') filters.push({ folderId: null })
+    else if (folderId) filters.push({ folderId })
+    if (type) filters.push({ type })
+    if (format) filters.push({ extension: { equals: format, mode: 'insensitive' } })
+    if (usage) filters.push(mediaUsageWhere(usage, settingMediaIds))
 
-    if (folderId === 'null' || folderId === 'root') {
-      where.folderId = null
-    } else if (folderId) {
-      where.folderId = folderId
-    }
-
-    if (type) {
-      where.type = type
-    }
-
-    if (format) {
-      where.extension = { equals: format, mode: 'insensitive' }
-    }
-
+    const where: Prisma.MediaFileWhereInput = { AND: filters }
     const [items, total] = await Promise.all([
       prisma.mediaFile.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        include: { folder: { select: { name: true } }, _count: { select: mediaUsageCountSelect } },
+        orderBy: sortOrder(sort),
         skip: (page - 1) * limit,
         take: limit,
       }),
       prisma.mediaFile.count({ where }),
     ])
 
-    const totalPages = Math.ceil(total / limit)
-
     return api.ok({
-      items,
+      items: await Promise.all(items.map((item) => toMediaFileDto(item, settingMediaIds))),
       total,
       page,
       limit,
-      totalPages,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     })
-  } catch (error: any) {
-    console.error('Media List API Error:', error)
-    return api.serverError('Lỗi lấy danh sách tập tin đa phương tiện')
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-
-    if (!body.name) {
-      return api.badRequest('Tên thư mục là bắt buộc')
-    }
-
-    const name = body.name.trim()
-    if (!name) {
-      return api.badRequest('Tên thư mục không được để trống')
-    }
-
-    // Sanitize empty string to null for parentId
-    const parentId = body.parentId === '' ? null : body.parentId || null
-
-    if (parentId) {
-      const parentFolder = await prisma.mediaFolder.findFirst({
-        where: { id: parentId, deletedAt: null },
-      })
-      if (!parentFolder) {
-        return api.badRequest('Thư mục cha không tồn tại hoặc đã bị xóa')
-      }
-    }
-
-    const slug = await generateUniqueSlug(name, async (s) => {
-      const existing = await prisma.mediaFolder.findUnique({ where: { slug: s } })
-      return !!existing
-    })
-
-    const folder = await prisma.mediaFolder.create({
-      data: {
-        name,
-        slug,
-        parentId,
-      },
-    })
-
-    return api.created(folder, 'Tạo thư mục thành công')
-  } catch (error: any) {
-    console.error('Media Folder Create API Error:', error)
-    return api.serverError('Lỗi tạo thư mục đa phương tiện')
+  } catch (error) {
+    console.error('Media list failed:', error)
+    return api.serverError('Không thể lấy danh sách Media.')
   }
 }
 

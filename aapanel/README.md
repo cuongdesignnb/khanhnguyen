@@ -154,3 +154,37 @@ Không chạy `docker compose down -v`, vì tùy chọn `-v` sẽ xóa database 
 ```
 
 Script đọc tag thành công trước đó, chỉ pull/recreate service app và chờ health. Database cùng uploads không bị thay đổi; rollback database luôn là thao tác độc lập có kế hoạch.
+
+## 11. Upload Media trên production
+
+Ứng dụng chạy bằng user `node` và lưu file trong named volume `khanhnguyen_prod_uploads` tại `/app/public/uploads`. Volume cũ từng được tạo bởi container chạy `root` có thể khiến upload báo `Permission denied` dù website vẫn mở bình thường.
+
+Kiểm tra quyền ghi:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml exec app sh -lc '
+  id
+  ls -ld /app/public/uploads
+  touch /app/public/uploads/.write-test
+  rm /app/public/uploads/.write-test
+'
+```
+
+Nếu lỗi quyền, chạy script an toàn dưới đây. Script chỉ đổi owner về `node:node`, không xóa file, không sửa database và không dùng `chmod 777`:
+
+```bash
+chmod +x fix-upload-permissions.sh
+./fix-upload-permissions.sh
+```
+
+`deploy.sh` luôn chạy preflight writable sau khi container mới healthy. Deploy sẽ dừng và in đúng lệnh sửa nếu volume không ghi được.
+
+Vhost Nginx aaPanel cần có các giá trị sau trong khối `server` để nhận từng request tối đa 20 MB mà không tăng giới hạn quá mức:
+
+```nginx
+client_max_body_size 25m;
+proxy_read_timeout 120s;
+proxy_send_timeout 120s;
+```
+
+Sau khi sửa vhost, kiểm tra cấu hình và reload Nginx từ aaPanel. Không tự ghi đè vhost nếu chưa đối chiếu cấu hình SSL/reverse proxy đang chạy.

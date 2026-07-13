@@ -661,7 +661,9 @@ export default function ProductEditorPanel({
                           </button>
                         </div>
                       ))}
-                      <div
+                      <button
+                        type="button"
+                        aria-label="Thêm ảnh vào album"
                         onClick={() => {
                           setMediaPickerMode('album')
                           setMediaPickerOpen(true)
@@ -669,7 +671,7 @@ export default function ProductEditorPanel({
                         className="border-dashed border-2 border-white/10 hover:border-white/20 rounded-xl flex items-center justify-center aspect-square cursor-pointer transition-colors"
                       >
                         <Plus className="w-5 h-5 text-[color:var(--muted)]" />
-                      </div>
+                      </button>
                     </div>
                   </div>
 

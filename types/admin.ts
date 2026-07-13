@@ -205,10 +205,18 @@ export type MediaItem = {
   id: string
   src: string
   alt: string
-  type: 'product' | 'service' | 'post' | 'hero' | 'other'
-  format: 'jpg' | 'png' | 'webp' | 'svg'
-  size: string
+  type: 'product' | 'service' | 'post' | 'hero' | 'other' | 'IMAGE' | 'DOCUMENT' | 'VIDEO' | 'OTHER'
+  format: string
+  size: number | string
   uploadedAt: string
+  url?: string
+  filename?: string
+  originalName?: string
+  mimeType?: string
+  extension?: string
+  width?: number | null
+  height?: number | null
+  title?: string
 }
 
 // ─── Category ────────────────────────────────────────────────────────────────

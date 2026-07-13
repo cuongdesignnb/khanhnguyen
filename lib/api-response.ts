@@ -22,12 +22,12 @@ export function created<T>(data: T, message?: string) {
   )
 }
 
-export function badRequest(error: string, details?: any) {
+export function badRequest(error: string, details?: unknown) {
   return NextResponse.json(
     {
       success: false,
       error,
-      ...(details && { details }),
+      ...(details !== undefined && { details }),
     },
     { status: 400 }
   )
@@ -61,6 +61,17 @@ export function notFound(error = 'Không tìm thấy tài nguyên') {
     },
     { status: 404 }
   )
+}
+
+export function conflict(error: string, details?: unknown) {
+  return NextResponse.json(
+    { success: false, error, ...(details !== undefined && { details }) },
+    { status: 409 }
+  )
+}
+
+export function payloadTooLarge(error: string) {
+  return NextResponse.json({ success: false, error }, { status: 413 })
 }
 
 export function serverError(error = 'Lỗi hệ thống') {
