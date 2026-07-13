@@ -54,7 +54,7 @@ function BrandLogo({ brand }: { brand: PublicBrand }) {
   const [failed, setFailed] = useState(false);
   if (!brand.logo || failed) {
     return (
-      <span className="px-3 text-center text-base font-black uppercase tracking-wide text-zinc-800 sm:text-lg">
+      <span className="px-3 text-center text-base font-black uppercase tracking-wide text-[color:var(--silver)] sm:text-lg">
         {brand.name}
       </span>
     );
@@ -207,7 +207,7 @@ export default function BrandSlider({
                   <Link
                     href={`/san-pham?brand=${encodeURIComponent(brand.slug)}`}
                     aria-label={`Xem sản phẩm thương hiệu ${brand.name}`}
-                    className="group flex h-24 items-center justify-center overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm transition duration-300 hover:border-[color:var(--gold)] sm:h-28"
+                    className="group flex h-24 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-transparent transition duration-300 hover:border-[color:var(--gold)] sm:h-28"
                   >
                     <span className="relative block h-full w-full">
                       <BrandLogo key={`${brand.id}-${brand.logo || "text"}`} brand={brand} />
