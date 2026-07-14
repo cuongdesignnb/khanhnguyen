@@ -141,7 +141,7 @@ export default function Hero({
       <AnimatePresence initial={false} mode="sync">
         <motion.div
           key={slide.id}
-          className="absolute inset-0"
+          className="absolute inset-0 overflow-hidden"
           initial={imageInitial}
           animate={imageAnimate}
           exit={{ opacity: 0, scale: reducedMotion ? 1 : 1.08 }}
@@ -156,7 +156,7 @@ export default function Hero({
             fill
             priority={activeIndex === 0}
             sizes="100vw"
-            className="object-cover"
+            className="h-full w-full object-cover object-center"
           />
         </motion.div>
       </AnimatePresence>
