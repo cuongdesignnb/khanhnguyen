@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import DesktopHeader from '@/components/layout/desktop-header'
 import MobileMenuDrawer from '@/components/layout/mobile-menu-drawer'
-import MobileDock from '@/components/layout/mobile-dock'
+import FloatingContactBar from '@/components/layout/floating-contact-bar'
 import Hero from '@/components/home/hero'
 import CategorySlider from '@/components/home/category-slider'
 import FeaturedProducts from '@/components/home/featured-products'
@@ -22,15 +22,17 @@ import type { HeaderConfig } from '@/types/header-settings'
 import type { HeaderContact } from '@/lib/header/resolve-header-utility-item'
 import { ProductCardConfigProvider } from '@/components/products/product-card-config-provider'
 import type { ProductCardSettings } from '@/types/product-card-settings'
+import type { ResolvedFloatingContactConfig } from '@/types/floating-contact'
 
 interface HomePageClientProps {
   data: PublicHomeData
   headerConfig: HeaderConfig
   contactConfig: HeaderContact
   productCardConfig: ProductCardSettings
+  floatingContactConfig: ResolvedFloatingContactConfig
 }
 
-export default function HomePageClient({ data, headerConfig, contactConfig, productCardConfig }: HomePageClientProps) {
+export default function HomePageClient({ data, headerConfig, contactConfig, productCardConfig, floatingContactConfig }: HomePageClientProps) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -62,7 +64,7 @@ export default function HomePageClient({ data, headerConfig, contactConfig, prod
       </ProductCardConfigProvider>
 
       <Footer siteConfig={data.siteConfig} footerGroups={data.footerGroups} />
-      <MobileDock onMenuOpen={() => setMenuOpen(true)} />
+      <FloatingContactBar config={floatingContactConfig} />
     </>
   )
 }

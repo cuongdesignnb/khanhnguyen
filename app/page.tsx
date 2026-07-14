@@ -9,6 +9,7 @@ import type { HeaderConfig } from '@/types/header-settings'
 import type { HeaderContact } from '@/lib/header/resolve-header-utility-item'
 import type { ProductCardSettings } from '@/types/product-card-settings'
 import type { Metadata } from 'next'
+import { getResolvedFloatingContactConfig } from '@/lib/floating-contact'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,12 +19,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [data, seoConfig, headerConfig, contactConfig, productCardConfig] = await Promise.all([
+  const [data, seoConfig, headerConfig, contactConfig, productCardConfig, floatingContactConfig] = await Promise.all([
     getHomeData(),
     getSeoConfig(),
     getSettingGroup('header.config'),
     getSettingGroup('contact.info'),
     getSettingGroup('products.config'),
+    getResolvedFloatingContactConfig(),
   ])
 
   return (
@@ -39,6 +41,7 @@ export default async function HomePage() {
         headerConfig={headerConfig as unknown as HeaderConfig}
         contactConfig={contactConfig as HeaderContact}
         productCardConfig={productCardConfig as unknown as ProductCardSettings}
+        floatingContactConfig={floatingContactConfig}
       />
     </>
   )

@@ -17,8 +17,10 @@ import ProductSpecPriorityEditor from "./product-spec-priority-editor";
 import HomeVideosEditor from "./home-videos-editor";
 import HomeHeroBannersEditor from "./home-hero-banners-editor";
 import HomeHeroSettings from "./home-hero-settings";
+import FloatingContactItemsEditor from "./floating-contact-items-editor";
 import type { HomeVideoSettingItem } from "@/types/home-video";
 import type { HeaderUtilityItem } from "@/types/header-settings";
+import type { FloatingContactItem } from "@/types/floating-contact";
 import { clampHeroOverlayOpacity } from "@/lib/hero/hero-overlay";
 
 const input =
@@ -548,6 +550,15 @@ function Field({
     return (
       <HomeVideosEditor
         value={Array.isArray(value) ? (value as HomeVideoSettingItem[]) : []}
+        onChange={update}
+      />
+    );
+  if (field.type === "floating-contact-items")
+    return (
+      <FloatingContactItemsEditor
+        value={
+          Array.isArray(value) ? (value as FloatingContactItem[]) : []
+        }
         onChange={update}
       />
     );

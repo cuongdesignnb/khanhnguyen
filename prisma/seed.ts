@@ -7,6 +7,7 @@ import { defaultSettings, settingGroupMap } from '../data/default-settings'
 import { defaultFooterMenu, defaultHeaderMenu, defaultMobileMenu, type DefaultMenuItem } from '../data/default-menus'
 import { defaultPages } from '../data/default-pages'
 import { normalizeProductSpecs } from '../lib/products/normalize-product-specs'
+import { floatingContactSeedBaseUrl, floatingContactSeedIcons } from '../data/floating-contact-icons'
 
 const prisma = new PrismaClient() as any
 
@@ -50,7 +51,7 @@ async function main() {
   }
 
   // Helper function for media files
-  async function upsertMedia(url: string) {
+  async function upsertMedia(url: string, id?: string) {
     const filename = url.split('/').pop() || 'file'
     const ext = '.' + filename.split('.').pop()
     const originalName = filename
@@ -60,13 +61,22 @@ async function main() {
     })
     if (existing) return existing
 
+    const mimeType = ext === '.png'
+      ? 'image/png'
+      : ext === '.svg'
+        ? 'image/svg+xml'
+        : ext === '.webp'
+          ? 'image/webp'
+          : 'image/jpeg'
+
     return prisma.mediaFile.create({
       data: {
+        ...(id ? { id } : {}),
         filename,
         originalName,
         path: `public${url}`,
         url,
-        mimeType: ext === '.png' ? 'image/png' : 'image/jpeg',
+        mimeType,
         extension: ext,
         size: 1024,
         type: 'IMAGE',
@@ -76,12 +86,25 @@ async function main() {
 
   // 2. Seed Settings
   console.log('Seeding settings...')
+  const floatingIconMediaIds = new Map<string, string>()
+  for (const icon of floatingContactSeedIcons) {
+    const media = await upsertMedia(`${floatingContactSeedBaseUrl}/${icon.filename}`, icon.mediaId)
+    floatingIconMediaIds.set(icon.itemId, media.id)
+  }
+  const floatingContactSeedValue = {
+    ...defaultSettings.floatingContactConfig,
+    items: defaultSettings.floatingContactConfig.items.map((item) => ({
+      ...item,
+      iconMediaId: floatingIconMediaIds.get(item.id) || null,
+    })),
+  }
   for (const [group, defaultKey] of Object.entries(settingGroupMap)) {
     await prisma.setting.upsert({
       where: { group_key: { group, key: 'main' } },
       update: {},
       create: {
-        group, key: 'main', label: group, value: (defaultSettings as any)[defaultKey],
+        group, key: 'main', label: group,
+        value: group === 'floating-contact.config' ? floatingContactSeedValue : (defaultSettings as any)[defaultKey],
         type: 'json', isPublic: group !== 'integrations.tracking',
       },
     })

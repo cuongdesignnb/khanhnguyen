@@ -44,6 +44,22 @@ export const defaultSettings = {
     columns: footerGroups.map((column) => ({ title: column.title, links: column.links.map((link) => ({ label: link.label, url: link.href })) })),
     bottomLinks: [{ label: 'Chính sách bảo mật', url: '/chinh-sach-bao-mat' }, { label: 'Điều khoản', url: '/dieu-khoan' }],
   },
+  floatingContactConfig: {
+    enabled: true,
+    showOnMobile: true,
+    showOnDesktop: true,
+    desktopTopPercent: 50,
+    mobileBackgroundColor: '#ffffff',
+    desktopBackgroundColor: '#ffffff',
+    items: [
+      { id: 'floating-messenger', label: 'Facebook', dataSource: 'messenger', actionType: 'external', url: '', iconMediaId: null, iconUrl: '/images/seed/contact-bar/messenger.svg', target: '_blank', badge: '', isEnabled: true, sortOrder: 0 },
+      { id: 'floating-hotline', label: 'Hotline', dataSource: 'hotline', actionType: 'phone', url: '', iconMediaId: null, iconUrl: '/images/seed/contact-bar/phone.svg', target: '_self', badge: '', isEnabled: true, sortOrder: 1 },
+      { id: 'floating-zalo', label: 'Zalo', dataSource: 'zalo', actionType: 'zalo', url: '', iconMediaId: null, iconUrl: '/images/seed/contact-bar/zalo.svg', target: '_blank', badge: '', isEnabled: true, sortOrder: 2 },
+      { id: 'floating-quote', label: 'Báo giá', dataSource: 'custom', actionType: 'internal', url: '/lien-he', iconMediaId: null, iconUrl: '/images/seed/contact-bar/quote.svg', target: '_self', badge: '1', isEnabled: true, sortOrder: 3 },
+      { id: 'floating-youtube', label: 'YouTube', dataSource: 'youtube', actionType: 'external', url: '', iconMediaId: null, iconUrl: '/images/seed/contact-bar/youtube.svg', target: '_blank', badge: '', isEnabled: true, sortOrder: 4 },
+      { id: 'floating-tiktok', label: 'TikTok', dataSource: 'tiktok', actionType: 'external', url: '', iconMediaId: null, iconUrl: '/images/seed/contact-bar/tiktok.svg', target: '_blank', badge: '', isEnabled: true, sortOrder: 5 },
+    ],
+  },
   homeConfig: {
     heroEnabled: true, heroTitle: 'GIẢI PHÁP XE NÂNG TOÀN DIỆN', heroSubtitle: 'KHANH NGUYÊN FORKLIFT',
     heroDescription: 'Xe nâng Nhật bãi tuyển chọn, dịch vụ kỹ thuật tận tâm.',
@@ -145,6 +161,7 @@ export const defaultSettings = {
 export const settingGroupMap = {
   'general.site': 'generalSite', 'brand.identity': 'brandIdentity', 'contact.info': 'contactInfo',
   'social.links': 'socialLinks', 'header.config': 'headerConfig', 'footer.config': 'footerConfig',
+  'floating-contact.config': 'floatingContactConfig',
   'home.config': 'homeConfig', 'products.config': 'productsConfig', 'services.config': 'servicesConfig',
   'posts.config': 'postsConfig', 'seo.default': 'seoDefault', 'integrations.tracking': 'integrationsTracking',
   'seo.organization': 'seoOrganization', 'seo.schemas': 'seoSchemas', 'seo.robots': 'seoRobots',

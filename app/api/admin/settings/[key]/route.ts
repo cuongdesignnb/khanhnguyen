@@ -5,6 +5,8 @@ import { getSettingsByGroup, upsertSetting } from '@/lib/settings'
 import { revalidatePath } from 'next/cache'
 import { normalizeVideoUrl } from '@/lib/videos/normalize-video-url'
 import type { HomeVideoSettingItem } from '@/types/home-video'
+import { ensureFloatingContactSeed } from '@/lib/floating-contact'
+import type { FloatingContactItem } from '@/types/floating-contact'
 
 function isAdmin(session: unknown) {
   return (session as { user?: { role?: string } })?.user?.role === 'ADMIN'
@@ -53,11 +55,39 @@ function validate(group: string, value: Record<string, unknown>) {
     if (key in value && typeof value[key] !== 'boolean') errors.push(`${key}: trạng thái phải là true hoặc false.`)
   }
   if (group === 'home.config') errors.push(...validateHomeVideos(value.videoItems))
+  if (group === 'floating-contact.config') errors.push(...validateFloatingContact(value))
   if ('cardVisibleSpecsLimit' in value && !isIntegerInRange(value.cardVisibleSpecsLimit, 0, 3)) errors.push('cardVisibleSpecsLimit: chỉ nhận giá trị từ 0 đến 3')
   if ('cardHoverSpecsLimit' in value && !isIntegerInRange(value.cardHoverSpecsLimit, 3, 6)) errors.push('cardHoverSpecsLimit: chỉ nhận giá trị từ 3 đến 6')
   if ('cardPrioritySpecs' in value && (!Array.isArray(value.cardPrioritySpecs) || value.cardPrioritySpecs.length > 3)) errors.push('cardPrioritySpecs: chỉ được chọn tối đa 3 thông số')
   if ('cardImageRatio' in value && (typeof value.cardImageRatio !== 'string' || !['4:3', '1:1', '16:9'].includes(value.cardImageRatio))) errors.push('cardImageRatio: tỷ lệ ảnh không hợp lệ')
   if (!(group in settingGroupMap)) errors.push('Nhóm cài đặt không hợp lệ')
+  return errors
+}
+
+function validateFloatingContact(value: Record<string, unknown>) {
+  const errors: string[] = []
+  if (!Array.isArray(value.items)) return ['Danh sách nút liên hệ không hợp lệ.']
+  if (value.items.length > 12) errors.push('Chỉ được cấu hình tối đa 12 nút liên hệ.')
+  if (!isIntegerInRange(value.desktopTopPercent, 15, 85)) errors.push('Vị trí desktop phải là số nguyên từ 15 đến 85%.')
+  const dataSources = new Set(['hotline', 'zalo', 'messenger', 'facebook', 'youtube', 'tiktok', 'custom'])
+  const actionTypes = new Set(['phone', 'zalo', 'internal', 'external'])
+  const ids = new Set<string>()
+  value.items.forEach((rawItem, index) => {
+    const position = index + 1
+    if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) {
+      errors.push(`Nút liên hệ số ${position} không hợp lệ.`)
+      return
+    }
+    const item = rawItem as Record<string, unknown>
+    if (typeof item.id !== 'string' || !item.id.trim() || ids.has(item.id)) errors.push(`Nút liên hệ số ${position} có mã nhận diện không hợp lệ.`)
+    else ids.add(item.id)
+    if (typeof item.label !== 'string' || !item.label.trim() || item.label.length > 40) errors.push(`Nhãn nút liên hệ số ${position} phải từ 1 đến 40 ký tự.`)
+    if (!dataSources.has(String(item.dataSource))) errors.push(`Nguồn dữ liệu của nút liên hệ số ${position} không hợp lệ.`)
+    if (!actionTypes.has(String(item.actionType))) errors.push(`Hành động của nút liên hệ số ${position} không hợp lệ.`)
+    if (item.url && !String(item.url).startsWith('/') && !/^https?:\/\//i.test(String(item.url)) && !/^tel:/i.test(String(item.url))) errors.push(`URL của nút liên hệ số ${position} không hợp lệ.`)
+    if (!(item.iconMediaId === null || item.iconMediaId === undefined || typeof item.iconMediaId === 'string')) errors.push(`Icon của nút liên hệ số ${position} không hợp lệ.`)
+    if (item.target !== '_self' && item.target !== '_blank') errors.push(`Cách mở liên kết số ${position} không hợp lệ.`)
+  })
   return errors
 }
 
@@ -103,11 +133,29 @@ function sanitizeHomeConfig(value: Record<string, unknown>) {
   return { ...value, videoItems }
 }
 
+function sanitizeFloatingContact(value: Record<string, unknown>) {
+  const items = (value.items as FloatingContactItem[]).map((item, index) => ({
+    id: item.id.trim(),
+    label: item.label.trim(),
+    dataSource: item.dataSource,
+    actionType: item.actionType,
+    url: item.url?.trim() || '',
+    iconMediaId: item.iconMediaId || null,
+    iconUrl: item.iconUrl || null,
+    target: item.target,
+    badge: item.badge?.trim().slice(0, 4) || '',
+    isEnabled: item.isEnabled !== false,
+    sortOrder: index,
+  }))
+  return { ...value, items }
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ key: string }> }) {
   const auth = await requireAdminSession(request)
   if (auth.response) return auth.response
   const group = decodeURIComponent((await params).key)
   if (!(group in settingGroupMap)) return Response.json({ success: false, error: 'Nhóm cài đặt không hợp lệ' }, { status: 404 })
+  if (group === 'floating-contact.config') await ensureFloatingContactSeed()
   const fallback = getDefaultSetting(group)
   const stored = await getSettingsByGroup(group, fallback)
   const data = stored && fallback && typeof stored === 'object' && typeof fallback === 'object' && !Array.isArray(stored) && !Array.isArray(fallback)
@@ -126,7 +174,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!value || typeof value !== 'object' || Array.isArray(value)) return Response.json({ success: false, error: 'Dữ liệu cài đặt không hợp lệ' }, { status: 400 })
   const errors = validate(group, value)
   if (errors.length) return Response.json({ success: false, error: errors[0], details: errors }, { status: 400 })
-  const sanitizedValue = group === 'home.config' ? sanitizeHomeConfig(value) : value
+  const sanitizedValue = group === 'home.config'
+    ? sanitizeHomeConfig(value)
+    : group === 'floating-contact.config'
+      ? sanitizeFloatingContact(value)
+      : value
   await upsertSetting(group, 'main', sanitizedValue, { label: group, isPublic: group !== 'integrations.tracking' })
   revalidatePath('/')
   revalidatePath('/san-pham')
