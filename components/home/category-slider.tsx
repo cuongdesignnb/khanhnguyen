@@ -229,6 +229,7 @@ export default function CategorySlider({
                 <div key={category.id} className={styles.card}>
                   <Link
                     href={`/${category.slug}`}
+                    aria-label={`Xem danh mục ${category.name}`}
                     className="group flex h-28 flex-col items-center justify-center gap-1.5 border-r border-white/10 px-2 text-center transition-colors hover:bg-white/[0.04] hover:outline hover:outline-1 hover:outline-inset hover:outline-[color:var(--gold)] focus-visible:relative focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[color:var(--gold)] sm:h-32 sm:px-3"
                   >
                     <Icon

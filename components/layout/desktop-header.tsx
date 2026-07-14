@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import clsx from 'clsx'
@@ -34,15 +34,16 @@ interface DesktopHeaderProps {
   contactConfig?: HeaderContact
 }
 
+const subscribeToHydration = () => () => undefined
+
 export default function DesktopHeader({ siteConfig, navigation, onMenuOpen, headerConfig, contactConfig = {} }: DesktopHeaderProps) {
   const [scrolled, setScrolled] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false)
   const config: PublicSiteConfig = siteConfig || staticSiteConfig
   const { wishlistCount, compareCount, cartCount } = useSalesContext()
   const { data: session } = authClient.useSession()
 
   useEffect(() => {
-    setMounted(true)
     const handleScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
@@ -162,18 +163,22 @@ export default function DesktopHeader({ siteConfig, navigation, onMenuOpen, head
 
           {/* ── Desktop Header ─────────────────────────────────────────── */}
           <div className="hidden lg:flex items-center gap-6 h-[72px]">
-            {/* Wordmark + Tagline */}
+            {/* Logo */}
             <Link
               href="/"
               aria-label="Trang chủ Khanh Nguyen"
-              className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
+              className="flex shrink-0 self-stretch items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
             >
-              {config.logoUrl ? <Image src={config.logoUrl} alt={config.name} width={190} height={54} className="h-11 w-auto object-contain" /> : <span className="block text-2xl font-black tracking-tight leading-tight">
-                <span className="text-[color:var(--gold)]">KHANH</span>
-                <span className="text-[color:var(--text)]"> NGUYEN</span>
-              </span>}
-              <span className="block text-xs text-[color:var(--muted)] mt-0.5">
-                {config.tagline}
+              <span className="flex flex-col justify-center">
+                {config.logoUrl ? <Image src={config.logoUrl} alt={config.name} width={190} height={54} className="h-11 w-auto object-contain" /> : <span className="block text-2xl font-black tracking-tight leading-tight">
+                  <span className="text-[color:var(--gold)]">KHANH</span>
+                  <span className="text-[color:var(--text)]"> NGUYEN</span>
+                </span>}
+                {headerConfig?.showTagline !== false && config.tagline && (
+                  <span className="mt-0.5 block text-xs text-[color:var(--muted)]">
+                    {config.tagline}
+                  </span>
+                )}
               </span>
             </Link>
 
