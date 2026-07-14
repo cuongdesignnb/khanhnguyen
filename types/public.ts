@@ -31,6 +31,21 @@ export interface PublicCategory {
   bannerImage?: string
 }
 
+export interface PublicCategorySliderSettings {
+  enabled: boolean
+  sliderEnabled: boolean
+  autoplay: boolean
+  intervalMs: number
+  pauseOnHover: boolean
+  showArrows: boolean
+  loop: boolean
+  desktopItems: number
+  laptopItems: number
+  tabletItems: number
+  mobileItems: number
+  maxItems: number
+}
+
 export interface PublicBrand {
   id: string
   name: string
@@ -256,6 +271,7 @@ export interface PublicHomeData {
   mobileNavigation: PublicNavigationItem[]
   footerGroups: { title: string; links: { label: string; href: string }[] }[]
   categories: PublicCategory[]
+  categorySliderSettings: PublicCategorySliderSettings
   featuredProducts: PublicProductCard[]
   productCategorySections: PublicProductCategorySection[]
   heroBanners: PublicBanner[]

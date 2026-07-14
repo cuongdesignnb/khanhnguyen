@@ -5,9 +5,8 @@ import DesktopHeader from '@/components/layout/desktop-header'
 import MobileMenuDrawer from '@/components/layout/mobile-menu-drawer'
 import MobileDock from '@/components/layout/mobile-dock'
 import Hero from '@/components/home/hero'
-import CategoryGrid from '@/components/home/category-grid'
+import CategorySlider from '@/components/home/category-slider'
 import FeaturedProducts from '@/components/home/featured-products'
-import PromoBanner from '@/components/home/promo-banner'
 import CategoryProductSections from '@/components/home/category-product-sections'
 import BrandSlider from '@/components/home/brand-slider'
 import WhyUs from '@/components/home/why-us'
@@ -48,9 +47,8 @@ export default function HomePageClient({ data, headerConfig, contactConfig, prod
       <ProductCardConfigProvider settings={productCardConfig}>
         <main className="pb-24 lg:pb-0">
           <Hero slides={data.heroBanners} settings={data.heroSettings} siteConfig={data.siteConfig} />
-          <CategoryGrid categories={data.categories} />
+          <CategorySlider categories={data.categories} settings={data.categorySliderSettings} />
           <FeaturedProducts products={data.featuredProducts} />
-          <PromoBanner />
           <CategoryProductSections sections={data.productCategorySections} />
           <BrandSlider brands={data.brands} settings={data.brandSliderSettings} />
           <WhyUs />

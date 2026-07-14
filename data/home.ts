@@ -344,17 +344,3 @@ export const footerGroups: FooterGroup[] = [
     ],
   },
 ]
-
-// ─── Promo Benefits ──────────────────────────────────────────────────────────
-
-export type PromoBenefit = {
-  icon: string
-  title: string
-  description: string
-}
-
-export const promoBenefits: PromoBenefit[] = [
-  { icon: 'HandCoins', title: 'Hỗ trợ trả góp', description: 'Lãi suất chỉ từ 0.6%/tháng' },
-  { icon: 'BadgePercent', title: 'Giảm giá lên đến', description: '15% cho xe chọn lọc' },
-  { icon: 'ShieldCheck', title: 'Bảo hành lên đến', description: '12 tháng hoặc 2000 giờ' },
-]

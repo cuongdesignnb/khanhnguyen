@@ -282,6 +282,20 @@ const productKeys = [
   "categoryProductSectionsEnabled",
   "categoryProductLimit",
 ];
+const categorySliderKeys = [
+  "categoriesEnabled",
+  "categorySliderEnabled",
+  "categorySliderAutoplay",
+  "categorySliderIntervalMs",
+  "categorySliderPauseOnHover",
+  "categorySliderShowArrows",
+  "categorySliderLoop",
+  "categorySliderDesktopItems",
+  "categorySliderLaptopItems",
+  "categorySliderTabletItems",
+  "categorySliderMobileItems",
+  "categorySliderMaxItems",
+];
 const videoKeys = [
   "videoSectionEnabled",
   "videoSectionEyebrow",
@@ -321,6 +335,7 @@ function HomeSettingsGroups({
     ...heroContentKeys,
     ...heroSliderKeys,
     ...productKeys,
+    ...categorySliderKeys,
     ...videoKeys,
     ...brandSliderKeys,
     "heroImageId",
@@ -396,6 +411,18 @@ function HomeSettingsGroups({
         />
       </SettingsGroup>
       <SettingsGroup
+        title="Slider danh mục sản phẩm"
+        description="Nội dung, icon, thứ tự và trạng thái hiển thị được lấy từ Quản lý danh mục sản phẩm."
+      >
+        {renderFields(categorySliderKeys)}
+        <Link
+          href="/admin/categories"
+          className="mt-5 inline-flex rounded-xl border border-[color:var(--gold)]/35 px-4 py-2 text-sm font-bold text-[color:var(--gold)]"
+        >
+          Quản lý danh mục
+        </Link>
+      </SettingsGroup>
+      <SettingsGroup
         title="Sản phẩm Trang chủ"
         description="Cấu hình sản phẩm nổi bật và các section sản phẩm theo danh mục."
       >
@@ -422,7 +449,7 @@ function HomeSettingsGroups({
       {remainingKeys.length > 0 && (
         <SettingsGroup
           title="Các section còn lại"
-          description="Danh mục, thống kê, dịch vụ, đánh giá và tin tức trên Trang chủ."
+          description="Thống kê, dịch vụ, đánh giá và tin tức trên Trang chủ."
         >
           {renderFields(remainingKeys)}
         </SettingsGroup>

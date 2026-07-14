@@ -35,6 +35,7 @@ import {
   PublicTestimonial,
   PublicBanner,
   PublicHeroSettings,
+  PublicCategorySliderSettings,
   PublicNavigationItem,
   ProductListParams,
   ProductListResult,
@@ -66,6 +67,18 @@ type HomeConfigRuntime = {
   heroSliderShowDots?: unknown
   heroSliderMaxItems?: unknown
   heroSliderOverlayOpacity?: unknown
+  categoriesEnabled?: unknown
+  categorySliderEnabled?: unknown
+  categorySliderAutoplay?: unknown
+  categorySliderIntervalMs?: unknown
+  categorySliderPauseOnHover?: unknown
+  categorySliderShowArrows?: unknown
+  categorySliderLoop?: unknown
+  categorySliderDesktopItems?: unknown
+  categorySliderLaptopItems?: unknown
+  categorySliderTabletItems?: unknown
+  categorySliderMobileItems?: unknown
+  categorySliderMaxItems?: unknown
   brandsEnabled?: unknown
   brandSectionEyebrow?: unknown
   brandSectionTitle?: unknown
@@ -412,15 +425,6 @@ export async function getVisibleCategories(): Promise<PublicCategory[]> {
       include: { bannerImage: true },
       orderBy: { sortOrder: 'asc' },
     })
-    if (!dbCategories || dbCategories.length === 0) {
-      return homeData.categories.map((c) => ({
-        id: c.id,
-        name: c.label,
-        slug: c.href.replace('/', ''),
-        subtitle: c.subtitle,
-        icon: c.icon,
-      }))
-    }
     return dbCategories.map(mapCategoryToPublicCategory)
   } catch (error) {
     logPublicDataFallback('getVisibleCategories', error)
@@ -670,6 +674,20 @@ export async function getHomeData() {
     mobileItems: integerSetting(homeConfig.brandSliderMobileItems, 2, 1, 3),
     maxItems: integerSetting(homeConfig.brandSliderMaxItems, 20, 1, 50),
   }
+  const categorySliderSettings: PublicCategorySliderSettings = {
+    enabled: homeConfig.categoriesEnabled !== false,
+    sliderEnabled: homeConfig.categorySliderEnabled !== false,
+    autoplay: homeConfig.categorySliderAutoplay !== false,
+    intervalMs: integerSetting(homeConfig.categorySliderIntervalMs, 3500, 2000, 15000),
+    pauseOnHover: homeConfig.categorySliderPauseOnHover !== false,
+    showArrows: homeConfig.categorySliderShowArrows !== false,
+    loop: homeConfig.categorySliderLoop !== false,
+    desktopItems: integerSetting(homeConfig.categorySliderDesktopItems, 8, 4, 10),
+    laptopItems: integerSetting(homeConfig.categorySliderLaptopItems, 6, 3, 8),
+    tabletItems: integerSetting(homeConfig.categorySliderTabletItems, 4, 2, 6),
+    mobileItems: integerSetting(homeConfig.categorySliderMobileItems, 2, 1, 3),
+    maxItems: integerSetting(homeConfig.categorySliderMaxItems, 20, 1, 50),
+  }
 
   const [
     siteConfig,
@@ -688,7 +706,7 @@ export async function getHomeData() {
     getSiteSettings(),
     getPublicMenus(),
     getPublicMobileMenus(),
-    getVisibleCategories(),
+    categorySliderSettings.enabled ? getVisibleCategories() : Promise.resolve([]),
     featuredProductsEnabled ? getFeaturedProducts(featuredProductsLimit) : Promise.resolve([]),
     categoryProductSectionsEnabled ? getHomeProductCategorySections(categoryProductLimit) : Promise.resolve([]),
     getVisibleServices(),
@@ -707,7 +725,8 @@ export async function getHomeData() {
     footerGroups: footerMenu.items.map((column) => ({
       title: column.label, links: column.children.length ? column.children.map((link) => ({ label: link.label, href: link.url })) : [{ label: column.label, href: column.url }],
     })),
-    categories,
+    categories: categories.slice(0, categorySliderSettings.maxItems),
+    categorySliderSettings,
     featuredProducts,
     productCategorySections,
     services,

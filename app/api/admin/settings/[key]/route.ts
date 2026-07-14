@@ -37,10 +37,19 @@ function validate(group: string, value: Record<string, unknown>) {
   if ('brandSliderTabletItems' in value && !isIntegerInRange(value.brandSliderTabletItems, 2, 6)) errors.push('Số logo tablet phải từ 2 đến 6.')
   if ('brandSliderMobileItems' in value && !isIntegerInRange(value.brandSliderMobileItems, 1, 3)) errors.push('Số logo mobile phải từ 1 đến 3.')
   if ('brandSliderMaxItems' in value && !isIntegerInRange(value.brandSliderMaxItems, 1, 50)) errors.push('Số thương hiệu tối đa phải từ 1 đến 50.')
+  if ('categorySliderIntervalMs' in value && !isIntegerInRange(value.categorySliderIntervalMs, 2000, 15000)) errors.push('Chu kỳ Slider danh mục phải từ 2000 đến 15000 ms.')
+  if ('categorySliderDesktopItems' in value && !isIntegerInRange(value.categorySliderDesktopItems, 4, 10)) errors.push('Số danh mục desktop phải từ 4 đến 10.')
+  if ('categorySliderLaptopItems' in value && !isIntegerInRange(value.categorySliderLaptopItems, 3, 8)) errors.push('Số danh mục laptop phải từ 3 đến 8.')
+  if ('categorySliderTabletItems' in value && !isIntegerInRange(value.categorySliderTabletItems, 2, 6)) errors.push('Số danh mục tablet phải từ 2 đến 6.')
+  if ('categorySliderMobileItems' in value && !isIntegerInRange(value.categorySliderMobileItems, 1, 3)) errors.push('Số danh mục mobile phải từ 1 đến 3.')
+  if ('categorySliderMaxItems' in value && !isIntegerInRange(value.categorySliderMaxItems, 1, 50)) errors.push('Số danh mục tối đa phải từ 1 đến 50.')
   for (const key of ['heroOverlayContentEnabled', 'heroTextEnabled', 'heroCtaEnabled']) {
     if (key in value && typeof value[key] !== 'boolean') errors.push(`${key}: trạng thái phải là true hoặc false.`)
   }
   for (const key of ['brandsEnabled', 'brandSliderEnabled', 'brandSliderAutoplay', 'brandSliderPauseOnHover', 'brandSliderShowArrows', 'brandSliderLoop']) {
+    if (key in value && typeof value[key] !== 'boolean') errors.push(`${key}: trạng thái phải là true hoặc false.`)
+  }
+  for (const key of ['categoriesEnabled', 'categorySliderEnabled', 'categorySliderAutoplay', 'categorySliderPauseOnHover', 'categorySliderShowArrows', 'categorySliderLoop']) {
     if (key in value && typeof value[key] !== 'boolean') errors.push(`${key}: trạng thái phải là true hoặc false.`)
   }
   if (group === 'home.config') errors.push(...validateHomeVideos(value.videoItems))
