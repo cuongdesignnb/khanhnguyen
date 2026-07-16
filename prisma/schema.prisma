@@ -251,6 +251,7 @@ model AiSetting {
   defaultTone           String?
   defaultLanguage       String   @default("vi")
   defaultWordCount      Int      @default(1500)
+  maxOutputTokens       Int      @default(1024)
   maxBulkItems          Int      @default(10)
   generateFeaturedImage Boolean  @default(true)
   generateHeadingImages Boolean  @default(true)

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getAiSetting, openAiRequest } from './openai-client'
+import { getAiSetting, openAiResponsesRequest } from './openai-client'
 import {
   DEFAULT_ARTICLE_PROMPT,
   DEFAULT_SYSTEM_PROMPT,
@@ -42,11 +42,12 @@ export async function generateNewsArticle(input: {
     wordCount: input.wordCount || setting?.defaultWordCount || 1500,
     tone: input.tone || setting?.defaultTone || 'Chuyên gia tư vấn xe nâng, dễ hiểu, bán hàng nhẹ',
   })
-  const response = await openAiRequest<{ output_text?: string; output?: Array<{ content?: Array<{ text?: string }> }> }>('/responses', {
+  const response = await openAiResponsesRequest<{ output_text?: string; output?: Array<{ content?: Array<{ text?: string }> }> }>({
     model: input.textModel || setting?.textModel || 'gpt-5.4-mini',
     instructions: setting?.systemPrompt || DEFAULT_SYSTEM_PROMPT,
     input: prompt,
     text: { format: { type: 'json_object' } },
+    maxOutputTokens: setting?.maxOutputTokens,
   })
   let raw = (response.output_text || response.output?.flatMap((item) => item.content || []).map((item) => item.text || '').join('') || '').trim()
   if (!raw) throw new Error('OpenAI không trả về nội dung bài viết')
