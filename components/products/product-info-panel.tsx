@@ -1,7 +1,8 @@
 'use client'
 
 import { PublicProductDetail } from '@/types/public'
-import { Phone, MessageSquare, Heart, BarChart2, ShieldCheck, Scale, Sparkles, Activity, FileText } from 'lucide-react'
+import { getProductCategoryHref } from '@/lib/products/category-url'
+import { Phone, MessageSquare, FileText } from 'lucide-react'
 import Link from 'next/link'
 import clsx from 'clsx'
 import WishlistButton from '../sales/wishlist-button'
@@ -36,7 +37,7 @@ export default function ProductInfoPanel({ product }: ProductInfoPanelProps) {
       {/* Category + Brand + Badges */}
       <div className="flex flex-wrap items-center gap-2">
         <Link
-          href={`/${product.categorySlug}`}
+          href={getProductCategoryHref(product.categorySlug)}
           className="text-xs font-bold uppercase tracking-wider text-[color:var(--gold)] bg-[color:var(--gold)]/10 border border-[color:var(--gold)]/30 px-3 py-1 rounded"
         >
           {product.categoryName}

@@ -420,12 +420,39 @@ export async function getVisibleBrands(limit = 20): Promise<PublicBrand[]> {
 // 5. Categories
 export async function getVisibleCategories(): Promise<PublicCategory[]> {
   try {
-    const dbCategories = await prisma.category.findMany({
-      where: { isVisible: true, deletedAt: null },
-      include: { bannerImage: true },
-      orderBy: { sortOrder: 'asc' },
-    })
-    return dbCategories.map(mapCategoryToPublicCategory)
+    const [dbCategories, productCategories] = await Promise.all([
+      prisma.category.findMany({
+        where: { isVisible: true, deletedAt: null },
+        include: { bannerImage: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
+      prisma.product.findMany({
+        where: {
+          status: 'PUBLISHED',
+          deletedAt: null,
+          category: { isVisible: true, deletedAt: null },
+        },
+        select: { categoryId: true },
+        distinct: ['categoryId'],
+      }),
+    ])
+    const categoryById = new Map(dbCategories.map((category) => [category.id, category]))
+    const categoryIdsWithProducts = new Set<string>()
+
+    for (const productCategory of productCategories) {
+      let current = categoryById.get(productCategory.categoryId)
+      const visited = new Set<string>()
+
+      while (current && !visited.has(current.id)) {
+        visited.add(current.id)
+        categoryIdsWithProducts.add(current.id)
+        current = current.parentId ? categoryById.get(current.parentId) : undefined
+      }
+    }
+
+    return dbCategories
+      .filter((category) => categoryIdsWithProducts.has(category.id))
+      .map(mapCategoryToPublicCategory)
   } catch (error) {
     logPublicDataFallback('getVisibleCategories', error)
     return homeData.categories.map((c) => ({
@@ -436,6 +463,28 @@ export async function getVisibleCategories(): Promise<PublicCategory[]> {
       icon: c.icon,
     }))
   }
+}
+
+async function getVisibleCategoryTreeIds(categorySlug: string) {
+  const categories = await prisma.category.findMany({
+    where: { isVisible: true, deletedAt: null },
+    select: { id: true, parentId: true, slug: true },
+  })
+  const selected = categories.find((category) => category.slug === categorySlug)
+  if (!selected) return []
+
+  const ids = new Set([selected.id])
+  let foundDescendant = true
+  while (foundDescendant) {
+    foundDescendant = false
+    for (const category of categories) {
+      if (category.parentId && ids.has(category.parentId) && !ids.has(category.id)) {
+        ids.add(category.id)
+        foundDescendant = true
+      }
+    }
+  }
+  return [...ids]
 }
 
 // 6. Featured Products
@@ -767,6 +816,7 @@ export async function getProductList(params: ProductListParams): Promise<Product
     const where: Prisma.ProductWhereInput = {
       status: 'PUBLISHED',
       deletedAt: null,
+      category: { isVisible: true, deletedAt: null },
     }
 
     if (q) {
@@ -780,12 +830,7 @@ export async function getProductList(params: ProductListParams): Promise<Product
     }
 
     if (category) {
-      where.category = {
-        OR: [
-          { slug: category },
-          { parent: { slug: category } },
-        ],
-      }
+      where.categoryId = { in: await getVisibleCategoryTreeIds(category) }
     }
 
     if (brand) {
@@ -1155,15 +1200,11 @@ export async function getProductFilterOptions(categorySlug?: string) {
     const where: Prisma.ProductWhereInput = {
       status: 'PUBLISHED',
       deletedAt: null,
+      category: { isVisible: true, deletedAt: null },
     }
 
     if (categorySlug) {
-      where.category = {
-        OR: [
-          { slug: categorySlug },
-          { parent: { slug: categorySlug } },
-        ],
-      }
+      where.categoryId = { in: await getVisibleCategoryTreeIds(categorySlug) }
     }
 
     const products = await prisma.product.findMany({

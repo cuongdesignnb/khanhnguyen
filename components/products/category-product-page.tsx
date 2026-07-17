@@ -12,6 +12,7 @@ import ProductPagination from './product-pagination'
 import ProductListEmpty from './product-list-empty'
 import { ProductListResult, PublicCategory, PublicBrand, ProductListParams } from '@/types/public'
 import RichContent from '@/components/public/rich-content'
+import { getProductCategoryHref } from '@/lib/products/category-url'
 
 interface CategoryProductPageProps {
   category: PublicCategory | null
@@ -138,7 +139,7 @@ export default function CategoryProductPage({
                 onChange={(p) => {
                   // If category changed, navigate to that page instead
                   if (p.category !== undefined && p.category !== categorySlug) {
-                    router.push(p.category ? `/${p.category}` : '/san-pham')
+                    router.push(getProductCategoryHref(p.category))
                   } else {
                     updateFilters(p)
                   }
@@ -284,7 +285,7 @@ export default function CategoryProductPage({
               params={{ ...currentParams, category: categorySlug }}
               onChange={(p) => {
                 if (p.category !== undefined && p.category !== categorySlug) {
-                  router.push(p.category ? `/${p.category}` : '/san-pham')
+                  router.push(getProductCategoryHref(p.category))
                 } else {
                   updateFilters(p)
                 }

@@ -5,6 +5,7 @@ import type {
   ResolvedFloatingContactConfig,
   ResolvedFloatingContactItem,
 } from "@/types/floating-contact";
+import { isBrowserHandledHref } from "@/lib/urls/normalize-configured-href";
 
 function ContactIcon({ item }: { item: ResolvedFloatingContactItem }) {
   return (
@@ -42,9 +43,9 @@ function ContactLink({
       <span className="max-w-full truncate">{item.label}</span>
     </>
   );
-  const external = item.target === "_blank" || /^https?:\/\//.test(item.href);
+  const external = item.target === "_blank" || isBrowserHandledHref(item.href);
 
-  if (external || item.href.startsWith("tel:")) {
+  if (external) {
     return (
       <a
         href={item.href}

@@ -6,6 +6,7 @@ import JsonLd from '@/components/seo/json-ld'
 import { buildProductSchema, buildBreadcrumbSchema } from '@/lib/seo/schemas'
 import { buildProductMetadata } from '@/lib/seo/metadata'
 import { getSeoConfig } from '@/lib/seo/config'
+import { getProductCategoryHref } from '@/lib/products/category-url'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -37,7 +38,7 @@ export default async function Page({ params }: PageProps) {
   const breadcrumbs = [
     { label: 'Trang chủ', url: origin },
     { label: 'Sản phẩm', url: `${origin}/san-pham` },
-    { label: product.categoryName, url: `${origin}/${product.categorySlug}` },
+    { label: product.categoryName, url: `${origin}${getProductCategoryHref(product.categorySlug)}` },
     { label: product.name, url: `${origin}/san-pham/${product.slug}` },
   ]
 

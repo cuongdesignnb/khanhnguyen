@@ -7,6 +7,7 @@ import { normalizeVideoUrl } from '@/lib/videos/normalize-video-url'
 import type { HomeVideoSettingItem } from '@/types/home-video'
 import { ensureFloatingContactSeed } from '@/lib/floating-contact'
 import type { FloatingContactItem } from '@/types/floating-contact'
+import { isValidConfiguredHref, normalizeConfiguredHref } from '@/lib/urls/normalize-configured-href'
 
 function isAdmin(session: unknown) {
   return (session as { user?: { role?: string } })?.user?.role === 'ADMIN'
@@ -84,7 +85,7 @@ function validateFloatingContact(value: Record<string, unknown>) {
     if (typeof item.label !== 'string' || !item.label.trim() || item.label.length > 40) errors.push(`Nhãn nút liên hệ số ${position} phải từ 1 đến 40 ký tự.`)
     if (!dataSources.has(String(item.dataSource))) errors.push(`Nguồn dữ liệu của nút liên hệ số ${position} không hợp lệ.`)
     if (!actionTypes.has(String(item.actionType))) errors.push(`Hành động của nút liên hệ số ${position} không hợp lệ.`)
-    if (item.url && !String(item.url).startsWith('/') && !/^https?:\/\//i.test(String(item.url)) && !/^tel:/i.test(String(item.url))) errors.push(`URL của nút liên hệ số ${position} không hợp lệ.`)
+    if (!isValidConfiguredHref(item.url)) errors.push(`URL của nút liên hệ số ${position} không hợp lệ.`)
     if (!(item.iconMediaId === null || item.iconMediaId === undefined || typeof item.iconMediaId === 'string')) errors.push(`Icon của nút liên hệ số ${position} không hợp lệ.`)
     if (item.target !== '_self' && item.target !== '_blank') errors.push(`Cách mở liên kết số ${position} không hợp lệ.`)
   })
@@ -139,7 +140,7 @@ function sanitizeFloatingContact(value: Record<string, unknown>) {
     label: item.label.trim(),
     dataSource: item.dataSource,
     actionType: item.actionType,
-    url: item.url?.trim() || '',
+    url: normalizeConfiguredHref(item.url),
     iconMediaId: item.iconMediaId || null,
     iconUrl: item.iconUrl || null,
     target: item.target,

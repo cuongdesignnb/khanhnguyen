@@ -17,6 +17,7 @@ import type {
   FloatingContactDataSource,
   FloatingContactItem,
 } from "@/types/floating-contact";
+import { normalizeConfiguredHref } from "@/lib/urls/normalize-configured-href";
 
 const inputClass =
   "min-w-0 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--gold)]/60";
@@ -185,6 +186,11 @@ export default function FloatingContactItemsEditor({
                     value={item.url || ""}
                     onChange={(event) =>
                       update(item.id, { url: event.target.value })
+                    }
+                    onBlur={(event) =>
+                      update(item.id, {
+                        url: normalizeConfiguredHref(event.target.value),
+                      })
                     }
                   />
                 </label>

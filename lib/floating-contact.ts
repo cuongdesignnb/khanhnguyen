@@ -10,6 +10,7 @@ import {
   floatingContactSeedBaseUrl,
   floatingContactSeedIcons,
 } from "@/data/floating-contact-icons";
+import { normalizeConfiguredHref } from "@/lib/urls/normalize-configured-href";
 
 type ContactSettings = {
   hotline?: string;
@@ -33,13 +34,13 @@ function resolveItemHref(
   contact: ContactSettings,
   social: SocialSettings,
 ) {
-  const explicitUrl = item.url?.trim() || "";
+  const explicitUrl = normalizeConfiguredHref(item.url);
   const hotline = cleanPhone(contact.hotline);
   const zaloPhone = cleanPhone(contact.zaloPhone || contact.hotline).replace(
     /^\+/,
     "",
   );
-  const sourceUrl = {
+  const sourceUrl = normalizeConfiguredHref({
     hotline: hotline ? `tel:${hotline}` : "",
     zalo: social.zalo || (zaloPhone ? `https://zalo.me/${zaloPhone}` : ""),
     messenger: social.messenger || social.facebook || "",
@@ -47,7 +48,7 @@ function resolveItemHref(
     youtube: social.youtube || "",
     tiktok: social.tiktok || "",
     custom: "",
-  }[item.dataSource];
+  }[item.dataSource]);
 
   if (item.actionType === "phone") {
     const number = cleanPhone(explicitUrl || contact.hotline);

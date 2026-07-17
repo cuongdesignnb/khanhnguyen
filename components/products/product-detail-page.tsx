@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShieldCheck, Calendar, Check, Truck, Headset, PhoneCall, Clock, Award, Star, ArrowRight, MessageSquare } from 'lucide-react'
+import { ShieldCheck, Check, Truck, Headset, PhoneCall, Clock, Award, Star, MessageSquare } from 'lucide-react'
 import ProductGallery from './product-gallery'
 import ProductInfoPanel from './product-info-panel'
 import ProductSpecTable from './product-spec-table'
@@ -11,6 +11,7 @@ import ProductQuoteForm from './product-quote-form'
 import RelatedProducts from './related-products'
 import ProductReviewsSection from './product-reviews-section'
 import { PublicProductDetail, PublicProductCard } from '@/types/public'
+import { getProductCategoryHref } from '@/lib/products/category-url'
 import RichContent from '@/components/public/rich-content'
 import { useSalesContext } from '@/components/sales/sales-provider'
 import AddToCartButton from '../sales/add-to-cart-button'
@@ -71,7 +72,7 @@ export default function ProductDetailPage({ product, relatedProducts }: ProductD
               Sản phẩm
             </Link>
             <span>/</span>
-            <Link href={`/${product.categorySlug}`} className="hover:text-[color:var(--gold)] transition-colors">
+            <Link href={getProductCategoryHref(product.categorySlug)} className="hover:text-[color:var(--gold)] transition-colors">
               {product.categoryName}
             </Link>
             <span>/</span>

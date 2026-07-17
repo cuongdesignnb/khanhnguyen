@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/ui/product-card'
 import { PublicProductCategorySection } from '@/types/public'
+import { getProductCategoryHref } from '@/lib/products/category-url'
 
 interface CategoryProductSectionsProps {
   sections?: PublicProductCategorySection[]
@@ -41,7 +42,7 @@ export default function CategoryProductSections({ sections = [] }: CategoryProdu
               </div>
 
               <Link
-                href={`/${section.category.slug}`}
+                href={getProductCategoryHref(section.category.slug)}
                 className="inline-flex items-center gap-2 text-sm font-bold text-[color:var(--gold)] transition-colors hover:text-[color:var(--gold-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--gold)]"
               >
                 Xem tất cả

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import { requireMenuAdmin } from '@/lib/menu-admin'
+import { getProductCategoryHref } from '@/lib/products/category-url'
 
 const pages = [
   ['Trang chủ','/'],['Sản phẩm','/san-pham'],['Xe nâng mới','/xe-nang-moi'],['Xe nâng điện','/xe-nang-dien'],
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
   ])
   const all = [
     ...pages,
-    ...categories.map((x) => ({ label: x.name, url: `/san-pham?category=${x.slug}`, type: 'category' })),
+    ...categories.map((x) => ({ label: x.name, url: getProductCategoryHref(x.slug), type: 'category' })),
     ...products.map((x) => ({ label: x.name, url: `/san-pham/${x.slug}`, type: 'product' })),
     ...services.map((x) => ({ label: x.title, url: `/dich-vu/${x.slug}`, type: 'service' })),
     ...posts.map((x) => ({ label: x.title, url: `/tin-tuc/${x.slug}`, type: 'post' })),
