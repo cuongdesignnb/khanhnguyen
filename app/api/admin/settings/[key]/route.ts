@@ -183,6 +183,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   await upsertSetting(group, 'main', sanitizedValue, { label: group, isPublic: group !== 'integrations.tracking' })
   revalidatePath('/')
   revalidatePath('/san-pham')
+  if (group === 'product-detail.config') revalidatePath('/san-pham/[slug]', 'page')
   revalidatePath('/tin-tuc')
   revalidatePath('/sitemap.xml')
   revalidatePath('/robots.txt')

@@ -16,13 +16,19 @@ import RichContent from '@/components/public/rich-content'
 import { useSalesContext } from '@/components/sales/sales-provider'
 import AddToCartButton from '../sales/add-to-cart-button'
 import clsx from 'clsx'
+import type { ProductDetailWarrantySettings } from '@/types/product-detail-settings'
 
 interface ProductDetailPageProps {
   product: PublicProductDetail
   relatedProducts: PublicProductCard[]
+  warrantySettings: ProductDetailWarrantySettings
 }
 
-export default function ProductDetailPage({ product, relatedProducts }: ProductDetailPageProps) {
+export default function ProductDetailPage({
+  product,
+  relatedProducts,
+  warrantySettings,
+}: ProductDetailPageProps) {
   const { addRecentlyViewed } = useSalesContext()
   const [showMobileCta, setShowMobileCta] = useState(false)
 
@@ -185,28 +191,29 @@ export default function ProductDetailPage({ product, relatedProducts }: ProductD
             )}
 
             {/* Warranty & Support Policy */}
-            <section className="bg-[color:var(--surface-2)] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-5">
-              <h3 className="font-extrabold uppercase text-base sm:text-lg text-white tracking-wider pb-3 border-b border-white/5 relative">
-                CHÍNH SÁCH BẢO HÀNH & HỖ TRỢ
-                <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-[color:var(--gold)]" />
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex gap-3">
-                  <ShieldCheck size={20} className="text-[color:var(--gold)] shrink-0" />
-                  <div>
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wide">Bảo hành 6 – 12 tháng</h4>
-                    <p className="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed">
-                      {product.warrantyPolicy || 'Bảo hành từ 6 đến 12 tháng hoặc 1000 giờ hoạt động tùy điều kiện nào đến trước. Hỗ trợ kỹ thuật 24/7 qua hotline, Zalo.'}
-                    </p>
+            {warrantySettings.warrantySectionEnabled && (
+              <section className="bg-[color:var(--surface-2)] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-5">
+                <h3 className="font-extrabold uppercase text-base sm:text-lg text-white tracking-wider pb-3 border-b border-white/5 relative">
+                  {warrantySettings.warrantySectionTitle}
+                  <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-[color:var(--gold)]" />
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex gap-3">
+                    <ShieldCheck size={20} className="text-[color:var(--gold)] shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wide">{warrantySettings.warrantyPrimaryTitle}</h4>
+                      <p className="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed whitespace-pre-line">
+                        {warrantySettings.warrantyPrimaryDescription}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
                 <div className="flex gap-3">
                   <Clock size={20} className="text-[color:var(--gold)] shrink-0" />
                   <div>
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wide">Hỗ trợ kỹ thuật 24/7</h4>
-                    <p className="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed">
-                      Đội ngũ kỹ thuật chuyên nghiệp, giàu kinh nghiệm luôn sẵn sàng giải quyết mọi vấn đề phát sinh. Hỗ trợ khắc phục sự cố tận nơi trong thời gian ngắn nhất.
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wide">{warrantySettings.technicalSupportTitle}</h4>
+                    <p className="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed whitespace-pre-line">
+                      {warrantySettings.technicalSupportDescription}
                     </p>
                   </div>
                 </div>
@@ -214,9 +221,9 @@ export default function ProductDetailPage({ product, relatedProducts }: ProductD
                 <div className="flex gap-3">
                   <Award size={20} className="text-[color:var(--gold)] shrink-0" />
                   <div>
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wide">Cung cấp phụ tùng chính hãng</h4>
-                    <p className="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed">
-                      Kho phụ tùng dồi dào, đầy đủ linh kiện thay thế cho các hãng Toyota, Komatsu, Mitsubishi, TCM... Bảo trì định kỳ miễn phí trong thời gian bảo hành.
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wide">{warrantySettings.genuinePartsTitle}</h4>
+                    <p className="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed whitespace-pre-line">
+                      {warrantySettings.genuinePartsDescription}
                     </p>
                   </div>
                 </div>
@@ -224,14 +231,15 @@ export default function ProductDetailPage({ product, relatedProducts }: ProductD
                 <div className="flex gap-3">
                   <Star size={20} className="text-[color:var(--gold)] shrink-0" />
                   <div>
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wide">Hỗ trợ kiểm tra, bảo trì trọn đời</h4>
-                    <p className="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed">
-                      Sau thời gian bảo hành, Khanh Nguyên vẫn hỗ trợ kiểm tra xe nâng định kỳ và sửa chữa với chi phí ưu đãi nhất cho quý khách hàng.
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wide">{warrantySettings.lifetimeSupportTitle}</h4>
+                    <p className="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed whitespace-pre-line">
+                      {warrantySettings.lifetimeSupportDescription}
                     </p>
                   </div>
                 </div>
-              </div>
-            </section>
+                </div>
+              </section>
+            )}
 
             {/* Specifications Details */}
             <section className="bg-[color:var(--surface-2)] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-4">

@@ -6,7 +6,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 const heroSeeds = [
   {
     title: "GIẢI PHÁP XE NÂNG TOÀN DIỆN",
-    subtitle: "KHÁNH NGUYÊN FORKLIFT",
+    subtitle: "KHANH NGUYÊN FORKLIFT",
     image: "/images/seed/hero/industrial-yard.jpg",
     href: "/san-pham",
     buttonText: "Xem sản phẩm",

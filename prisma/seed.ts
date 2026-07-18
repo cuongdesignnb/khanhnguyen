@@ -699,7 +699,7 @@ async function main() {
 
   // 13. Seed Hero Banners once; never overwrite Banner edited by Admin.
   const heroSeeds = [
-    { title: 'GIẢI PHÁP XE NÂNG TOÀN DIỆN', subtitle: 'KHÁNH NGUYÊN FORKLIFT', image: '/images/seed/hero/industrial-yard.jpg', href: '/san-pham', buttonText: 'Xem sản phẩm' },
+    { title: 'GIẢI PHÁP XE NÂNG TOÀN DIỆN', subtitle: 'KHANH NGUYÊN FORKLIFT', image: '/images/seed/hero/industrial-yard.jpg', href: '/san-pham', buttonText: 'Xem sản phẩm' },
     { title: 'XE NÂNG NHẬT BÃI TUYỂN CHỌN', subtitle: 'BỀN BỈ · HIỆU QUẢ · TẬN TÂM', image: '/images/seed/hero/forklift-warehouse.jpg', href: '/lien-he', buttonText: 'Nhận tư vấn' },
     { title: 'DỊCH VỤ KỸ THUẬT CHUYÊN NGHIỆP', subtitle: 'ĐỒNG HÀNH CÙNG DOANH NGHIỆP', image: '/images/seed/hero/industrial-yard.jpg', href: '/dich-vu', buttonText: 'Xem dịch vụ' },
   ]

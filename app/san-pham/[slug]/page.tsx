@@ -7,6 +7,8 @@ import { buildProductSchema, buildBreadcrumbSchema } from '@/lib/seo/schemas'
 import { buildProductMetadata } from '@/lib/seo/metadata'
 import { getSeoConfig } from '@/lib/seo/config'
 import { getProductCategoryHref } from '@/lib/products/category-url'
+import { getProductDetailSettings } from '@/lib/site-config/settings'
+import { resolveProductDetailWarrantySettings } from '@/lib/product-detail-settings'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -31,8 +33,12 @@ export default async function Page({ params }: PageProps) {
     notFound()
   }
 
-  const relatedProducts = await getRelatedProducts(product.id, product.categoryId, 6)
-  const seoConfig = await getSeoConfig()
+  const [relatedProducts, seoConfig, productDetailSettings] = await Promise.all([
+    getRelatedProducts(product.id, product.categoryId, 6),
+    getSeoConfig(),
+    getProductDetailSettings(),
+  ])
+  const warrantySettings = resolveProductDetailWarrantySettings(productDetailSettings)
   const origin = seoConfig.siteUrl
   
   const breadcrumbs = [
@@ -47,7 +53,11 @@ export default async function Page({ params }: PageProps) {
       {seoConfig.schemas.productEnabled && <JsonLd data={buildProductSchema(product, seoConfig)} />}
       {seoConfig.schemas.breadcrumbEnabled && <JsonLd data={buildBreadcrumbSchema(breadcrumbs)} />}
       <PublicPageShell>
-        <ProductDetailPage product={product} relatedProducts={relatedProducts} />
+        <ProductDetailPage
+          product={product}
+          relatedProducts={relatedProducts}
+          warrantySettings={warrantySettings}
+        />
       </PublicPageShell>
     </>
   )

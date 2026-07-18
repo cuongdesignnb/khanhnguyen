@@ -174,7 +174,7 @@ async function getHomeVideoSection(homeConfig: HomeConfigRuntime): Promise<Publi
     return {
       enabled: true,
       eyebrow: textValue(homeConfig.videoSectionEyebrow, 'VIDEO THỰC TẾ'),
-      title: textValue(homeConfig.videoSectionTitle, 'VIDEO XE NÂNG KHÁNH NGUYÊN'),
+      title: textValue(homeConfig.videoSectionTitle, 'VIDEO XE NÂNG KHANH NGUYÊN'),
       description: textValue(homeConfig.videoSectionDescription),
       ctaLabel: textValue(homeConfig.videoSectionCtaLabel, 'Xem thêm video'),
       ctaUrl: textValue(homeConfig.videoSectionCtaUrl),
