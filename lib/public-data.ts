@@ -333,7 +333,8 @@ export async function getSiteSettings(): Promise<PublicSiteConfig> {
       name: general.siteName, tagline: general.slogan, slogan: general.description,
       hotline: contact.hotline, secondaryHotline: contact.hotlineSecondary, email: contact.email,
       showroom: contact.showroomAddress || contact.address, branch: contact.warehouseAddress,
-      workingHours: contact.workingHours, facebookLink: social.facebook, zaloLink: social.zalo,
+      workingHours: contact.workingHours, googleMapUrl: contact.googleMapUrl,
+      googleMapEmbed: contact.googleMapEmbed, facebookLink: social.facebook, zaloLink: social.zalo,
       youtubeLink: social.youtube, tiktokLink: social.tiktok, logoUrl: logo?.url,
     }
   } catch (error) {

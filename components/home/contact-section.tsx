@@ -28,9 +28,33 @@ const INPUT_CLASSES =
 
 const INPUT_ERROR_CLASSES = 'border-[color:var(--danger)]';
 
+function getGoogleMapSource(value?: string) {
+  const configuredValue = value?.trim();
+  if (!configuredValue) return '';
+
+  const iframeSource = configuredValue.match(/<iframe[^>]+src=["']([^"']+)["']/i)?.[1];
+  const source = (iframeSource || configuredValue).replace(/&amp;/g, '&');
+
+  try {
+    const url = new URL(source);
+    const isGoogleMapsHost =
+      /(^|\.)google\.[a-z.]+$/i.test(url.hostname) ||
+      url.hostname === 'maps.app.goo.gl' ||
+      url.hostname === 'goo.gl';
+
+    return ['http:', 'https:'].includes(url.protocol) && isGoogleMapsHost
+      ? url.toString()
+      : '';
+  } catch {
+    return '';
+  }
+}
+
 export function ContactSection({ siteConfig }: ContactSectionProps) {
   const formId = useId();
-  const config = siteConfig || staticSiteConfig
+  const config: PublicSiteConfig = siteConfig || staticSiteConfig
+  const googleMapSource =
+    getGoogleMapSource(config.googleMapEmbed) || getGoogleMapSource(config.googleMapUrl)
   
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -158,13 +182,25 @@ export function ContactSection({ siteConfig }: ContactSectionProps) {
               />
             </div>
 
-            {/* Map placeholder */}
-            <div className="bg-[color:var(--surface-2)] rounded-xl h-48 lg:h-56 mt-6 flex flex-col items-center justify-center border border-white/10">
-              <MapPin size={32} className="text-[color:var(--gold)]" />
-              <p className="text-sm text-[color:var(--muted)] mt-2 font-semibold tracking-wide">
-                KHANH NGUYEN FORKLIFT
-              </p>
-            </div>
+            {googleMapSource ? (
+              <div className="mt-6 h-48 overflow-hidden rounded-xl border border-white/10 bg-[color:var(--surface-2)] lg:h-56">
+                <iframe
+                  src={googleMapSource}
+                  title={`Google Map - ${config.name}`}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <div className="mt-6 flex h-48 flex-col items-center justify-center rounded-xl border border-white/10 bg-[color:var(--surface-2)] lg:h-56">
+                <MapPin size={32} className="text-[color:var(--gold)]" />
+                <p className="mt-2 text-sm font-semibold tracking-wide text-[color:var(--muted)]">
+                  KHANH NGUYEN FORKLIFT
+                </p>
+              </div>
+            )}
           </div>
 
           {/* ─── Right Column: Form ─── */}

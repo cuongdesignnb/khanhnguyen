@@ -67,9 +67,11 @@ export default function ServiceDetailPage({ service }: ServiceDetailPageProps) {
                         {idx + 1}
                       </span>
                       <h4 className="font-bold text-white text-sm">{step.title}</h4>
-                      <p className="text-xs text-[color:var(--muted)] mt-1 leading-relaxed">
-                        {step.description}
-                      </p>
+                      {step.description && (
+                        <p className="text-xs text-[color:var(--muted)] mt-1 leading-relaxed">
+                          {step.description}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>

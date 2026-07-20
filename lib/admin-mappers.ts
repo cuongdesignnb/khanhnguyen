@@ -12,6 +12,28 @@ import {
 } from '@/types/admin'
 import type { MediaFileDto } from '@/types/media'
 
+function richTextToPlainText(value: unknown): string {
+  const html = String(value ?? '').trim()
+  if (!html) return ''
+
+  if (typeof DOMParser !== 'undefined') {
+    const document = new DOMParser().parseFromString(html, 'text/html')
+    document.querySelectorAll('script, style, template').forEach((element) => element.remove())
+    return (document.body.textContent || '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim()
+  }
+
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function mapProductToAdminItem(p: any): ProductAdminItem {
   return {
     id: p.id,
@@ -184,6 +206,6 @@ export function mapServiceToItem(s: any): ServiceItem {
     status: s.status === 'PUBLISHED' ? 'published' : 'draft',
     faqCount: s.faqs?.length || 0,
     updatedAt: s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('vi-VN') : '',
-    description: s.description || '',
+    description: richTextToPlainText(s.description),
   }
 }

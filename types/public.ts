@@ -8,6 +8,8 @@ export interface PublicSiteConfig {
   showroom: string
   branch: string
   workingHours: string
+  googleMapUrl?: string
+  googleMapEmbed?: string
   facebookLink?: string
   zaloLink?: string
   youtubeLink?: string

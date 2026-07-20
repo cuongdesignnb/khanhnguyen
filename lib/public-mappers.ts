@@ -158,6 +158,29 @@ function parseArray<T>(value: unknown): T[] {
   }
 }
 
+function normalizeServiceProcess(value: unknown): ServiceProcessLike[] {
+  return parseArray<unknown>(value).flatMap((step, index) => {
+    if (typeof step === 'string') {
+      const title = step.trim()
+      return title ? [{ title, description: '' }] : []
+    }
+
+    if (!step || typeof step !== 'object' || Array.isArray(step)) return []
+
+    const record = step as Record<string, unknown>
+    const text = (key: string) => typeof record[key] === 'string' ? record[key].trim() : ''
+    const title = text('title') || text('name') || text('label')
+    const description = text('description') || text('text')
+
+    if (!title && !description) return []
+
+    return [{
+      title: title || `Bước ${index + 1}`,
+      description,
+    }]
+  })
+}
+
 // Helper to format Decimal to string or null
 const formatPrice = (price: Decimal | number | string | null | undefined): string | null => {
   if (price === null || price === undefined) return null
@@ -322,7 +345,7 @@ export function mapServiceToPublicService(s: ServiceLike): PublicService {
 
 export function mapServiceToServiceDetail(s: ServiceLike): PublicServiceDetail {
   const benefits = parseArray<string>(s.benefits)
-  const process = parseArray<ServiceProcessLike>(s.process)
+  const process = normalizeServiceProcess(s.process)
 
   const faqs = Array.isArray(s.faqs)
     ? s.faqs.map((f) => ({ question: f.question || '', answer: f.answer || '' }))
