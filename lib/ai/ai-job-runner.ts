@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slug'
 import { generateNewsArticle } from './news-generator'
 import { insertHeadingImages, tryGeneratePostImage } from './image-generator'
+import { addRelatedPostLinks } from './internal-linking'
 
 export async function runAiNewsJob(jobId: string) {
   const job = await prisma.aiGenerationJob.findUnique({
@@ -50,7 +51,11 @@ export async function runAiNewsJob(jobId: string) {
           if (result.warning) warnings.push(result.warning)
         }
       }
-      const content = insertHeadingImages(article.contentHtml, headingImages)
+      const content = insertHeadingImages(await addRelatedPostLinks({
+        contentHtml: article.contentHtml,
+        categoryId: job.postCategoryId,
+        focusKeywords: article.focusKeywords,
+      }), headingImages)
       const slug = await generateUniqueSlug(article.slug || article.title, async (candidate) =>
         Boolean(await prisma.post.findUnique({ where: { slug: candidate }, select: { id: true } })),
       )

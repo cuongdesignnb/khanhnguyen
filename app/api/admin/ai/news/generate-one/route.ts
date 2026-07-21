@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server'
 import { requireAdminSession } from '@/lib/admin-auth'
 import { OpenAiRequestError } from '@/lib/ai/openai-client'
-import { generateNewsArticle } from '@/lib/ai/news-generator'
+import { GeneratedNewsArticleError, generateNewsArticle } from '@/lib/ai/news-generator'
 import { insertHeadingImages, tryGeneratePostImage } from '@/lib/ai/image-generator'
+import { addRelatedPostLinks } from '@/lib/ai/internal-linking'
 
 export async function POST(request: NextRequest) {
   const auth = await requireAdminSession(request)
@@ -15,6 +16,11 @@ export async function POST(request: NextRequest) {
     }
     const wordCount = Math.min(3000, Math.max(500, Number(body.wordCount) || 1500))
     const article = await generateNewsArticle({ ...body, keyword, wordCount })
+    const contentHtml = await addRelatedPostLinks({
+      contentHtml: article.contentHtml,
+      categoryId: body.categoryId,
+      focusKeywords: article.focusKeywords,
+    })
     const warnings: string[] = []
     let featuredImage: Awaited<ReturnType<typeof tryGeneratePostImage>>['image']
 
@@ -46,14 +52,18 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         ...article,
-        contentHtml: insertHeadingImages(article.contentHtml, headingImages),
+        contentHtml: insertHeadingImages(contentHtml, headingImages),
         featuredImage: featuredImage || null,
         headingImages,
         warnings: [...new Set(warnings)],
       },
     })
   } catch (error) {
-    const status = error instanceof OpenAiRequestError ? 424 : 400
+    const status = error instanceof OpenAiRequestError
+      ? 424
+      : error instanceof GeneratedNewsArticleError
+        ? 502
+        : 400
     return Response.json({
       success: false,
       error: error instanceof Error ? error.message : 'Khong the sinh bai',

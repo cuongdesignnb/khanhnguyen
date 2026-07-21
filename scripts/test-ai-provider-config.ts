@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { encryptSecret } from '../lib/crypto'
 import { imageBytesFromResult } from '../lib/ai/image-generator'
+import { ensureArticleHtml, parseGeneratedNewsArticle } from '../lib/ai/news-generator'
+import { injectRelatedPostLinks } from '../lib/ai/internal-linking'
 import {
   buildOpenAiContentRequest,
   extractOpenAiText,
@@ -65,12 +67,13 @@ const chatRequest = buildOpenAiContentRequest({
   model: 'gpt-5.5',
   reasoningEffort: 'high',
   maxTokens: 4096,
-}, { instructions: 'system', input: 'user', maxOutputTokens: 32 })
+}, { instructions: 'system', input: 'user', maxOutputTokens: 32, text: { format: { type: 'json_object' } } })
 assert.equal(chatRequest.path, '/chat/completions')
 assert.deepEqual(chatRequest.body, {
   model: 'gpt-5.5',
   messages: [{ role: 'system', content: 'system' }, { role: 'user', content: 'user' }],
   max_tokens: 32,
+  response_format: { type: 'json_object' },
 })
 assert.ok(!('reasoning' in chatRequest.body))
 assert.ok(!('store' in chatRequest.body))
@@ -124,6 +127,26 @@ async function main() {
   assert.equal(extractOpenAiText({ output_text: 'one' }), 'one')
   assert.equal(extractOpenAiText({ output: [{ content: [{ text: 'two' }] }] }), 'two')
   assert.equal(extractOpenAiText({ choices: [{ message: { content: 'three' } }] }), 'three')
+  const parsedArticle = parseGeneratedNewsArticle(`Mình sẽ viết bài ngay.\n\`\`\`json\n${JSON.stringify({
+    title: 'Bai viet test',
+    slug: 'bai-viet-test',
+    excerpt: 'Tom tat',
+    contentHtml: '<p>Noi dung</p>',
+    seoTitle: 'SEO title',
+    seoDescription: 'SEO description',
+    focusKeywords: ['xe nang'],
+    headings: ['Mo dau'],
+    imagePrompts: { featured: 'Xe nang', headings: [{ heading: 'Mo dau', prompt: 'Kho hang' }] },
+  })}\n\`\`\``)
+  assert.equal(parsedArticle.title, 'Bai viet test')
+  const formatted = ensureArticleHtml('<p>Mo dau</p><p>Xe nang la thiet bi quan trong.</p>', ['Mo dau'])
+  assert.match(formatted, /^<h2>Mo dau<\/h2>/)
+  const linked = injectRelatedPostLinks(
+    `<p>${'Xe nang '.repeat(140)}xe nang dien.</p><p>${'Bao duong '.repeat(140)}bao duong xe nang.</p>`,
+    [{ title: 'Bao duong xe nang dung cach', slug: 'bao-duong-xe-nang' }],
+    ['xe nang dien'],
+  )
+  assert.match(linked, /href="\/tin-tuc\/bao-duong-xe-nang"/)
   await runHttpTest()
   console.log('AI provider config tests passed.')
 }

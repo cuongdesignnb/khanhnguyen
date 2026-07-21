@@ -197,8 +197,18 @@ export type OpenAiContentRequest = {
   maxOutputTokens?: unknown
 }
 
+function getChatResponseFormat(text: unknown) {
+  if (!text || typeof text !== 'object') return undefined
+  const format = (text as Record<string, unknown>).format
+  if (!format || typeof format !== 'object') return undefined
+  return (format as Record<string, unknown>).type === 'json_object'
+    ? { type: 'json_object' as const }
+    : undefined
+}
+
 export function buildOpenAiContentRequest(config: Pick<OpenAiContentConfig, 'wireApi' | 'model' | 'reasoningEffort' | 'maxTokens'>, body: OpenAiContentRequest) {
   if (config.wireApi === 'chat_completions') {
+    const responseFormat = getChatResponseFormat(body.text)
     return {
       path: '/chat/completions',
       body: {
@@ -208,6 +218,7 @@ export function buildOpenAiContentRequest(config: Pick<OpenAiContentConfig, 'wir
           { role: 'user', content: body.input },
         ],
         max_tokens: normalizeOpenAIOutputTokens(body.maxOutputTokens ?? config.maxTokens, config.maxTokens),
+        ...(responseFormat ? { response_format: responseFormat } : {}),
       },
     }
   }

@@ -249,7 +249,12 @@ export default function PostEditorPage({ mode, postId }: PostEditorPageProps) {
     setAiLoading('Đang sinh nội dung...')
     try {
       const data = await callAi('/api/admin/ai/news/generate-one', {
-        title, generateFeaturedImage: true, generateHeadingImages: true, maxHeadingImages: 3,
+        title,
+        categoryId: categoryId || null,
+        categoryName: postCategories.find((item) => item.id === categoryId)?.name,
+        generateFeaturedImage: true,
+        generateHeadingImages: true,
+        maxHeadingImages: 3,
       })
       setTitle((current) => current || data.title)
       setSlug(data.slug)
