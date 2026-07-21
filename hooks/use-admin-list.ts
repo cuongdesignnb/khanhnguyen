@@ -96,7 +96,7 @@ export function useAdminList<T = any, R = any>({
   }, [loadData])
 
   const reload = useCallback(() => {
-    loadData()
+    return loadData()
   }, [loadData])
 
   return {

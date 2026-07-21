@@ -28,7 +28,7 @@ const INPUT_CLASSES =
 
 const INPUT_ERROR_CLASSES = 'border-[color:var(--danger)]';
 
-function getGoogleMapSource(value?: string) {
+function getGoogleMapUrl(value?: string) {
   const configuredValue = value?.trim();
   if (!configuredValue) return '';
 
@@ -42,12 +42,20 @@ function getGoogleMapSource(value?: string) {
       url.hostname === 'maps.app.goo.gl' ||
       url.hostname === 'goo.gl';
 
-    return ['http:', 'https:'].includes(url.protocol) && isGoogleMapsHost
-      ? url.toString()
-      : '';
+    return ['http:', 'https:'].includes(url.protocol) && isGoogleMapsHost ? url.toString() : '';
   } catch {
     return '';
   }
+}
+
+function getGoogleMapSource(value?: string) {
+  const source = getGoogleMapUrl(value);
+  if (!source) return '';
+
+  const url = new URL(source);
+  return /\/maps\/embed(?:\/|$)/i.test(url.pathname) || url.searchParams.get('output') === 'embed'
+    ? source
+    : '';
 }
 
 export function ContactSection({ siteConfig }: ContactSectionProps) {
@@ -55,6 +63,7 @@ export function ContactSection({ siteConfig }: ContactSectionProps) {
   const config: PublicSiteConfig = siteConfig || staticSiteConfig
   const googleMapSource =
     getGoogleMapSource(config.googleMapEmbed) || getGoogleMapSource(config.googleMapUrl)
+  const googleMapLink = getGoogleMapUrl(config.googleMapUrl) || getGoogleMapUrl(config.googleMapEmbed)
   
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -192,6 +201,21 @@ export function ContactSection({ siteConfig }: ContactSectionProps) {
                   referrerPolicy="no-referrer-when-downgrade"
                   allowFullScreen
                 />
+              </div>
+            ) : googleMapLink ? (
+              <div className="mt-6 flex h-48 flex-col items-center justify-center rounded-xl border border-white/10 bg-[color:var(--surface-2)] lg:h-56">
+                <MapPin size={32} className="text-[color:var(--gold)]" />
+                <p className="mt-2 text-sm font-semibold tracking-wide text-[color:var(--muted)]">
+                  VỊ TRÍ TRÊN GOOGLE MAPS
+                </p>
+                <a
+                  href={googleMapLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 text-xs font-semibold text-[color:var(--gold)] hover:underline"
+                >
+                  Mở Google Maps
+                </a>
               </div>
             ) : (
               <div className="mt-6 flex h-48 flex-col items-center justify-center rounded-xl border border-white/10 bg-[color:var(--surface-2)] lg:h-56">

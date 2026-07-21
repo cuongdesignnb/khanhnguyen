@@ -65,7 +65,7 @@ export async function adminFetch<T>(
 }
 
 export async function adminGet<T>(url: string): Promise<T> {
-  return adminFetch<T>(url, { method: 'GET' })
+  return adminFetch<T>(url, { method: 'GET', cache: 'no-store' })
 }
 
 export async function adminPost<T>(url: string, body?: any): Promise<T> {

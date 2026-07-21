@@ -17,7 +17,7 @@ interface ServiceEditorPanelProps {
   isOpen: boolean
   onClose: () => void
   service: ServiceItem | null
-  onSaved: () => void
+  onSaved: () => void | Promise<void>
 }
 
 const tabs = ['Thông tin cơ bản', 'Nội dung', 'FAQ', 'SEO']
@@ -241,7 +241,7 @@ export default function ServiceEditorPanel({
         await adminApi.createService(payload)
         toast.success('Thêm dịch vụ thành công')
       }
-      onSaved()
+      await onSaved()
       onClose()
     } catch (err: any) {
       toast.error(err.message || 'Lỗi lưu dịch vụ')

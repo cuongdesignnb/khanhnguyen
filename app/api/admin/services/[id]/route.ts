@@ -160,3 +160,5 @@ export async function DELETE(
     return api.serverError('Lỗi xóa dịch vụ')
   }
 }
+
+export const dynamic = 'force-dynamic'
