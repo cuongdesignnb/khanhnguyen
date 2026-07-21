@@ -6,6 +6,7 @@ import JsonLd from '@/components/seo/json-ld'
 import { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from '@/lib/seo/schemas'
 import { buildServiceMetadata } from '@/lib/seo/metadata'
 import { getSeoConfig } from '@/lib/seo/config'
+import { htmlToPlainText } from '@/lib/sanitize-html'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!service) {
     return { title: 'Không tìm thấy dịch vụ' }
   }
-  return buildServiceMetadata({ title: service.seoTitle || service.title, description: service.seoDescription || service.description,
+  return buildServiceMetadata({ title: service.seoTitle || service.title, description: htmlToPlainText(service.seoDescription || service.description),
     canonicalPath: `/dich-vu/${service.slug}`, canonicalUrl: service.canonicalUrl, ogTitle: service.ogTitle,
     ogDescription: service.ogDescription, ogImage: service.ogImage || service.image, robotsIndex: service.robotsIndex, robotsFollow: service.robotsFollow })
 }

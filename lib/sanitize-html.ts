@@ -64,3 +64,22 @@ export function sanitizeHtml(html: string | null | undefined): string {
     return doc.body.innerHTML
   }
 }
+
+export function htmlToPlainText(html: string | null | undefined): string {
+  if (!html) return ''
+
+  const textWithSpacing = html
+    .replace(/<br\s*\/?\s*>/gi, ' ')
+    .replace(/<\/(?:p|div|h[1-6]|li|blockquote|tr|td|th)>/gi, ' ')
+
+  const sanitized = DOMPurify.sanitize(textWithSpacing, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+    RETURN_DOM: true,
+  })
+
+  return (sanitized.textContent || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}

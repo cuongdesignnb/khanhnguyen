@@ -1,6 +1,7 @@
 import { absoluteUrl } from './canonical'
 import { compactObject } from './sanitize'
 import type { BreadcrumbItem } from './types'
+import { htmlToPlainText } from '@/lib/sanitize-html'
 
 export function buildOrganizationSchema(config: any) {
   const { siteUrl, organization } = config
@@ -76,7 +77,7 @@ export function buildArticleSchema(post: any, config: any) {
 export function buildServiceSchema(service: any, config: any) {
   const url = `${config.siteUrl}/dich-vu/${service.slug}`
   return compactObject({ '@context': 'https://schema.org', '@type': 'Service', '@id': `${url}#service`, name: service.title,
-    description: service.seoDescription || service.description, url, image: absoluteUrl(service.ogImage || service.image, config.siteUrl),
+    description: htmlToPlainText(service.seoDescription || service.description), url, image: absoluteUrl(service.ogImage || service.image, config.siteUrl),
     provider: { '@id': `${config.siteUrl}#organization` }, areaServed: config.organization.areaServed, serviceType: service.title })
 }
 

@@ -12,6 +12,7 @@ import { useAdminList } from '@/hooks/use-admin-list'
 import { useAdminMutation } from '@/hooks/use-admin-mutation'
 import { adminApi } from '@/lib/admin-api'
 import { mapServiceToItem } from '@/lib/admin-mappers'
+import { htmlToPlainText } from '@/lib/sanitize-html'
 import AdminConfirmModal from '@/components/admin/admin-confirm-modal'
 import AdminLoading from '@/components/admin/admin-loading'
 import AdminErrorState from '@/components/admin/admin-error-state'
@@ -118,7 +119,7 @@ export default function ServicesAdminPage() {
                       <div>
                         <div className="text-white font-medium text-sm">{service.title}</div>
                         <div className="text-xs text-[color:var(--muted)] mt-0.5 line-clamp-1 max-w-[350px]">
-                          {service.description}
+                          {htmlToPlainText(service.description)}
                         </div>
                       </div>
                     </td>

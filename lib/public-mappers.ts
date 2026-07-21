@@ -14,6 +14,7 @@ import {
   PublicNavigationItem,
 } from '@/types/public'
 import { normalizeProductSpecs } from '@/lib/products/normalize-product-specs'
+import { htmlToPlainText } from '@/lib/sanitize-html'
 
 type MediaLike = { url?: string | null }
 type CategoryLike = {
@@ -338,7 +339,7 @@ export function mapServiceToPublicService(s: ServiceLike): PublicService {
     id: s.id || '',
     title: s.title || '',
     slug: s.slug || '',
-    description: s.description || '',
+    description: htmlToPlainText(s.description),
     image: s.image?.url || '/images/placeholder.jpg',
   }
 }

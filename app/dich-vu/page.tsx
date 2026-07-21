@@ -6,10 +6,12 @@ import JsonLd from '@/components/seo/json-ld'
 import { buildPageMetadata } from '@/lib/seo/metadata'
 import { buildBreadcrumbSchema, buildItemListSchema, buildWebPageSchema } from '@/lib/seo/schemas'
 import { getSeoConfig } from '@/lib/seo/config'
+import { connection } from 'next/server'
 
 export async function generateMetadata(): Promise<Metadata> { return buildPageMetadata({ title: 'Dịch vụ xe nâng', description: 'Cho thuê, sửa chữa và bảo dưỡng xe nâng chuyên nghiệp.', canonicalPath: '/dich-vu' }) }
 
 export default async function Page() {
+  await connection()
   const services = await getServiceList()
   const seoConfig = await getSeoConfig()
 

@@ -24,9 +24,12 @@ export default function ServiceDetailPage({ service }: ServiceDetailPageProps) {
           <div className="lg:col-span-8 space-y-8">
             {/* Description / Summary */}
             {service.description && (
-              <p className="text-base sm:text-lg text-[color:var(--silver)] leading-relaxed italic border-l-2 border-[color:var(--gold)] pl-4">
-                {service.description}
-              </p>
+              <div className="border-l-2 border-[color:var(--gold)] pl-4 italic">
+                <RichContent
+                  html={service.description}
+                  className="text-base sm:text-lg [&_p]:mb-0"
+                />
+              </div>
             )}
 
             {/* Content rich text area */}
