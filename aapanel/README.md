@@ -20,7 +20,7 @@ curl -fsS http://127.0.0.1:4317/api/health
 docker compose --env-file .env.production -f docker-compose.production.yml logs --tail=100 app
 ```
 
-Rollback chỉ app: `./rollback.sh`. Build khẩn cấp tại server: `./build-local.sh`. Hai thao tác đều giữ nguyên PostgreSQL và volume uploads. `RUN_DB_PUSH`/`RUN_DB_SEED` phải để `false`; migration production là bước release chủ động bằng `prisma migrate deploy` khi đã có migration hợp lệ.
+Rollback chỉ app: `./rollback.sh`. Build khẩn cấp tại server: `./build-local.sh`. Hai thao tác đều giữ nguyên PostgreSQL và volume uploads. `RUN_DB_PUSH`/`RUN_DB_SEED` phải để `false`; `deploy.sh` sẽ chạy `prisma migrate deploy` sau khi app mới healthy.
 
 Bộ cấu hình này chạy Next.js và PostgreSQL bằng Docker. aaPanel Nginx chịu trách nhiệm domain, SSL và reverse proxy. PostgreSQL không mở cổng ra Internet; ứng dụng chỉ bind vào `127.0.0.1:4317`.
 
@@ -58,7 +58,8 @@ Sửa `.env.production`:
 - Điền cùng mật khẩu đó vào phần password của `DATABASE_URL`.
 - `BETTER_AUTH_SECRET` và `AI_SETTINGS_SECRET` phải là hai chuỗi khác nhau.
 - Đặt mật khẩu Admin mạnh, không dùng mật khẩu mặc định.
-- Chỉ điền `OPENAI_API_KEY` nếu muốn dùng tính năng AI.
+- Có thể cấu hình provider viết bài bằng `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_WIRE_API`, `OPENAI_MODEL`, `OPENAI_REASONING_EFFORT` và `OPENAI_MAX_TOKENS`.
+- Sinh ảnh dùng key riêng `OPENAI_IMAGE_API_KEY` cùng `OPENAI_IMAGE_BASE_URL`, `OPENAI_IMAGE_MODEL`, `OPENAI_IMAGE_QUALITY`; không dùng chung key nội dung.
 
 Phân quyền file:
 

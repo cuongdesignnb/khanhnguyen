@@ -32,6 +32,12 @@ if ! wait_healthy "$TAG"; then
   exit 1
 fi
 
+echo "Applying database migrations"
+if ! APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T app ./node_modules/.bin/prisma migrate deploy; then
+  echo "Migration khong thanh cong; deploy dung lai." >&2
+  exit 1
+fi
+
 if ! APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T app \
   sh -lc 'test -d /app/public/uploads && test -w /app/public/uploads && touch /app/public/uploads/.deploy-write-test && rm /app/public/uploads/.deploy-write-test'; then
   echo "Deploy dừng: /app/public/uploads không ghi được bằng user ứng dụng." >&2

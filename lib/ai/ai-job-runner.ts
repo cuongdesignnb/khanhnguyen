@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slug'
 import { generateNewsArticle } from './news-generator'
-import { generatePostImage, insertHeadingImages } from './image-generator'
+import { insertHeadingImages, tryGeneratePostImage } from './image-generator'
 
 export async function runAiNewsJob(jobId: string) {
   const job = await prisma.aiGenerationJob.findUnique({
@@ -27,23 +27,27 @@ export async function runAiNewsJob(jobId: string) {
         wordCount: job.wordCount,
         textModel: job.textModel,
       })
-      let featuredImage: Awaited<ReturnType<typeof generatePostImage>> | undefined
+      const warnings: string[] = []
+      let featuredImage: Awaited<ReturnType<typeof tryGeneratePostImage>>['image']
       if (job.generateFeaturedImage) {
-        featuredImage = await generatePostImage({
+        const result = await tryGeneratePostImage({
           title: article.title,
           prompt: article.imagePrompts.featured,
           imageModel: job.imageModel,
         })
+        featuredImage = result.image
+        if (result.warning) warnings.push(result.warning)
       }
-      const headingImages = []
+      const headingImages: Array<{ heading: string; url: string; alt: string }> = []
       if (job.generateHeadingImages) {
         for (const headingPrompt of article.imagePrompts.headings.slice(0, job.maxHeadingImages)) {
-          const image = await generatePostImage({
+          const result = await tryGeneratePostImage({
             title: headingPrompt.heading,
             prompt: headingPrompt.prompt,
             imageModel: job.imageModel,
           })
-          headingImages.push({ heading: headingPrompt.heading, ...image })
+          if (result.image) headingImages.push({ heading: headingPrompt.heading, ...result.image })
+          if (result.warning) warnings.push(result.warning)
         }
       }
       const content = insertHeadingImages(article.contentHtml, headingImages)
@@ -73,7 +77,14 @@ export async function runAiNewsJob(jobId: string) {
       })
       await prisma.aiGeneratedPostItem.update({
         where: { id: item.id },
-        data: { status: 'COMPLETED', postId: post.id, title: article.title, slug, scheduledAt, rawAiResponse: article },
+        data: {
+          status: 'COMPLETED',
+          postId: post.id,
+          title: article.title,
+          slug,
+          scheduledAt,
+          rawAiResponse: { ...article, warnings: [...new Set(warnings)] },
+        },
       })
       await prisma.aiGenerationJob.update({ where: { id: jobId }, data: { completedItems: { increment: 1 } } })
     } catch (error) {

@@ -22,6 +22,7 @@
     ,"audit:admin-colors": "tsx scripts/audit-admin-color-fields.ts"
     ,"audit:product-specs": "tsx scripts/audit-product-specs.ts"
     ,"repair:product-specs": "tsx scripts/repair-product-specs.ts"
+    ,"test:ai": "tsx scripts/test-ai-token-limit.ts && tsx scripts/test-ai-provider-config.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -246,12 +246,19 @@ model AiSetting {
   provider              String   @default("openai")
   apiKeyEncrypted       String?
   apiKeyHint            String?
-  textModel             String   @default("gpt-5.4-mini")
-  imageModel            String   @default("chatgpt-image-2")
+  baseUrl               String?
+  wireApi               String?
+  reasoningEffort       String?
+  imageApiKeyEncrypted  String?
+  imageApiKeyHint       String?
+  imageBaseUrl          String?
+  imageQuality          String?
+  textModel             String   @default("gpt-5.5")
+  imageModel            String   @default("gpt-image-2")
   defaultTone           String?
   defaultLanguage       String   @default("vi")
   defaultWordCount      Int      @default(1500)
-  maxOutputTokens       Int      @default(1024)
+  maxOutputTokens       Int      @default(4096)
   maxBulkItems          Int      @default(10)
   generateFeaturedImage Boolean  @default(true)
   generateHeadingImages Boolean  @default(true)
