@@ -27,9 +27,8 @@ COPY --from=builder --chown=node:node /app/prisma ./prisma
 COPY --from=builder --chown=node:node /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder --chown=node:node /app/node_modules/@prisma ./node_modules/@prisma
 COPY --chown=node:node aapanel/entrypoint.production.sh /app/entrypoint.production.sh
-RUN mkdir -p /app/public/uploads /app/node_modules/.bin \
-  && ln -s ../prisma/build/index.js /app/node_modules/.bin/prisma \
-  && /app/node_modules/.bin/prisma --version \
+RUN mkdir -p /app/public/uploads \
+  && node /app/node_modules/prisma/build/index.js --version \
   && chown -R node:node /app/public/uploads \
   && chmod +x /app/entrypoint.production.sh
 USER node
