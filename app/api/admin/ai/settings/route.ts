@@ -55,6 +55,44 @@ function resolved(dbValue: unknown, envValue: unknown, fallback: string) {
   return nonEmpty(dbValue) || nonEmpty(envValue) || fallback
 }
 
+function prismaErrorDetails(error: unknown) {
+  if (!error || typeof error !== 'object') return { code: '', name: '', message: '' }
+  const candidate = error as { code?: unknown; name?: unknown; message?: unknown }
+  return {
+    code: typeof candidate.code === 'string' ? candidate.code : '',
+    name: typeof candidate.name === 'string' ? candidate.name : '',
+    message: typeof candidate.message === 'string' ? candidate.message : '',
+  }
+}
+
+function isPrismaError(error: unknown) {
+  const { code, name } = prismaErrorDetails(error)
+  return code.startsWith('P') || name.startsWith('PrismaClient')
+}
+
+function aiSettingsServerError(error: unknown, action: 'tai' | 'luu') {
+  const { code, message } = prismaErrorDetails(error)
+  const migrationRequired = code === 'P2022'
+    || /column .* does not exist/i.test(message)
+    || /does not exist in the current database/i.test(message)
+
+  console.error(`[AI settings] Khong the ${action} cai dat`, error)
+
+  if (migrationRequired) {
+    return Response.json({
+      success: false,
+      code: 'AI_SETTINGS_MIGRATION_REQUIRED',
+      error: 'Database chua ap dung migration AI moi. Hay chay prisma migrate deploy tren may chu.',
+    }, { status: 503 })
+  }
+
+  return Response.json({
+    success: false,
+    code: 'AI_SETTINGS_DATABASE_ERROR',
+    error: `Khong the ${action} cai dat AI. Vui long kiem tra ket noi database va nhat ky may chu.`,
+  }, { status: 500 })
+}
+
 function safeSetting(setting: AiSetting | null) {
   const envContentKey = nonEmpty(process.env.OPENAI_API_KEY)
   const envImageKey = nonEmpty(process.env.OPENAI_IMAGE_API_KEY)
@@ -90,10 +128,14 @@ function safeSetting(setting: AiSetting | null) {
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAdminSession(request)
-  if (auth.response) return auth.response
-  const setting = await prisma.aiSetting.findFirst({ orderBy: { updatedAt: 'desc' } })
-  return Response.json({ success: true, data: safeSetting(setting) })
+  try {
+    const auth = await requireAdminSession(request)
+    if (auth.response) return auth.response
+    const setting = await prisma.aiSetting.findFirst({ orderBy: { updatedAt: 'desc' } })
+    return Response.json({ success: true, data: safeSetting(setting) })
+  } catch (error) {
+    return aiSettingsServerError(error, 'tai')
+  }
 }
 
 export async function PATCH(request: NextRequest) {
@@ -157,6 +199,7 @@ export async function PATCH(request: NextRequest) {
       : await prisma.aiSetting.create({ data })
     return Response.json({ success: true, data: safeSetting(setting), message: 'Da luu cai dat AI' })
   } catch (error) {
+    if (isPrismaError(error)) return aiSettingsServerError(error, 'luu')
     return Response.json({
       success: false,
       error: error instanceof Error ? error.message : 'Khong the luu cai dat AI',

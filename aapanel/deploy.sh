@@ -25,16 +25,18 @@ wait_healthy() {
 
 echo "Pulling immutable app image: $IMAGE"
 APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull app
+
+echo "Applying database migrations before app rollout"
+if ! APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm --no-deps \
+  --entrypoint ./node_modules/.bin/prisma app migrate deploy; then
+  echo "Migration khong thanh cong; app hien tai van duoc giu nguyen." >&2
+  exit 1
+fi
+
 APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --no-deps --force-recreate app
 if ! wait_healthy "$TAG"; then
   echo "Image mới không healthy; bắt đầu rollback." >&2
   if [ -f .last-successful-image ]; then ./rollback.sh "$(cat .last-successful-image)"; fi
-  exit 1
-fi
-
-echo "Applying database migrations"
-if ! APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T app ./node_modules/.bin/prisma migrate deploy; then
-  echo "Migration khong thanh cong; deploy dung lai." >&2
   exit 1
 fi
 
