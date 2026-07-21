@@ -28,7 +28,7 @@ APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pu
 
 echo "Applying database migrations before app rollout"
 if ! APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm --no-deps \
-  --entrypoint ./node_modules/.bin/prisma app migrate deploy; then
+  --entrypoint node app ./node_modules/prisma/build/index.js migrate deploy; then
   echo "Migration khong thanh cong; app hien tai van duoc giu nguyen." >&2
   exit 1
 fi
