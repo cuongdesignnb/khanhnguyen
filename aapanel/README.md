@@ -22,6 +22,8 @@ docker compose --env-file .env.production -f docker-compose.production.yml logs 
 
 Rollback chỉ app: `./rollback.sh`. Build khẩn cấp tại server: `./build-local.sh`. Hai thao tác đều giữ nguyên PostgreSQL và volume uploads. `RUN_DB_PUSH`/`RUN_DB_SEED` phải để `false`; `deploy.sh` sẽ chạy `prisma migrate deploy` bằng image mới trước khi thay container app hiện tại.
 
+Với database production cũ được tạo bằng `prisma db push`, lần deploy đầu tiên có thể gặp `P3005`. `deploy.sh` sẽ chạy migration đầu tiên theo chế độ idempotent, ghi nhận migration đó làm baseline rồi áp dụng các migration còn lại. Các mã lỗi migration khác vẫn dừng deploy và giữ nguyên app đang chạy.
+
 Bộ cấu hình này chạy Next.js và PostgreSQL bằng Docker. aaPanel Nginx chịu trách nhiệm domain, SSL và reverse proxy. PostgreSQL không mở cổng ra Internet; ứng dụng chỉ bind vào `127.0.0.1:4317`.
 
 ## 1. Chuẩn bị DNS

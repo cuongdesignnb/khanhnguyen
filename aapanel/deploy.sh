@@ -23,12 +23,36 @@ wait_healthy() {
   return 1
 }
 
+run_prisma() {
+  APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm --no-deps \
+    --entrypoint node app ./node_modules/prisma/build/index.js "$@"
+}
+
+apply_migrations() {
+  output=''
+  if output=$(run_prisma migrate deploy 2>&1); then
+    printf '%s\n' "$output"
+    return 0
+  fi
+
+  printf '%s\n' "$output" >&2
+  if ! printf '%s\n' "$output" | grep -q 'P3005'; then
+    return 1
+  fi
+
+  echo "Existing database detected; baselining the first idempotent migration."
+  run_prisma db execute \
+    --file prisma/migrations/20260716090000_add_ai_max_output_tokens/migration.sql \
+    --schema prisma/schema.prisma
+  run_prisma migrate resolve --applied 20260716090000_add_ai_max_output_tokens
+  run_prisma migrate deploy
+}
+
 echo "Pulling immutable app image: $IMAGE"
 APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull app
 
 echo "Applying database migrations before app rollout"
-if ! APP_IMAGE_TAG="$TAG" docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm --no-deps \
-  --entrypoint node app ./node_modules/prisma/build/index.js migrate deploy; then
+if ! apply_migrations; then
   echo "Migration khong thanh cong; app hien tai van duoc giu nguyen." >&2
   exit 1
 fi
